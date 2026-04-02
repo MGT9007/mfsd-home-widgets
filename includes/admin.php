@@ -432,15 +432,19 @@ function mfsd_hw_render_config_fields( string $type, array $config ): void {
         case 'news_internal':
         case 'news_external':
         case 'new_courses':
-            $link_label = $type === 'news_external'
-                ? __( 'External URL', 'mfsd-home-widgets' )
-                : __( 'Internal Page URL', 'mfsd-home-widgets' );
             $cta_default = $type === 'new_courses' ? 'Course Details' : 'Read More';
-            mfsd_hw_text_field(  'config[headline]', __( 'Headline',      'mfsd-home-widgets' ), $config['headline'] ?? '' );
-            mfsd_hw_textarea_field( 'config[summary]', __( 'Summary',     'mfsd-home-widgets' ), $config['summary']  ?? '' );
-            mfsd_hw_image_field( 'config[image_id]',  __( 'Image',        'mfsd-home-widgets' ), (int) ( $config['image_id'] ?? 0 ) );
-            mfsd_hw_text_field(  'config[link]',      $link_label,                               $config['link']    ?? '', 'url' );
-            mfsd_hw_text_field(  'config[cta_text]',  __( 'Button Label', 'mfsd-home-widgets' ), $config['cta_text'] ?? $cta_default );
+            mfsd_hw_text_field(     'config[headline]', __( 'Headline',      'mfsd-home-widgets' ), $config['headline'] ?? '' );
+            mfsd_hw_textarea_field( 'config[summary]',  __( 'Summary',       'mfsd-home-widgets' ), $config['summary']  ?? '' );
+            mfsd_hw_image_field(    'config[image_id]', __( 'Image',         'mfsd-home-widgets' ), (int) ( $config['image_id'] ?? 0 ) );
+
+            // Internal types get a page dropdown; external gets a URL input.
+            if ( $type === 'news_external' ) {
+                mfsd_hw_text_field( 'config[link]', __( 'External URL', 'mfsd-home-widgets' ), $config['link'] ?? '', 'url' );
+            } else {
+                mfsd_hw_page_field( 'config[link]', __( 'Link to Page', 'mfsd-home-widgets' ), $config['link'] ?? '' );
+            }
+
+            mfsd_hw_text_field( 'config[cta_text]', __( 'Button Label', 'mfsd-home-widgets' ), $config['cta_text'] ?? $cta_default );
             break;
 
         case 'shorts':
@@ -550,6 +554,42 @@ function mfsd_hw_image_field( string $name, string $label, int $image_id ): void
           </button>
         <?php endif; ?>
       </div>
+    </div>
+    <?php
+}
+
+/**
+ * Page dropdown field — lists all published pages as options.
+ * Stores the page permalink as the value so it works directly as a link href.
+ *
+ * @param string $name   Field name attribute.
+ * @param string $label  Field label.
+ * @param string $value  Currently saved URL (used to re-select the matching page).
+ */
+function mfsd_hw_page_field( string $name, string $label, string $value ): void {
+    // Get all published pages.
+    $pages = get_pages( [
+        'sort_column' => 'post_title',
+        'sort_order'  => 'ASC',
+        'post_status' => 'publish',
+    ] );
+    ?>
+    <div class="mfsd-hw-admin__field">
+      <label><?php echo esc_html( $label ); ?></label>
+      <select name="<?php echo esc_attr( $name ); ?>" style="max-width:560px;">
+        <option value=""><?php esc_html_e( '— Select a page —', 'mfsd-home-widgets' ); ?></option>
+        <?php foreach ( $pages as $page ) :
+          $permalink = get_permalink( $page->ID );
+        ?>
+          <option value="<?php echo esc_url( $permalink ); ?>"
+                  <?php selected( $value, $permalink ); ?>>
+            <?php echo esc_html( $page->post_title ); ?>
+          </option>
+        <?php endforeach; ?>
+      </select>
+      <p class="description">
+        <?php esc_html_e( 'Select the page this widget card should link to.', 'mfsd-home-widgets' ); ?>
+      </p>
     </div>
     <?php
 }
