@@ -1,0 +1,226 @@
+/*
+ * MFSD Home Widgets — Admin Styles (v2 instance-based)
+ */
+
+/* ── PAGE TITLE ──────────────────────────────────────────────────────────── */
+
+.mfsd-hw-admin__title .dashicons {
+  font-size: 26px;
+  vertical-align: middle;
+  color: #C9A84C;
+  margin-right: 6px;
+}
+
+
+/* ── WIDGET LIST TABLE ───────────────────────────────────────────────────── */
+
+.mfsd-hw-admin__list-table th {
+  background: #1d2327;
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mfsd-hw-admin__list-table .dashicons {
+  font-size: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+  color: #888;
+}
+
+.mfsd-hw-admin__list-row--paused td {
+  opacity: 0.6;
+}
+
+.mfsd-hw-admin__list-order {
+  text-align: center;
+  font-weight: 700;
+  color: #555;
+}
+
+.mfsd-hw-admin__role-pill {
+  display: inline-block;
+  background: #1d2327;
+  color: #C9A84C;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin: 1px 2px;
+}
+
+.mfsd-hw-admin__status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mfsd-hw-admin__status--live { background: #00a32a; color: #fff; }
+.mfsd-hw-admin__status--off  { background: #b0b0b0; color: #fff; }
+
+.mfsd-hw-admin__list-actions { white-space: nowrap; }
+.mfsd-hw-admin__list-actions .button { margin-right: 4px; }
+
+.mfsd-hw-admin__btn-delete {
+  color: #b32d2e !important;
+  border-color: #b32d2e !important;
+}
+.mfsd-hw-admin__btn-delete:hover {
+  background: #b32d2e !important;
+  color: #fff !important;
+}
+
+
+/* ── TYPE PICKER ─────────────────────────────────────────────────────────── */
+
+.mfsd-hw-admin__type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 20px 0;
+  max-width: 900px;
+}
+
+.mfsd-hw-admin__type-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  background: #fff;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mfsd-hw-admin__type-card:hover {
+  border-color: #C9A84C;
+  box-shadow: 0 2px 12px rgba(201,168,76,0.20);
+  color: inherit;
+  text-decoration: none;
+}
+
+.mfsd-hw-admin__type-card .dashicons {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  color: #C9A84C;
+}
+
+.mfsd-hw-admin__type-card strong {
+  font-size: 14px;
+  color: #1d2327;
+}
+
+.mfsd-hw-admin__type-card span {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .mfsd-hw-admin__type-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+
+/* ── ADD / EDIT FORM LAYOUT ──────────────────────────────────────────────── */
+
+.mfsd-hw-admin__form-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  margin-top: 16px;
+}
+
+.mfsd-hw-admin__form-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.mfsd-hw-admin__form-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .mfsd-hw-admin__form-layout { flex-direction: column; }
+  .mfsd-hw-admin__form-sidebar { width: 100%; }
+}
+
+.mfsd-hw-admin__form-section {
+  background: #fff;
+  border: 1px solid #ccd0d4;
+  border-radius: 4px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.mfsd-hw-admin__form-section h3 {
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #C9A84C;
+  font-size: 14px;
+}
+
+.mfsd-hw-admin__sidebar-box {
+  background: #fff;
+  border: 1px solid #ccd0d4;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.mfsd-hw-admin__sidebar-box h3 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.mfsd-hw-admin__sidebar-box hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 12px 0;
+}
+
+
+/* ── SHARED FIELD STYLES ─────────────────────────────────────────────────── */
+
+.mfsd-hw-admin__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.mfsd-hw-admin__field > label:first-child {
+  font-weight: 600;
+  font-size: 13px;
+  display: block;
+}
+
+.mfsd-hw-admin__check {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400 !important;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.mfsd-hw-admin__info-box {
+  background: #f0f6fc;
+  border-left: 4px solid #1d79be;
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  border-radius: 0 4px 4px 0;
+}
