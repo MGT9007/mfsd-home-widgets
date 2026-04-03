@@ -296,25 +296,29 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
         <?php if ( ! $is_parent && ! empty( $c['show_badge'] ) && $latest_badge ) : ?>
           <div class="mfsd-hw-progress-row">
-            <span class="mfsd-hw-progress-row__icon">🏅</span>
+            <?php
+            $badge_slug  = $latest_badge['badge_slug'] ?? '';
+            $meta        = json_decode( $latest_badge['metadata'] ?? '{}', true );
+            $badge_img   = plugins_url( 'assets/' . $badge_slug . '.png', WP_PLUGIN_DIR . '/mfsd-quest-log/mfsd-quest-log.php' );
+
+            if ( ! empty( $meta['character'] ) ) {
+                $badge_label = 'Who Am I — ' . $meta['character'];
+            } elseif ( ! empty( $meta['task_slug'] ) ) {
+                $badge_label = ucwords( str_replace( [ '_', '-' ], ' ', $meta['task_slug'] ) );
+            } else {
+                $badge_label = ucwords( str_replace( [ '_', '-' ], ' ', $badge_slug ) );
+            }
+            ?>
+            <span class="mfsd-hw-progress-row__icon">
+              <img src="<?php echo esc_url( $badge_img ); ?>"
+                   alt="<?php echo esc_attr( $badge_label ); ?>"
+                   class="mfsd-hw-badge-img"
+                   onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
+              <span style="display:none;">🏅</span>
+            </span>
             <div>
               <div class="mfsd-hw-progress-row__label"><?php esc_html_e( 'Latest badge', 'mfsd-home-widgets' ); ?></div>
-              <div class="mfsd-hw-progress-row__value"><?php
-                $badge_slug = $latest_badge['badge_slug'] ?? '';
-                $meta       = json_decode( $latest_badge['metadata'] ?? '{}', true );
-
-                // Try to build a human-readable name from metadata or slug.
-                if ( ! empty( $meta['character'] ) ) {
-                    // Who Am I badge — show character name.
-                    echo esc_html( 'Who Am I — ' . $meta['character'] );
-                } elseif ( ! empty( $meta['task_slug'] ) ) {
-                    // Other badges — format the task slug nicely.
-                    echo esc_html( ucwords( str_replace( [ '_', '-' ], ' ', $meta['task_slug'] ) ) );
-                } else {
-                    // Fallback — format the badge slug.
-                    echo esc_html( ucwords( str_replace( [ '_', '-' ], ' ', $badge_slug ) ) );
-                }
-              ?></div>
+              <div class="mfsd-hw-progress-row__value"><?php echo esc_html( $badge_label ); ?></div>
             </div>
           </div>
         <?php endif; ?>
