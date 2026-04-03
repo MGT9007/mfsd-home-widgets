@@ -301,12 +301,10 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
             $meta        = json_decode( $latest_badge['metadata'] ?? '{}', true );
             $ql_base     = WP_PLUGIN_URL . '/mfsd-quest-log/assets/';
 
-            // For Who Am I badges use the character avatar from the Avatars subfolder.
+            // For Who Am I badges use the character portrait.
             if ( ! empty( $meta['character'] ) ) {
                 $character   = $meta['character'];
-                $gender      = $meta['gender'] ?? 'male';
-                // Try gendered variant first (e.g. Mediatorv3.png), then plain name.
-                $badge_img   = $ql_base . 'Avatars/' . $character . 'v3.png';
+                $badge_img   = $ql_base . 'images/characters/' . $character . '.png';
                 $badge_label = 'Who Am I — ' . $character;
             } elseif ( ! empty( $meta['task_slug'] ) ) {
                 $badge_img   = $ql_base . $badge_slug . '.png';
