@@ -429,6 +429,7 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  border: 2px solid var(--color-accent, #C9A84C);
 }
 
 /* Background image — fills entire card */
@@ -557,4 +558,18 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   .mfsd-hw-card__hero-headline {
     font-size: 16px;
   }
-}+
+}
+
+/* Force white text on news hero cards — theme override */
+.mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline {
+  color: #fff !important;
+}
+.mfsd-hw-card--news-hero .mfsd-hw-card__hero-summary {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+.mfsd-hw-card--news-hero .mfsd-hw-card__hero-content a {
+  color: #fff !important;
+}
+.mfsd-hw-card--news-hero {
+  border: 2px solid var(--color-accent, #C9A84C) !important;
+}
