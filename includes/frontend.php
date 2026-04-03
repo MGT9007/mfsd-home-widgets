@@ -325,6 +325,28 @@ function mfsd_hw_task_display_name( string $slug ): string {
     return $names[ $slug ] ?? ucwords( str_replace( '_', ' ', $slug ) );
 }
 
+/**
+ * Human-friendly display name for a badge slug.
+ * Badge slugs from Quest Log engine: badge_word_assoc, badge_junk_jobs,
+ * badge_who_am_i_1, badge_super_strengths, badge_rag_w1, etc.
+ */
+function mfsd_hw_badge_display_name( string $slug ): string {
+    $names = [
+        // Week 1
+        'badge_word_assoc'      => 'Word Association',
+        'badge_junk_jobs'       => 'Junk Jobs',
+        'badge_who_am_i_1'     => 'Who Am I',
+        'badge_super_strengths' => 'Super Strengths',
+        'badge_rag_w1'          => 'Weekly Check-in',
+        // Week completion
+        'chest_week_1'          => 'Week 1 Complete',
+        'chest_achiever_1'      => 'Week 1 High Achiever',
+        // Week 2 — extend when ready
+        // Week 3 — extend when ready
+    ];
+    return $names[ $slug ] ?? ucwords( str_replace( [ 'badge_', '_' ], [ '', ' ' ], $slug ) );
+}
+
 function mfsd_hw_card_progress( array $c, string $role ): void {
     global $wpdb;
 
@@ -336,6 +358,12 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     $title = $is_parent
         ? __( 'STUDENT PERFORMANCE', 'mfsd-home-widgets' )
         : __( 'MY ACHIEVEMENTS', 'mfsd-home-widgets' );
+
+    // ── Admin config flags (student view toggles) ────────────────────────────
+    // Parent view always shows everything; student view respects checkboxes.
+    $show_badge = $is_parent || ! empty( $c['show_badge'] );
+    $show_task  = $is_parent || ! empty( $c['show_task'] );
+    $show_score = $is_parent || ! empty( $c['show_score'] );
 
     // ── Resolve the student ID ───────────────────────────────────────────────
     $student_id   = $user_id;
@@ -351,8 +379,9 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     }
 
     // ── Latest badge (from Quest Log: wp_mfsd_badges) ────────────────────────
+    // FIX: column is student_id (not user_id)
     $latest_badge = null;
-    if ( $student_id ) {
+    if ( $show_badge && $student_id ) {
         $badges_table = $wpdb->prefix . 'mfsd_badges';
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$badges_table}'" ) === $badges_table ) {
             $latest_badge = $wpdb->get_row( $wpdb->prepare(
@@ -367,7 +396,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
     // ── Latest completed task (from ordering system: wp_mfsd_task_progress) ──
     $latest_task = null;
-    if ( $student_id ) {
+    if ( $show_task && $student_id ) {
         $task_table = $wpdb->prefix . 'mfsd_task_progress';
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$task_table}'" ) === $task_table ) {
             $latest_task = $wpdb->get_row( $wpdb->prepare(
@@ -381,10 +410,9 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         }
     }
 
-    // ── Latest arcade score (from Arcade: wp_mfsd_arcade_scores) ───────────
-    // FIX: actual table is wp_mfsd_arcade_scores, column is student_id
+    // ── Latest arcade score (from Arcade: wp_mfsd_arcade_scores) ─────────────
     $latest_score = null;
-    if ( $student_id ) {
+    if ( $show_score && $student_id ) {
         $scores_table = $wpdb->prefix . 'mfsd_arcade_scores';
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$scores_table}'" ) === $scores_table ) {
             $latest_score = $wpdb->get_row( $wpdb->prepare(
@@ -402,6 +430,9 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     $task_urls = mfsd_hw_task_url_map();
     $task_link = isset( $task_urls[ $task_slug ] ) ? home_url( $task_urls[ $task_slug ] ) : '';
     $task_name = mfsd_hw_task_display_name( $task_slug );
+
+    // ── Resolve badge display name ───────────────────────────────────────────
+    $badge_name = mfsd_hw_badge_display_name( $latest_badge['badge_slug'] ?? '' );
     ?>
     <div class="mfsd-hw-card mfsd-hw-card--progress" data-widget="progress">
       <div class="mfsd-hw-card__header">
@@ -423,17 +454,17 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
           </p>
         <?php endif; ?>
 
-        <?php if ( $student_id && $latest_badge ) : ?>
+        <?php if ( $show_badge && $student_id && $latest_badge ) : ?>
           <div class="mfsd-hw-card__stat">
             <span class="mfsd-hw-card__stat-icon">🏅</span>
             <div>
               <strong><?php esc_html_e( 'Latest Badge', 'mfsd-home-widgets' ); ?></strong><br>
-              <?php echo esc_html( ucwords( str_replace( '_', ' ', $latest_badge['badge_slug'] ?? '' ) ) ); ?>
+              <?php echo esc_html( $badge_name ); ?>
             </div>
           </div>
         <?php endif; ?>
 
-        <?php if ( $student_id && $latest_task ) : ?>
+        <?php if ( $show_task && $student_id && $latest_task ) : ?>
           <div class="mfsd-hw-card__stat">
             <span class="mfsd-hw-card__stat-icon">✅</span>
             <div>
@@ -457,7 +488,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
           </div>
         <?php endif; ?>
 
-        <?php if ( $student_id && $latest_score ) : ?>
+        <?php if ( $show_score && $student_id && $latest_score ) : ?>
           <div class="mfsd-hw-card__stat">
             <span class="mfsd-hw-card__stat-icon">🎮</span>
             <div>
