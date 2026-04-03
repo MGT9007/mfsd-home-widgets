@@ -82,17 +82,6 @@ function mfsd_hw_get_linked_student_id( int $parent_user_id ): int {
 }
 
 
-// ─── HELPER: resolve image URL from attachment ID ────────────────────────────
-
-function mfsd_hw_get_image_url( int $attachment_id ): string {
-    if ( $attachment_id > 0 ) {
-        $url = wp_get_attachment_image_url( $attachment_id, 'medium' );
-        if ( $url ) return $url;
-    }
-    return MFSD_HW_URI . 'assets/images/placeholder.png';
-}
-
-
 // ─── CARD: News (internal + external) ─────────────────────────────────────────
 
 function mfsd_hw_card_news( string $variant, array $c ): void {
