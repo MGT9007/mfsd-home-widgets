@@ -1,13 +1,18 @@
 <?php
 /**
- * MFSD Home Widgets — Frontend
+ * MFSD Home Widgets — Frontend Rendering
  *
- * Hooks into do_action('mfsd_home_widgets') from front-page.php.
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
+ *
+ * Version: 2.0.1 — Fixed column name mismatches in parent-student link
+ *                   and task progress queries.
  */
 
 defined( 'ABSPATH' ) || exit;
+
+
+// ─── GRID RENDERER ────────────────────────────────────────────────────────────
 
 add_action( 'mfsd_home_widgets', 'mfsd_hw_render_grid' );
 
@@ -22,13 +27,7 @@ function mfsd_hw_render_grid(): void {
         return;
     }
 
-    $count = count( $widgets );
-    $grid_class = 'mfsd-hw-grid';
-    if ( $count === 1 ) $grid_class .= ' mfsd-hw-grid--1';
-    elseif ( $count === 2 ) $grid_class .= ' mfsd-hw-grid--2';
-    elseif ( $count === 4 ) $grid_class .= ' mfsd-hw-grid--4';
-
-    echo '<div class="' . esc_attr( $grid_class ) . '">';
+    echo '<div class="mfsd-hw-grid">';
     foreach ( $widgets as $w ) {
         echo '<div class="mfsd-hw-grid__cell">';
         mfsd_hw_render_widget( $w['type'], (array) $w['config'], $role );
@@ -59,7 +58,42 @@ function mfsd_hw_render_widget( string $type, array $config, string $role ): voi
 }
 
 
-// ─── CARD RENDERERS ───────────────────────────────────────────────────────────
+// ─── HELPER: get linked student ID for a parent ──────────────────────────────
+// Centralised so both progress and scores widgets use the same correct query.
+
+function mfsd_hw_get_linked_student_id( int $parent_user_id ): int {
+    global $wpdb;
+
+    $links_table = $wpdb->prefix . 'mfsd_parent_student_links';
+
+    if ( $wpdb->get_var( "SHOW TABLES LIKE '{$links_table}'" ) !== $links_table ) {
+        return 0;
+    }
+
+    return (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT student_user_id
+         FROM {$links_table}
+         WHERE parent_user_id = %d
+           AND link_status = 'active'
+         ORDER BY is_primary_contact DESC
+         LIMIT 1",
+        $parent_user_id
+    ) );
+}
+
+
+// ─── HELPER: resolve image URL from attachment ID ────────────────────────────
+
+function mfsd_hw_get_image_url( int $attachment_id ): string {
+    if ( $attachment_id > 0 ) {
+        $url = wp_get_attachment_image_url( $attachment_id, 'medium' );
+        if ( $url ) return $url;
+    }
+    return MFSD_HW_URI . 'assets/images/placeholder.png';
+}
+
+
+// ─── CARD: News (internal + external) ─────────────────────────────────────────
 
 function mfsd_hw_card_news( string $variant, array $c ): void {
     $title    = $variant === 'internal' ? 'MFS NEWS' : 'COMMUNITY ARTICLES';
@@ -74,7 +108,9 @@ function mfsd_hw_card_news( string $variant, array $c ): void {
       </div>
       <div class="mfsd-hw-card__body">
         <div class="mfsd-hw-card__media-row">
-          <img class="mfsd-hw-card__thumb" src="<?php echo esc_url( $img ); ?>" alt="<?php echo esc_attr( $c['headline'] ?? '' ); ?>">
+          <img class="mfsd-hw-card__thumb"
+               src="<?php echo esc_url( $img ); ?>"
+               alt="<?php echo esc_attr( $c['headline'] ?? '' ); ?>">
           <div class="mfsd-hw-card__text">
             <h3 class="mfsd-hw-card__headline"><?php echo esc_html( $c['headline'] ?? '' ); ?></h3>
             <p class="mfsd-hw-card__summary"><?php echo esc_html( $c['summary'] ?? '' ); ?></p>
@@ -91,6 +127,9 @@ function mfsd_hw_card_news( string $variant, array $c ): void {
     </div>
     <?php
 }
+
+
+// ─── CARD: Shorts Video ──────────────────────────────────────────────────────
 
 function mfsd_hw_card_shorts( array $c ): void {
     $img = mfsd_hw_get_image_url( (int) ( $c['image_id'] ?? 0 ) );
@@ -123,6 +162,9 @@ function mfsd_hw_card_shorts( array $c ): void {
     <?php
 }
 
+
+// ─── CARD: New Course ────────────────────────────────────────────────────────
+
 function mfsd_hw_card_courses( array $c ): void {
     $img = mfsd_hw_get_image_url( (int) ( $c['image_id'] ?? 0 ) );
     ?>
@@ -133,7 +175,9 @@ function mfsd_hw_card_courses( array $c ): void {
       </div>
       <div class="mfsd-hw-card__body">
         <div class="mfsd-hw-card__media-row">
-          <img class="mfsd-hw-card__thumb" src="<?php echo esc_url( $img ); ?>" alt="<?php echo esc_attr( $c['headline'] ?? '' ); ?>">
+          <img class="mfsd-hw-card__thumb"
+               src="<?php echo esc_url( $img ); ?>"
+               alt="<?php echo esc_attr( $c['headline'] ?? '' ); ?>">
           <div class="mfsd-hw-card__text">
             <h3 class="mfsd-hw-card__headline"><?php echo esc_html( $c['headline'] ?? '' ); ?></h3>
             <p class="mfsd-hw-card__summary"><?php echo esc_html( $c['summary'] ?? '' ); ?></p>
@@ -149,16 +193,19 @@ function mfsd_hw_card_courses( array $c ): void {
     <?php
 }
 
+
+// ─── CARD: Top Scores / Leaderboard ──────────────────────────────────────────
+
 function mfsd_hw_card_scores( array $c, string $role ): void {
     global $wpdb;
 
     $limit      = (int) ( $c['score_count'] ?? 5 );
     $mode       = $c['mode'] ?? 'global';
-    $is_student = in_array( $role, [ 'student' ], true );
+    $is_student = $role === 'student';
     $title      = $mode === 'student' ? "MY STUDENT'S SCORES" : 'TOP SCORES';
 
     $scores   = [];
-    $lb_table = $wpdb->prefix . 'mfsd_arcade_scores';
+    $lb_table = $wpdb->prefix . 'mfsd_leaderboard';
 
     if ( $wpdb->get_var( "SHOW TABLES LIKE '{$lb_table}'" ) === $lb_table ) {
 
@@ -168,24 +215,24 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
         }
 
         if ( $mode === 'student' && ! $is_student ) {
-            $links_table = $wpdb->prefix . 'mfsd_parent_student_links';
-            $student_id  = $wpdb->get_var( $wpdb->prepare(
-                "SELECT student_id FROM {$links_table} WHERE parent_id = %d LIMIT 1",
-                get_current_user_id()
-            ) );
+            // Parent view: show linked student's scores.
+            // FIX: use centralised helper with correct column names.
+            $student_id = mfsd_hw_get_linked_student_id( get_current_user_id() );
+
             if ( $student_id ) {
                 $scores = $wpdb->get_results( $wpdb->prepare(
                     "SELECT l.*, u.display_name FROM {$lb_table} l
-                     LEFT JOIN {$wpdb->users} u ON l.student_id = u.ID
-                     WHERE l.student_id = %d {$game_where}
+                     LEFT JOIN {$wpdb->users} u ON l.user_id = u.ID
+                     WHERE l.user_id = %d {$game_where}
                      ORDER BY l.score DESC LIMIT %d",
                     $student_id, $limit
                 ), ARRAY_A ) ?: [];
             }
         } else {
+            // Global leaderboard.
             $scores = $wpdb->get_results( $wpdb->prepare(
                 "SELECT l.*, u.display_name FROM {$lb_table} l
-                 LEFT JOIN {$wpdb->users} u ON l.student_id = u.ID
+                 LEFT JOIN {$wpdb->users} u ON l.user_id = u.ID
                  WHERE 1=1 {$game_where}
                  ORDER BY l.score DESC LIMIT %d",
                 $limit
@@ -200,20 +247,22 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
       </div>
       <div class="mfsd-hw-card__body">
         <?php if ( empty( $scores ) ) : ?>
-          <p class="mfsd-hw-card__empty"><?php esc_html_e( 'No scores yet.', 'mfsd-home-widgets' ); ?></p>
+          <p class="mfsd-hw-card__empty"><?php esc_html_e( 'No scores recorded yet.', 'mfsd-home-widgets' ); ?></p>
         <?php else : ?>
           <table class="mfsd-hw-scores-table">
-            <thead><tr>
-              <th><?php esc_html_e( 'Rank', 'mfsd-home-widgets' ); ?></th>
-              <th><?php esc_html_e( 'Player', 'mfsd-home-widgets' ); ?></th>
-              <th><?php esc_html_e( 'Game', 'mfsd-home-widgets' ); ?></th>
-              <th><?php esc_html_e( 'Score', 'mfsd-home-widgets' ); ?></th>
-            </tr></thead>
+            <thead>
+              <tr>
+                <th><?php esc_html_e( 'Rank', 'mfsd-home-widgets' ); ?></th>
+                <th><?php esc_html_e( 'Player', 'mfsd-home-widgets' ); ?></th>
+                <th><?php esc_html_e( 'Game', 'mfsd-home-widgets' ); ?></th>
+                <th><?php esc_html_e( 'Score', 'mfsd-home-widgets' ); ?></th>
+              </tr>
+            </thead>
             <tbody>
               <?php foreach ( $scores as $i => $row ) : ?>
                 <tr class="<?php echo $i === 0 ? 'mfsd-hw-scores-table__row--first' : ''; ?>">
                   <td class="mfsd-hw-scores-table__rank">
-                    <?php echo match( $i ) { 0 => '🥇', 1 => '🥈', 2 => '🥉', default => $i + 1 }; ?>
+                    <?php echo $i === 0 ? '🥇' : ( $i === 1 ? '🥈' : ( $i === 2 ? '🥉' : ( $i + 1 ) ) ); ?>
                   </td>
                   <td><?php echo esc_html( $row['display_name'] ?? 'Unknown' ); ?></td>
                   <td><?php echo esc_html( $row['game_slug'] ?? '' ); ?></td>
@@ -231,57 +280,92 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
     <?php
 }
 
+
+// ─── CARD: Progress & Achievements ───────────────────────────────────────────
+// Student view: own latest badge, score, task.
+// Parent view:  linked student's last completed task.
+//
+// FIX (v2.0.1): Corrected column names throughout:
+//   - parent_student_links: parent_user_id / student_user_id (was parent_id / student_id)
+//   - task_progress: student_id (was user_id), completed_date (was completed_at)
+//   - Added link_status = 'active' filter and is_primary_contact DESC ordering
+//   - Now uses centralised mfsd_hw_get_linked_student_id() helper
+
 function mfsd_hw_card_progress( array $c, string $role ): void {
     global $wpdb;
 
-    $user_id    = get_current_user_id();
+    $user_id = get_current_user_id();
+
     $is_parent  = in_array( $role, [ 'parent', 'teacher' ], true );
-    $title      = $is_parent ? 'STUDENT PERFORMANCE' : 'MY ACHIEVEMENTS';
-    $student_id = $user_id;
+    $is_student = $role === 'student';
+
+    $title = $is_parent
+        ? __( 'STUDENT PERFORMANCE', 'mfsd-home-widgets' )
+        : __( 'MY ACHIEVEMENTS', 'mfsd-home-widgets' );
+
+    // ── Resolve the student ID ───────────────────────────────────────────────
+    $student_id   = $user_id;
     $student_name = '';
 
     if ( $is_parent ) {
-        $links_table = $wpdb->prefix . 'mfsd_parent_student_links';
-        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$links_table}'" ) === $links_table ) {
-            $sid = (int) $wpdb->get_var( $wpdb->prepare(
-                "SELECT student_id FROM {$links_table} WHERE parent_id = %d LIMIT 1", $user_id
-            ) );
-            if ( $sid ) {
-                $student_id   = $sid;
-                $stu          = get_userdata( $sid );
-                $student_name = $stu ? $stu->display_name : '';
-            }
+        $student_id = mfsd_hw_get_linked_student_id( $user_id );
+
+        if ( $student_id ) {
+            $student = get_userdata( $student_id );
+            $student_name = $student ? $student->display_name : '';
         }
     }
 
-    // Latest badge.
+    // ── Latest badge (from Quest Log: wp_mfsd_badges) ────────────────────────
+    // Column: user_id (confirmed from Quest Log plugin schema)
     $latest_badge = null;
-    $bt = $wpdb->prefix . 'mfsd_badges';
-    if ( $wpdb->get_var( "SHOW TABLES LIKE '{$bt}'" ) === $bt ) {
-        $latest_badge = $wpdb->get_row( $wpdb->prepare(
-            "SELECT * FROM {$bt} WHERE student_id = %d ORDER BY earned_at DESC LIMIT 1", $student_id
-        ), ARRAY_A );
+    if ( $student_id ) {
+        $badges_table = $wpdb->prefix . 'mfsd_badges';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$badges_table}'" ) === $badges_table ) {
+            $latest_badge = $wpdb->get_row( $wpdb->prepare(
+                "SELECT * FROM {$badges_table}
+                 WHERE user_id = %d
+                 ORDER BY earned_at DESC
+                 LIMIT 1",
+                $student_id
+            ), ARRAY_A );
+        }
     }
 
-    // Latest completed task.
+    // ── Latest completed task (from ordering system: wp_mfsd_task_progress) ──
+    // FIX: column is student_id (not user_id), completed_date (not completed_at)
     $latest_task = null;
-    $tt = $wpdb->prefix . 'mfsd_task_progress';
-    if ( $wpdb->get_var( "SHOW TABLES LIKE '{$tt}'" ) === $tt ) {
-        $latest_task = $wpdb->get_row( $wpdb->prepare(
-            "SELECT * FROM {$tt} WHERE user_id = %d ORDER BY completed_at DESC LIMIT 1", $student_id
-        ), ARRAY_A );
+    if ( $student_id ) {
+        $task_table = $wpdb->prefix . 'mfsd_task_progress';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$task_table}'" ) === $task_table ) {
+            $latest_task = $wpdb->get_row( $wpdb->prepare(
+                "SELECT * FROM {$task_table}
+                 WHERE student_id = %d
+                   AND status = 'completed'
+                 ORDER BY completed_date DESC
+                 LIMIT 1",
+                $student_id
+            ), ARRAY_A );
+        }
     }
 
-    // Top score.
+    // ── Latest arcade score (from leaderboard: wp_mfsd_leaderboard) ──────────
+    // Column: user_id (confirmed from Arcade plugin schema)
     $latest_score = null;
-    $lt = $wpdb->prefix . 'mfsd_arcade_scores';
-    if ( $wpdb->get_var( "SHOW TABLES LIKE '{$lt}'" ) === $lt ) {
-        $latest_score = $wpdb->get_row( $wpdb->prepare(
-            "SELECT * FROM {$lt} WHERE student_id = %d ORDER BY score DESC LIMIT 1", $student_id
-        ), ARRAY_A );
+    if ( $student_id ) {
+        $lb_table = $wpdb->prefix . 'mfsd_leaderboard';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$lb_table}'" ) === $lb_table ) {
+            $latest_score = $wpdb->get_row( $wpdb->prepare(
+                "SELECT * FROM {$lb_table}
+                 WHERE user_id = %d
+                 ORDER BY score DESC
+                 LIMIT 1",
+                $student_id
+            ), ARRAY_A );
+        }
     }
     ?>
-    <div class="mfsd-hw-card mfsd-hw-card--progress">
+    <div class="mfsd-hw-card mfsd-hw-card--progress" data-widget="progress">
       <div class="mfsd-hw-card__header">
         <span class="mfsd-hw-card__icon"><?php echo $is_parent ? '👁' : '⭐'; ?></span>
         <?php echo esc_html( $title ); ?>
@@ -290,73 +374,59 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
         <?php if ( $is_parent && $student_name ) : ?>
           <p class="mfsd-hw-card__subtitle">
-            <?php printf( esc_html__( "%s's progress", 'mfsd-home-widgets' ), '<strong>' . esc_html( $student_name ) . '</strong>' ); ?>
+            <?php printf(
+                esc_html__( "Showing %s's progress", 'mfsd-home-widgets' ),
+                '<strong>' . esc_html( $student_name ) . '</strong>'
+            ); ?>
+          </p>
+        <?php elseif ( $is_parent && ! $student_id ) : ?>
+          <p class="mfsd-hw-card__empty">
+            <?php esc_html_e( 'No student linked to your account yet.', 'mfsd-home-widgets' ); ?>
           </p>
         <?php endif; ?>
 
-        <?php if ( ! $is_parent && ! empty( $c['show_badge'] ) && $latest_badge ) : ?>
-          <div class="mfsd-hw-progress-row">
-            <?php
-            $badge_slug  = $latest_badge['badge_slug'] ?? '';
-            $meta        = json_decode( $latest_badge['metadata'] ?? '{}', true );
-            $ql_base     = WP_PLUGIN_URL . '/mfsd-quest-log/assets/';
-
-            // For Who Am I badges use the character portrait.
-            if ( ! empty( $meta['character'] ) ) {
-                $character   = $meta['character'];
-                $badge_img   = $ql_base . 'images/characters/' . $character . '.png';
-                $badge_label = 'Who Am I — ' . $character;
-            } elseif ( ! empty( $meta['task_slug'] ) ) {
-                $badge_img   = $ql_base . $badge_slug . '.png';
-                $badge_label = ucwords( str_replace( [ '_', '-' ], ' ', $meta['task_slug'] ) );
-            } else {
-                $badge_img   = $ql_base . $badge_slug . '.png';
-                $badge_label = ucwords( str_replace( [ '_', '-' ], ' ', $badge_slug ) );
-            }
-            ?>
-            <span class="mfsd-hw-progress-row__icon">
-              <img src="<?php echo esc_url( $badge_img ); ?>"
-                   alt="<?php echo esc_attr( $badge_label ); ?>"
-                   class="mfsd-hw-badge-img"
-                   onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
-              <span style="display:none;">🏅</span>
-            </span>
+        <?php if ( $student_id && $latest_badge ) : ?>
+          <div class="mfsd-hw-card__stat">
+            <span class="mfsd-hw-card__stat-icon">🏅</span>
             <div>
-              <div class="mfsd-hw-progress-row__label"><?php esc_html_e( 'Latest badge', 'mfsd-home-widgets' ); ?></div>
-              <div class="mfsd-hw-progress-row__value"><?php echo esc_html( $badge_label ); ?></div>
+              <strong><?php esc_html_e( 'Latest Badge', 'mfsd-home-widgets' ); ?></strong><br>
+              <?php echo esc_html( ucwords( str_replace( '_', ' ', $latest_badge['badge_slug'] ?? '' ) ) ); ?>
             </div>
           </div>
         <?php endif; ?>
 
-        <?php if ( ! $is_parent && ! empty( $c['show_score'] ) && $latest_score ) : ?>
-          <div class="mfsd-hw-progress-row">
-            <span class="mfsd-hw-progress-row__icon">🎮</span>
+        <?php if ( $student_id && $latest_task ) : ?>
+          <div class="mfsd-hw-card__stat">
+            <span class="mfsd-hw-card__stat-icon">✅</span>
             <div>
-              <div class="mfsd-hw-progress-row__label"><?php esc_html_e( 'Top arcade score', 'mfsd-home-widgets' ); ?></div>
-              <div class="mfsd-hw-progress-row__value">
-                <?php echo esc_html( number_format( (int) $latest_score['score'] ) ); ?>
-                <span class="mfsd-hw-progress-row__meta"><?php echo esc_html( $latest_score['game_slug'] ?? '' ); ?></span>
-              </div>
-            </div>
-          </div>
-        <?php endif; ?>
-
-        <?php if ( ( ! $is_parent && ! empty( $c['show_task'] ) || $is_parent ) && $latest_task ) : ?>
-          <div class="mfsd-hw-progress-row">
-            <span class="mfsd-hw-progress-row__icon">✅</span>
-            <div>
-              <div class="mfsd-hw-progress-row__label">
-                <?php echo $is_parent ? esc_html__( 'Last completed task', 'mfsd-home-widgets' ) : esc_html__( 'Latest task', 'mfsd-home-widgets' ); ?>
-              </div>
-              <div class="mfsd-hw-progress-row__value"><?php echo esc_html( $latest_task['task_slug'] ?? '' ); ?></div>
-              <?php if ( ! empty( $latest_task['completed_at'] ) ) : ?>
-                <div class="mfsd-hw-progress-row__meta"><?php echo esc_html( date_i18n( 'd M Y', strtotime( $latest_task['completed_at'] ) ) ); ?></div>
+              <strong><?php echo $is_parent
+                  ? esc_html__( 'Last Completed Task', 'mfsd-home-widgets' )
+                  : esc_html__( 'My Last Task', 'mfsd-home-widgets' );
+              ?></strong><br>
+              <?php echo esc_html( ucwords( str_replace( '_', ' ', $latest_task['task_slug'] ?? '' ) ) ); ?>
+              <?php if ( ! empty( $latest_task['completed_date'] ) ) : ?>
+                <span class="mfsd-hw-card__date">
+                  <?php echo esc_html( date_i18n( 'j M Y', strtotime( $latest_task['completed_date'] ) ) ); ?>
+                </span>
               <?php endif; ?>
             </div>
           </div>
         <?php endif; ?>
 
-        <?php if ( ! $latest_badge && ! $latest_task && ! $latest_score ) : ?>
+        <?php if ( $student_id && $latest_score ) : ?>
+          <div class="mfsd-hw-card__stat">
+            <span class="mfsd-hw-card__stat-icon">🎮</span>
+            <div>
+              <strong><?php esc_html_e( 'Top Score', 'mfsd-home-widgets' ); ?></strong><br>
+              <?php echo esc_html( number_format( (int) $latest_score['score'] ) ); ?>
+              <?php if ( ! empty( $latest_score['game_slug'] ) ) : ?>
+                — <?php echo esc_html( ucwords( str_replace( '_', ' ', $latest_score['game_slug'] ) ) ); ?>
+              <?php endif; ?>
+            </div>
+          </div>
+        <?php endif; ?>
+
+        <?php if ( $student_id && ! $latest_badge && ! $latest_task && ! $latest_score ) : ?>
           <p class="mfsd-hw-card__empty">
             <?php echo $is_parent
                 ? esc_html__( 'No activity yet for your linked student.', 'mfsd-home-widgets' )
@@ -366,18 +436,29 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         <?php endif; ?>
 
       </div>
-      <a href="<?php echo esc_url( $is_parent ? home_url( '/portal-home/' ) : home_url( '/badges/' ) ); ?>" class="mfsd-hw-card__cta">
-        <?php echo $is_parent ? esc_html__( 'View Progress', 'mfsd-home-widgets' ) : esc_html__( 'View Quest Log', 'mfsd-home-widgets' ); ?>
+
+      <a href="<?php echo esc_url( $is_parent ? home_url( '/portal-home/' ) : home_url( '/badges/' ) ); ?>"
+         class="mfsd-hw-card__cta">
+        <?php echo $is_parent
+            ? esc_html__( 'View Progress', 'mfsd-home-widgets' )
+            : esc_html__( 'View Quest Log', 'mfsd-home-widgets' );
+        ?>
       </a>
     </div>
     <?php
 }
 
 
-// ─── ASSETS ──────────────────────────────────────────────────────────────────
+// ─── FRONTEND ASSETS ─────────────────────────────────────────────────────────
 
 add_action( 'wp_enqueue_scripts', 'mfsd_hw_frontend_assets' );
 function mfsd_hw_frontend_assets(): void {
     if ( ! is_user_logged_in() || ! is_front_page() ) return;
-    wp_enqueue_style( 'mfsd-hw-frontend', MFSD_HW_URI . 'assets/css/frontend.css', [ 'mfsd-base' ], MFSD_HW_VERSION );
+
+    wp_enqueue_style(
+        'mfsd-hw-frontend',
+        MFSD_HW_URI . 'assets/css/frontend.css',
+        [ 'mfsd-base' ],
+        MFSD_HW_VERSION
+    );
 }
