@@ -343,10 +343,8 @@ function mfsd_hw_badge_display_name( string $slug ): string {
 
 /**
  * Get the badge image URL from the Quest Log plugin assets.
- * Falls back to the locked badge if the specific image doesn't exist.
  */
 function mfsd_hw_badge_image_url( string $slug ): string {
-    // Badge slug → image filename (matches Quest Log renderer WEEK_CONFIG)
     $images = [
         'badge_word_assoc'      => 'badge_word_assoc.png',
         'badge_junk_jobs'       => 'badge_junk_jobs.png',
@@ -357,9 +355,7 @@ function mfsd_hw_badge_image_url( string $slug ): string {
 
     $filename = $images[ $slug ] ?? 'badge_locked.png';
 
-    // Quest Log plugin assets path
-    $quest_log_url = plugin_dir_url( WP_PLUGIN_DIR . '/mfsd-quest-log/mfsd-quest-log.php' );
-    return $quest_log_url . 'assets/images/badges/' . $filename;
+    return plugins_url( 'mfsd-quest-log/assets/images/badges/' . $filename );
 }
 
 function mfsd_hw_card_progress( array $c, string $role ): void {
@@ -485,7 +481,6 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
         <?php if ( $show_task && $student_id && $latest_task ) : ?>
           <div class="mfsd-hw-card__stat">
-            <span class="mfsd-hw-card__stat-icon">✅</span>
             <div>
               <strong><?php echo $is_parent
                   ? esc_html__( 'Last Completed Task', 'mfsd-home-widgets' )
