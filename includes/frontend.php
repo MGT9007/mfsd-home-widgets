@@ -5,8 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 2.0.1 — Fixed column name mismatches in parent-student link
- *                   and task progress queries.
+ * Version: 2.0.2 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -83,36 +82,51 @@ function mfsd_hw_get_linked_student_id( int $parent_user_id ): int {
 
 
 // ─── CARD: News (internal + external) ─────────────────────────────────────────
+// Full-bleed background image with gradient overlay and text on top.
 
 function mfsd_hw_card_news( string $variant, array $c ): void {
     $title    = $variant === 'internal' ? 'MFS NEWS' : 'COMMUNITY ARTICLES';
     $icon     = $variant === 'internal' ? '📣' : '📰';
     $external = $variant === 'external';
     $img      = mfsd_hw_get_image_url( (int) ( $c['image_id'] ?? 0 ) );
+    $link     = $c['link'] ?? '';
+    $cta_text = $c['cta_text'] ?? 'Read More';
     ?>
-    <div class="mfsd-hw-card mfsd-hw-card--news">
-      <div class="mfsd-hw-card__header">
+    <div class="mfsd-hw-card mfsd-hw-card--news-hero">
+
+      <?php // Background image ?>
+      <div class="mfsd-hw-card__hero-bg"
+           style="background-image: url('<?php echo esc_url( $img ); ?>');">
+      </div>
+
+      <?php // Gradient overlay ?>
+      <div class="mfsd-hw-card__hero-overlay"></div>
+
+      <?php // Category badge — top left ?>
+      <div class="mfsd-hw-card__hero-badge">
         <span class="mfsd-hw-card__icon"><?php echo $icon; ?></span>
         <?php echo esc_html( $title ); ?>
       </div>
-      <div class="mfsd-hw-card__body">
-        <div class="mfsd-hw-card__media-row">
-          <img class="mfsd-hw-card__thumb"
-               src="<?php echo esc_url( $img ); ?>"
-               alt="<?php echo esc_attr( $c['headline'] ?? '' ); ?>">
-          <div class="mfsd-hw-card__text">
-            <h3 class="mfsd-hw-card__headline"><?php echo esc_html( $c['headline'] ?? '' ); ?></h3>
-            <p class="mfsd-hw-card__summary"><?php echo esc_html( $c['summary'] ?? '' ); ?></p>
-          </div>
-        </div>
+
+      <?php // Text content — bottom of card ?>
+      <div class="mfsd-hw-card__hero-content">
+        <h3 class="mfsd-hw-card__hero-headline">
+          <?php echo esc_html( $c['headline'] ?? '' ); ?>
+        </h3>
+        <?php if ( ! empty( $c['summary'] ) ) : ?>
+          <p class="mfsd-hw-card__hero-summary">
+            <?php echo esc_html( $c['summary'] ); ?>
+          </p>
+        <?php endif; ?>
+        <?php if ( ! empty( $link ) ) : ?>
+          <a href="<?php echo esc_url( $link ); ?>"
+             class="mfsd-hw-card__hero-cta"
+             <?php echo $external ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
+            <?php echo esc_html( $cta_text ); ?> →
+          </a>
+        <?php endif; ?>
       </div>
-      <?php if ( ! empty( $c['link'] ) ) : ?>
-        <a href="<?php echo esc_url( $c['link'] ); ?>"
-           class="mfsd-hw-card__cta"
-           <?php echo $external ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
-          <?php echo esc_html( $c['cta_text'] ?? 'Read More' ); ?>
-        </a>
-      <?php endif; ?>
+
     </div>
     <?php
 }

@@ -415,3 +415,146 @@ body.mfsd-role-student .mfsd-hw-card__thumb {
 body.mfsd-role-student .mfsd-hw-progress-row {
   border-bottom-color: rgba(0,212,255,0.10);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   NEWS HERO CARD — Full-bleed background image style
+   Add this block to the END of your existing frontend.css
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.mfsd-hw-card--news-hero {
+  position: relative;
+  min-height: 280px;
+  border-radius: var(--radius-md, 8px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* Background image — fills entire card */
+.mfsd-hw-card__hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 1;
+}
+
+/* Gradient overlay — dark from bottom for text readability */
+.mfsd-hw-card__hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.90) 0%,
+    rgba(0, 0, 0, 0.55) 45%,
+    rgba(0, 0, 0, 0.15) 100%
+  );
+  z-index: 2;
+}
+
+/* Category badge — top left corner */
+.mfsd-hw-card__hero-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--color-card-header-bg, #1d2327);
+  color: var(--color-card-header-text, #C9A84C);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  z-index: 3;
+}
+
+.mfsd-hw-card__hero-badge .mfsd-hw-card__icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* Text content — anchored to bottom */
+.mfsd-hw-card__hero-content {
+  position: relative;
+  z-index: 3;
+  padding: 20px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mfsd-hw-card__hero-headline {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+  margin: 0;
+  /* Clamp to 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mfsd-hw-card__hero-summary {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.45;
+  margin: 0;
+  /* Clamp to 3 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mfsd-hw-card__hero-cta {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 16px;
+  background: var(--color-btn-primary-bg, #C9A84C);
+  color: var(--color-btn-primary-text, #1d2327);
+  font-family: var(--font-nav);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 4px;
+  align-self: flex-start;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.mfsd-hw-card__hero-cta:hover {
+  background: var(--color-btn-primary-hover, #b8983e);
+  color: var(--color-btn-primary-text, #1d2327);
+  transform: translateY(-1px);
+}
+
+/* Subtle hover lift on the whole card */
+.mfsd-hw-card--news-hero:hover .mfsd-hw-card__hero-bg {
+  transform: scale(1.03);
+  transition: transform 400ms ease;
+}
+
+.mfsd-hw-card__hero-bg {
+  transition: transform 400ms ease;
+}
+
+/* Mobile: reduce minimum height */
+@media (max-width: 600px) {
+  .mfsd-hw-card--news-hero {
+    min-height: 220px;
+  }
+  .mfsd-hw-card__hero-headline {
+    font-size: 16px;
+  }
+}+
