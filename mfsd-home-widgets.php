@@ -8,7 +8,7 @@
  *               visible to any role combination. Six widget types available:
  *               MFS News (Internal), External News, Shorts Video, New Courses,
  *               Top Scores, and Progress & Achievements.
- * Version:      3.9.0
+ * Version:      3.9.1
  * Author:       MisterT9007
  * Author URI:   https://s47d.co.uk
  * Text Domain:  mfsd-home-widgets
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-define( 'MFSD_HW_VERSION', '3.9.0' );
+define( 'MFSD_HW_VERSION', '3.9.1' );
 define( 'MFSD_HW_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'MFSD_HW_URI',     plugin_dir_url( __FILE__ ) );
 define( 'MFSD_HW_TABLE',   'mfsd_hw_widgets' );

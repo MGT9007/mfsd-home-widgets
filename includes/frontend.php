@@ -427,11 +427,12 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         ? __( 'STUDENT PERFORMANCE', 'mfsd-home-widgets' )
         : __( 'MY ACHIEVEMENTS', 'mfsd-home-widgets' );
 
-    // ── Admin config flags (student view toggles) ────────────────────────────
-    // Parent view always shows everything; student view respects checkboxes.
+    // ── Admin config flags ──────────────────────────────────────────────────
+    // Parent view: badge + task only (no score — parent just needs the task summary).
+    // Student view: respects admin checkboxes.
     $show_badge = $is_parent || ! empty( $c['show_badge'] );
-    $show_task  = $is_parent || ! empty( $c['show_task'] );
-    $show_score = $is_parent || ! empty( $c['show_score'] );
+    $show_task  = true; // always show the task
+    $show_score = ! $is_parent && ! empty( $c['show_score'] );
 
     // ── Resolve the student ID ───────────────────────────────────────────────
     $student_id   = $user_id;
