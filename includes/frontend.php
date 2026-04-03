@@ -357,7 +357,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$badges_table}'" ) === $badges_table ) {
             $latest_badge = $wpdb->get_row( $wpdb->prepare(
                 "SELECT * FROM {$badges_table}
-                 WHERE user_id = %d
+                 WHERE student_id = %d
                  ORDER BY earned_at DESC
                  LIMIT 1",
                 $student_id
