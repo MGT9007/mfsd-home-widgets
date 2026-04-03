@@ -573,3 +573,15 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 .mfsd-hw-card--news-hero {
   border: 2px solid var(--color-accent, #C9A84C) !important;
 }
+
+/* Task link in Progress widget — append to frontend.css */
+.mfsd-hw-card__task-link {
+  color: var(--color-accent, #C9A84C) !important;
+  text-decoration: none !important;
+  font-weight: 700 !important;
+  transition: opacity 150ms ease;
+}
+.mfsd-hw-card__task-link:hover {
+  opacity: 0.8;
+  text-decoration: underline !important;
+}

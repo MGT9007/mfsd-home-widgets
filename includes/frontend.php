@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 2.0.2 — News cards now use full-bleed background image style.
+ * Version: 2.0.3 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -288,11 +288,39 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
 // Student view: own latest badge, score, task.
 // Parent view:  linked student's last completed task.
 //
-// FIX (v2.0.1): Corrected column names throughout:
-//   - parent_student_links: parent_user_id / student_user_id (was parent_id / student_id)
-//   - task_progress: student_id (was user_id), completed_date (was completed_at)
-//   - Added link_status = 'active' filter and is_primary_contact DESC ordering
-//   - Now uses centralised mfsd_hw_get_linked_student_id() helper
+// v2.0.2: Task names now link directly to the task summary page.
+//         CTA links to portal with student context for parents.
+
+/**
+ * Task slug → page URL mapping.
+ * Extend this array as new weeks/tasks are added.
+ */
+function mfsd_hw_task_url_map(): array {
+    return [
+        // Week 1
+        'word_association'       => '/my-future-self-foundation-course/week-1/word-association/',
+        'junk_jobs'              => '/my-future-self-foundation-course/week-1/junk-jobs/',
+        'personality_test_week_1'=> '/my-future-self-foundation-course/week-1/week-1-personality-test/',
+        'super_strengths'        => '/my-future-self-foundation-course/week-1/super-strengths/',
+        'rag_week_1'             => '/my-future-self-foundation-course/week-1/week-1-rag/',
+        // Week 2 — add here when ready
+        // Week 3 — add here when ready
+    ];
+}
+
+/**
+ * Human-friendly display name for a task slug.
+ */
+function mfsd_hw_task_display_name( string $slug ): string {
+    $names = [
+        'word_association'        => 'Word Association',
+        'junk_jobs'               => 'Junk Jobs',
+        'personality_test_week_1' => 'Who Am I (Part 1)',
+        'super_strengths'         => 'Super Strengths',
+        'rag_week_1'              => 'Weekly Check-in',
+    ];
+    return $names[ $slug ] ?? ucwords( str_replace( '_', ' ', $slug ) );
+}
 
 function mfsd_hw_card_progress( array $c, string $role ): void {
     global $wpdb;
@@ -320,7 +348,6 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     }
 
     // ── Latest badge (from Quest Log: wp_mfsd_badges) ────────────────────────
-    // Column: user_id (confirmed from Quest Log plugin schema)
     $latest_badge = null;
     if ( $student_id ) {
         $badges_table = $wpdb->prefix . 'mfsd_badges';
@@ -336,7 +363,6 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     }
 
     // ── Latest completed task (from ordering system: wp_mfsd_task_progress) ──
-    // FIX: column is student_id (not user_id), completed_date (not completed_at)
     $latest_task = null;
     if ( $student_id ) {
         $task_table = $wpdb->prefix . 'mfsd_task_progress';
@@ -353,7 +379,6 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     }
 
     // ── Latest arcade score (from leaderboard: wp_mfsd_leaderboard) ──────────
-    // Column: user_id (confirmed from Arcade plugin schema)
     $latest_score = null;
     if ( $student_id ) {
         $lb_table = $wpdb->prefix . 'mfsd_leaderboard';
@@ -367,6 +392,12 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
             ), ARRAY_A );
         }
     }
+
+    // ── Resolve task URL for deep linking ────────────────────────────────────
+    $task_slug = $latest_task['task_slug'] ?? '';
+    $task_urls = mfsd_hw_task_url_map();
+    $task_link = isset( $task_urls[ $task_slug ] ) ? home_url( $task_urls[ $task_slug ] ) : '';
+    $task_name = mfsd_hw_task_display_name( $task_slug );
     ?>
     <div class="mfsd-hw-card mfsd-hw-card--progress" data-widget="progress">
       <div class="mfsd-hw-card__header">
@@ -406,7 +437,13 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
                   ? esc_html__( 'Last Completed Task', 'mfsd-home-widgets' )
                   : esc_html__( 'My Last Task', 'mfsd-home-widgets' );
               ?></strong><br>
-              <?php echo esc_html( ucwords( str_replace( '_', ' ', $latest_task['task_slug'] ?? '' ) ) ); ?>
+              <?php if ( $task_link ) : ?>
+                <a href="<?php echo esc_url( $task_link ); ?>" class="mfsd-hw-card__task-link">
+                  <?php echo esc_html( $task_name ); ?> →
+                </a>
+              <?php else : ?>
+                <?php echo esc_html( $task_name ); ?>
+              <?php endif; ?>
               <?php if ( ! empty( $latest_task['completed_date'] ) ) : ?>
                 <span class="mfsd-hw-card__date">
                   <?php echo esc_html( date_i18n( 'j M Y', strtotime( $latest_task['completed_date'] ) ) ); ?>
@@ -440,11 +477,14 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
       </div>
 
-      <a href="<?php echo esc_url( $is_parent ? home_url( '/portal-home/' ) : home_url( '/badges/' ) ); ?>"
+      <a href="<?php echo esc_url( $is_parent
+            ? add_query_arg( [ 'course_id' => 1, 'student_id' => $student_id ], home_url( '/portal-home/' ) )
+            : home_url( '/portal-home/' )
+         ); ?>"
          class="mfsd-hw-card__cta">
         <?php echo $is_parent
-            ? esc_html__( 'View Progress', 'mfsd-home-widgets' )
-            : esc_html__( 'View Quest Log', 'mfsd-home-widgets' );
+            ? esc_html__( 'View Full Progress', 'mfsd-home-widgets' )
+            : esc_html__( 'View My Progress', 'mfsd-home-widgets' );
         ?>
       </a>
     </div>
