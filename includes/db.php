@@ -36,7 +36,7 @@ function mfsd_hw_create_table(): void {
         roles       VARCHAR(500)  NOT NULL DEFAULT '[\"all\"]',
         active      TINYINT(1)    NOT NULL DEFAULT 1,
         sort_order  INT           NOT NULL DEFAULT 0,
-        config      LONGTEXT      NOT NULL DEFAULT '{}',
+        config      LONGTEXT      NOT NULL,
         created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),

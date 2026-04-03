@@ -22,7 +22,13 @@ function mfsd_hw_render_grid(): void {
         return;
     }
 
-    echo '<div class="mfsd-hw-grid">';
+    $count = count( $widgets );
+    $grid_class = 'mfsd-hw-grid';
+    if ( $count === 1 ) $grid_class .= ' mfsd-hw-grid--1';
+    elseif ( $count === 2 ) $grid_class .= ' mfsd-hw-grid--2';
+    elseif ( $count === 4 ) $grid_class .= ' mfsd-hw-grid--4';
+
+    echo '<div class="' . esc_attr( $grid_class ) . '">';
     foreach ( $widgets as $w ) {
         echo '<div class="mfsd-hw-grid__cell">';
         mfsd_hw_render_widget( $w['type'], (array) $w['config'], $role );
@@ -152,16 +158,20 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
     $title      = $mode === 'student' ? "MY STUDENT'S SCORES" : 'TOP SCORES';
 
     $scores   = [];
-    $lb_table = $wpdb->prefix . 'mfsd_leaderboard';
+    $lb_table = $wpdb->prefix . 'mfsd_arcade_scores';
+    $g_table  = $wpdb->prefix . 'mfsd_arcade_games';
 
     if ( $wpdb->get_var( "SHOW TABLES LIKE '{$lb_table}'" ) === $lb_table ) {
+
+        // Build game join — arcade_scores references game_id, names are in arcade_games.
         $game_where = '';
         if ( ! empty( $c['games'] ) && $c['games'] !== 'all' ) {
-            $game_where = $wpdb->prepare( ' AND l.game_slug = %s', $c['games'] );
+            $game_where = $wpdb->prepare( ' AND g.game_slug = %s', $c['games'] );
         }
 
+        $join = "LEFT JOIN {$g_table} g ON l.game_id = g.id";
+
         if ( $mode === 'student' && ! $is_student ) {
-            // Parent: show linked student's scores.
             $links_table = $wpdb->prefix . 'mfsd_parent_student_links';
             $student_id  = $wpdb->get_var( $wpdb->prepare(
                 "SELECT student_id FROM {$links_table} WHERE parent_id = %d LIMIT 1",
@@ -169,8 +179,10 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
             ) );
             if ( $student_id ) {
                 $scores = $wpdb->get_results( $wpdb->prepare(
-                    "SELECT l.*, u.display_name FROM {$lb_table} l
+                    "SELECT l.*, u.display_name, g.name as game_name, g.game_slug
+                     FROM {$lb_table} l
                      LEFT JOIN {$wpdb->users} u ON l.user_id = u.ID
+                     {$join}
                      WHERE l.user_id = %d {$game_where}
                      ORDER BY l.score DESC LIMIT %d",
                     $student_id, $limit
@@ -178,8 +190,10 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
             }
         } else {
             $scores = $wpdb->get_results( $wpdb->prepare(
-                "SELECT l.*, u.display_name FROM {$lb_table} l
+                "SELECT l.*, u.display_name, g.name as game_name, g.game_slug
+                 FROM {$lb_table} l
                  LEFT JOIN {$wpdb->users} u ON l.user_id = u.ID
+                 {$join}
                  WHERE 1=1 {$game_where}
                  ORDER BY l.score DESC LIMIT %d",
                 $limit
@@ -210,7 +224,7 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
                     <?php echo match( $i ) { 0 => '🥇', 1 => '🥈', 2 => '🥉', default => $i + 1 }; ?>
                   </td>
                   <td><?php echo esc_html( $row['display_name'] ?? 'Unknown' ); ?></td>
-                  <td><?php echo esc_html( $row['game_slug'] ?? '' ); ?></td>
+                  <td><?php echo esc_html( $row['game_name'] ?? $row['game_slug'] ?? '' ); ?></td>
                   <td class="mfsd-hw-scores-table__score"><?php echo esc_html( number_format( (int) $row['score'] ) ); ?></td>
                 </tr>
               <?php endforeach; ?>
@@ -262,16 +276,20 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     $tt = $wpdb->prefix . 'mfsd_task_progress';
     if ( $wpdb->get_var( "SHOW TABLES LIKE '{$tt}'" ) === $tt ) {
         $latest_task = $wpdb->get_row( $wpdb->prepare(
-            "SELECT * FROM {$tt} WHERE user_id = %d AND status = 'completed' ORDER BY completed_at DESC LIMIT 1", $student_id
+            "SELECT * FROM {$tt} WHERE user_id = %d ORDER BY completed_at DESC LIMIT 1", $student_id
         ), ARRAY_A );
     }
 
-    // Top score.
+    // Top score — from arcade_scores joined with arcade_games for the name.
     $latest_score = null;
-    $lt = $wpdb->prefix . 'mfsd_leaderboard';
+    $lt  = $wpdb->prefix . 'mfsd_arcade_scores';
+    $lgt = $wpdb->prefix . 'mfsd_arcade_games';
     if ( $wpdb->get_var( "SHOW TABLES LIKE '{$lt}'" ) === $lt ) {
         $latest_score = $wpdb->get_row( $wpdb->prepare(
-            "SELECT * FROM {$lt} WHERE user_id = %d ORDER BY score DESC LIMIT 1", $student_id
+            "SELECT s.*, g.name as game_name FROM {$lt} s
+             LEFT JOIN {$lgt} g ON s.game_id = g.id
+             WHERE s.user_id = %d ORDER BY s.score DESC LIMIT 1",
+            $student_id
         ), ARRAY_A );
     }
     ?>
@@ -305,7 +323,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
               <div class="mfsd-hw-progress-row__label"><?php esc_html_e( 'Top arcade score', 'mfsd-home-widgets' ); ?></div>
               <div class="mfsd-hw-progress-row__value">
                 <?php echo esc_html( number_format( (int) $latest_score['score'] ) ); ?>
-                <span class="mfsd-hw-progress-row__meta"><?php echo esc_html( $latest_score['game_slug'] ?? '' ); ?></span>
+                <span class="mfsd-hw-progress-row__meta"><?php echo esc_html( $latest_score['game_name'] ?? '' ); ?></span>
               </div>
             </div>
           </div>
