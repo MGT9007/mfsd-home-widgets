@@ -299,7 +299,22 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
             <span class="mfsd-hw-progress-row__icon">🏅</span>
             <div>
               <div class="mfsd-hw-progress-row__label"><?php esc_html_e( 'Latest badge', 'mfsd-home-widgets' ); ?></div>
-              <div class="mfsd-hw-progress-row__value"><?php echo esc_html( $latest_badge['badge_slug'] ?? '' ); ?></div>
+              <div class="mfsd-hw-progress-row__value"><?php
+                $badge_slug = $latest_badge['badge_slug'] ?? '';
+                $meta       = json_decode( $latest_badge['metadata'] ?? '{}', true );
+
+                // Try to build a human-readable name from metadata or slug.
+                if ( ! empty( $meta['character'] ) ) {
+                    // Who Am I badge — show character name.
+                    echo esc_html( 'Who Am I — ' . $meta['character'] );
+                } elseif ( ! empty( $meta['task_slug'] ) ) {
+                    // Other badges — format the task slug nicely.
+                    echo esc_html( ucwords( str_replace( [ '_', '-' ], ' ', $meta['task_slug'] ) ) );
+                } else {
+                    // Fallback — format the badge slug.
+                    echo esc_html( ucwords( str_replace( [ '_', '-' ], ' ', $badge_slug ) ) );
+                }
+              ?></div>
             </div>
           </div>
         <?php endif; ?>
