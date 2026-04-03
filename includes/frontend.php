@@ -299,13 +299,20 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
             <?php
             $badge_slug  = $latest_badge['badge_slug'] ?? '';
             $meta        = json_decode( $latest_badge['metadata'] ?? '{}', true );
-            $badge_img   = plugins_url( 'assets/' . $badge_slug . '.png', WP_PLUGIN_DIR . '/mfsd-quest-log/mfsd-quest-log.php' );
+            $ql_base     = WP_PLUGIN_URL . '/mfsd-quest-log/assets/';
 
+            // For Who Am I badges use the character avatar from the Avatars subfolder.
             if ( ! empty( $meta['character'] ) ) {
-                $badge_label = 'Who Am I — ' . $meta['character'];
+                $character   = $meta['character'];
+                $gender      = $meta['gender'] ?? 'male';
+                // Try gendered variant first (e.g. Mediatorv3.png), then plain name.
+                $badge_img   = $ql_base . 'Avatars/' . $character . 'v3.png';
+                $badge_label = 'Who Am I — ' . $character;
             } elseif ( ! empty( $meta['task_slug'] ) ) {
+                $badge_img   = $ql_base . $badge_slug . '.png';
                 $badge_label = ucwords( str_replace( [ '_', '-' ], ' ', $meta['task_slug'] ) );
             } else {
+                $badge_img   = $ql_base . $badge_slug . '.png';
                 $badge_label = ucwords( str_replace( [ '_', '-' ], ' ', $badge_slug ) );
             }
             ?>
