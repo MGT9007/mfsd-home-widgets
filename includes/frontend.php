@@ -524,36 +524,33 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
           </p>
         <?php endif; ?>
 
-        <?php if ( $show_badge && $student_id && $latest_badge ) : ?>
+        <?php if ( $student_id && ( $latest_badge || $latest_task ) ) : ?>
           <div class="mfsd-hw-card__stat mfsd-hw-card__stat--badge">
-            <img class="mfsd-hw-card__badge-img"
-                 src="<?php echo esc_url( $badge_img ); ?>"
-                 alt="<?php echo esc_attr( $badge_name ); ?>">
-            <div>
-              <strong><?php esc_html_e( 'Latest Badge', 'mfsd-home-widgets' ); ?></strong><br>
-              <?php echo esc_html( $badge_name ); ?>
-            </div>
-          </div>
-        <?php endif; ?>
-
-        <?php if ( $show_task && $student_id && $latest_task ) : ?>
-          <div class="mfsd-hw-card__stat">
+            <?php if ( $show_badge && $latest_badge ) : ?>
+              <img class="mfsd-hw-card__badge-img"
+                   src="<?php echo esc_url( $badge_img ); ?>"
+                   alt="<?php echo esc_attr( $badge_name ); ?>">
+            <?php endif; ?>
             <div>
               <strong><?php echo $is_parent
                   ? esc_html__( 'Last Completed Task', 'mfsd-home-widgets' )
-                  : esc_html__( 'My Last Task', 'mfsd-home-widgets' );
+                  : esc_html__( 'Latest Completed Task', 'mfsd-home-widgets' );
               ?></strong><br>
-              <?php if ( $task_link ) : ?>
-                <a href="<?php echo esc_url( $task_link ); ?>" class="mfsd-hw-card__task-link">
-                  <?php echo esc_html( $task_name ); ?> →
-                </a>
+              <?php if ( $show_task && $latest_task ) : ?>
+                <?php if ( $task_link ) : ?>
+                  <a href="<?php echo esc_url( $task_link ); ?>" class="mfsd-hw-card__task-link">
+                    <?php echo esc_html( $task_name ); ?> →
+                  </a>
+                <?php else : ?>
+                  <?php echo esc_html( $task_name ); ?>
+                <?php endif; ?>
+                <?php if ( ! empty( $latest_task['completed_date'] ) ) : ?>
+                  <span class="mfsd-hw-card__date">
+                    <?php echo esc_html( date_i18n( 'j M Y', strtotime( $latest_task['completed_date'] ) ) ); ?>
+                  </span>
+                <?php endif; ?>
               <?php else : ?>
-                <?php echo esc_html( $task_name ); ?>
-              <?php endif; ?>
-              <?php if ( ! empty( $latest_task['completed_date'] ) ) : ?>
-                <span class="mfsd-hw-card__date">
-                  <?php echo esc_html( date_i18n( 'j M Y', strtotime( $latest_task['completed_date'] ) ) ); ?>
-                </span>
+                <?php echo esc_html( $badge_name ); ?>
               <?php endif; ?>
             </div>
           </div>
