@@ -327,24 +327,39 @@ function mfsd_hw_task_display_name( string $slug ): string {
 
 /**
  * Human-friendly display name for a badge slug.
- * Badge slugs from Quest Log engine: badge_word_assoc, badge_junk_jobs,
- * badge_who_am_i_1, badge_super_strengths, badge_rag_w1, etc.
  */
 function mfsd_hw_badge_display_name( string $slug ): string {
     $names = [
-        // Week 1
         'badge_word_assoc'      => 'Word Association',
         'badge_junk_jobs'       => 'Junk Jobs',
         'badge_who_am_i_1'     => 'Who Am I',
         'badge_super_strengths' => 'Super Strengths',
         'badge_rag_w1'          => 'Weekly Check-in',
-        // Week completion
         'chest_week_1'          => 'Week 1 Complete',
         'chest_achiever_1'      => 'Week 1 High Achiever',
-        // Week 2 — extend when ready
-        // Week 3 — extend when ready
     ];
     return $names[ $slug ] ?? ucwords( str_replace( [ 'badge_', '_' ], [ '', ' ' ], $slug ) );
+}
+
+/**
+ * Get the badge image URL from the Quest Log plugin assets.
+ * Falls back to the locked badge if the specific image doesn't exist.
+ */
+function mfsd_hw_badge_image_url( string $slug ): string {
+    // Badge slug → image filename (matches Quest Log renderer WEEK_CONFIG)
+    $images = [
+        'badge_word_assoc'      => 'badge_word_assoc.png',
+        'badge_junk_jobs'       => 'badge_junk_jobs.png',
+        'badge_who_am_i_1'     => 'badge_who_am_i_1.png',
+        'badge_super_strengths' => 'badge_super_strengths.png',
+        'badge_rag_w1'          => 'badge_rag_w1.png',
+    ];
+
+    $filename = $images[ $slug ] ?? 'badge_locked.png';
+
+    // Quest Log plugin assets path
+    $quest_log_url = plugin_dir_url( WP_PLUGIN_DIR . '/mfsd-quest-log/mfsd-quest-log.php' );
+    return $quest_log_url . 'assets/images/badges/' . $filename;
 }
 
 function mfsd_hw_card_progress( array $c, string $role ): void {
@@ -431,8 +446,10 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     $task_link = isset( $task_urls[ $task_slug ] ) ? home_url( $task_urls[ $task_slug ] ) : '';
     $task_name = mfsd_hw_task_display_name( $task_slug );
 
-    // ── Resolve badge display name ───────────────────────────────────────────
-    $badge_name = mfsd_hw_badge_display_name( $latest_badge['badge_slug'] ?? '' );
+    // ── Resolve badge display ────────────────────────────────────────────────
+    $badge_slug_val = $latest_badge['badge_slug'] ?? '';
+    $badge_name     = mfsd_hw_badge_display_name( $badge_slug_val );
+    $badge_img      = mfsd_hw_badge_image_url( $badge_slug_val );
     ?>
     <div class="mfsd-hw-card mfsd-hw-card--progress" data-widget="progress">
       <div class="mfsd-hw-card__header">
@@ -455,8 +472,10 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         <?php endif; ?>
 
         <?php if ( $show_badge && $student_id && $latest_badge ) : ?>
-          <div class="mfsd-hw-card__stat">
-            <span class="mfsd-hw-card__stat-icon">🏅</span>
+          <div class="mfsd-hw-card__stat mfsd-hw-card__stat--badge">
+            <img class="mfsd-hw-card__badge-img"
+                 src="<?php echo esc_url( $badge_img ); ?>"
+                 alt="<?php echo esc_attr( $badge_name ); ?>">
             <div>
               <strong><?php esc_html_e( 'Latest Badge', 'mfsd-home-widgets' ); ?></strong><br>
               <?php echo esc_html( $badge_name ); ?>

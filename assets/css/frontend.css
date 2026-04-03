@@ -585,3 +585,17 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   opacity: 0.8;
   text-decoration: underline !important;
 }
+
+/* Badge image in Progress widget — append to frontend.css */
+.mfsd-hw-card__stat--badge {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+.mfsd-hw-card__badge-img {
+  width: 56px !important;
+  height: 56px !important;
+  object-fit: contain !important;
+  flex-shrink: 0 !important;
+  border-radius: 6px !important;
+}
