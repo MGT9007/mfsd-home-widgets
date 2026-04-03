@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 2.0.3 — News cards now use full-bleed background image style.
+ * Version: 2.0.2 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -207,37 +207,40 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
     $is_student = $role === 'student';
     $title      = $mode === 'student' ? "MY STUDENT'S SCORES" : 'TOP SCORES';
 
-    $scores   = [];
-    $lb_table = $wpdb->prefix . 'mfsd_leaderboard';
+    $scores      = [];
+    // FIX: actual table is wp_mfsd_arcade_scores (not wp_mfsd_leaderboard)
+    // Columns: student_id, score, game_slug, initials, created_at
+    $scores_table = $wpdb->prefix . 'mfsd_arcade_scores';
 
-    if ( $wpdb->get_var( "SHOW TABLES LIKE '{$lb_table}'" ) === $lb_table ) {
+    if ( $wpdb->get_var( "SHOW TABLES LIKE '{$scores_table}'" ) === $scores_table ) {
 
         $game_where = '';
         if ( ! empty( $c['games'] ) && $c['games'] !== 'all' ) {
-            $game_where = $wpdb->prepare( ' AND l.game_slug = %s', $c['games'] );
+            $game_where = $wpdb->prepare( ' AND s.game_slug = %s', $c['games'] );
         }
 
         if ( $mode === 'student' && ! $is_student ) {
             // Parent view: show linked student's scores.
-            // FIX: use centralised helper with correct column names.
             $student_id = mfsd_hw_get_linked_student_id( get_current_user_id() );
 
             if ( $student_id ) {
                 $scores = $wpdb->get_results( $wpdb->prepare(
-                    "SELECT l.*, u.display_name FROM {$lb_table} l
-                     LEFT JOIN {$wpdb->users} u ON l.user_id = u.ID
-                     WHERE l.user_id = %d {$game_where}
-                     ORDER BY l.score DESC LIMIT %d",
+                    "SELECT s.*, u.display_name
+                     FROM {$scores_table} s
+                     LEFT JOIN {$wpdb->users} u ON s.student_id = u.ID
+                     WHERE s.student_id = %d {$game_where}
+                     ORDER BY s.score DESC LIMIT %d",
                     $student_id, $limit
                 ), ARRAY_A ) ?: [];
             }
         } else {
             // Global leaderboard.
             $scores = $wpdb->get_results( $wpdb->prepare(
-                "SELECT l.*, u.display_name FROM {$lb_table} l
-                 LEFT JOIN {$wpdb->users} u ON l.user_id = u.ID
+                "SELECT s.*, u.display_name
+                 FROM {$scores_table} s
+                 LEFT JOIN {$wpdb->users} u ON s.student_id = u.ID
                  WHERE 1=1 {$game_where}
-                 ORDER BY l.score DESC LIMIT %d",
+                 ORDER BY s.score DESC LIMIT %d",
                 $limit
             ), ARRAY_A ) ?: [];
         }
@@ -378,14 +381,15 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         }
     }
 
-    // ── Latest arcade score (from leaderboard: wp_mfsd_leaderboard) ──────────
+    // ── Latest arcade score (from Arcade: wp_mfsd_arcade_scores) ───────────
+    // FIX: actual table is wp_mfsd_arcade_scores, column is student_id
     $latest_score = null;
     if ( $student_id ) {
-        $lb_table = $wpdb->prefix . 'mfsd_leaderboard';
-        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$lb_table}'" ) === $lb_table ) {
+        $scores_table = $wpdb->prefix . 'mfsd_arcade_scores';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$scores_table}'" ) === $scores_table ) {
             $latest_score = $wpdb->get_row( $wpdb->prepare(
-                "SELECT * FROM {$lb_table}
-                 WHERE user_id = %d
+                "SELECT * FROM {$scores_table}
+                 WHERE student_id = %d
                  ORDER BY score DESC
                  LIMIT 1",
                 $student_id
