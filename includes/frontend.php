@@ -343,8 +343,17 @@ function mfsd_hw_badge_display_name( string $slug ): string {
 
 /**
  * Get the badge image URL from the Quest Log plugin assets.
+ * Who Am I badges use the personality character avatar instead.
  */
-function mfsd_hw_badge_image_url( string $slug ): string {
+function mfsd_hw_badge_image_url( string $slug, int $student_id = 0 ): string {
+
+    // ── Who Am I badges: pull the personality character avatar ────────────────
+    if ( in_array( $slug, [ 'badge_who_am_i_1', 'badge_who_am_i_2' ], true ) && $student_id ) {
+        $avatar_url = mfsd_hw_get_character_avatar( $student_id );
+        if ( $avatar_url ) return $avatar_url;
+    }
+
+    // ── Standard badges: use Quest Log badge artwork ─────────────────────────
     $images = [
         'badge_word_assoc'      => 'badge_word_assoc.png',
         'badge_junk_jobs'       => 'badge_junk_jobs.png',
@@ -354,8 +363,56 @@ function mfsd_hw_badge_image_url( string $slug ): string {
     ];
 
     $filename = $images[ $slug ] ?? 'badge_locked.png';
-
     return plugins_url( 'mfsd-quest-log/assets/images/badges/' . $filename );
+}
+
+/**
+ * Get the personality character avatar URL for a student.
+ * Reads MBTI type from wp_mfsd_ptest_results and maps to the avatar filename.
+ */
+function mfsd_hw_get_character_avatar( int $student_id ): string {
+    global $wpdb;
+
+    $results_table = $wpdb->prefix . 'mfsd_ptest_results';
+    if ( $wpdb->get_var( "SHOW TABLES LIKE '{$results_table}'" ) !== $results_table ) {
+        return '';
+    }
+
+    $result = $wpdb->get_row( $wpdb->prepare(
+        "SELECT mbti_type FROM {$results_table}
+         WHERE user_id = %d
+           AND test_type IN ('COMBINED','MBTI')
+           AND mbti_type IS NOT NULL
+         ORDER BY created_at DESC LIMIT 1",
+        $student_id
+    ), ARRAY_A );
+
+    if ( ! $result || empty( $result['mbti_type'] ) ) return '';
+
+    $mbti = strtoupper( $result['mbti_type'] );
+
+    // MBTI → avatar filename (matches Quest Log + personality test plugin)
+    $avatar_files = [
+        'ISTJ' => 'Logistician.png',  'ISFJ' => 'Defender.png',
+        'ESTJ' => 'Executive.png',    'ESFJ' => 'Consul.png',
+        'INTJ' => 'Architect.png',    'INTP' => 'Logician.png',
+        'ENTJ' => 'Commander.png',    'ENTP' => 'Debater.png',
+        'INFJ' => 'Advocate.png',     'INFP' => 'Mediatorv3.png',
+        'ENFJ' => 'Protagonist.png',  'ENFP' => 'Campaigner.png',
+        'ISTP' => 'Virtuoso.png',     'ISFP' => 'Adventurer.png',
+        'ESTP' => 'Entrepreneur.png', 'ESFP' => 'Entertainer.png',
+    ];
+
+    $filename = $avatar_files[ $mbti ] ?? '';
+    if ( ! $filename ) return '';
+
+    // Try personality test plugin's Avatars folder first
+    if ( is_dir( WP_PLUGIN_DIR . '/mfsd-personality-test/assets/Avatars/' ) ) {
+        return plugins_url( 'mfsd-personality-test/assets/Avatars/' . $filename );
+    }
+
+    // Fallback: Quest Log's own characters folder
+    return plugins_url( 'mfsd-quest-log/assets/images/characters/' . $filename );
 }
 
 function mfsd_hw_card_progress( array $c, string $role ): void {
@@ -445,7 +502,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     // ── Resolve badge display ────────────────────────────────────────────────
     $badge_slug_val = $latest_badge['badge_slug'] ?? '';
     $badge_name     = mfsd_hw_badge_display_name( $badge_slug_val );
-    $badge_img      = mfsd_hw_badge_image_url( $badge_slug_val );
+    $badge_img      = mfsd_hw_badge_image_url( $badge_slug_val, $student_id );
     ?>
     <div class="mfsd-hw-card mfsd-hw-card--progress" data-widget="progress">
       <div class="mfsd-hw-card__header">
