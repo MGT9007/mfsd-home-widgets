@@ -641,11 +641,11 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   z-index: 10;
 }
 
-.mfsd-hw-carousel__slide .mfsd-hw-card__hero-bg {
+.mfsd-hw-card--news-hero .mfsd-hw-carousel__slide .mfsd-hw-card__hero-bg {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-position: center;
+  background-size: cover !important;
+  background-position: center !important;
 }
 /* ── ARROWS ──────────────────────────────────────────────────────────────── */
 
