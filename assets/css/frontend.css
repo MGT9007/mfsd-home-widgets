@@ -615,6 +615,8 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   transition: opacity 0.6s ease;
   pointer-events: none;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .mfsd-hw-carousel__slide--active {
@@ -742,4 +744,31 @@ body.mfsd-role-admin .mfsd-hw-carousel__dot--active {
     height: 30px;
     font-size: 18px;
   }
+}
+
+/* Slides fill the full card */
+.mfsd-hw-carousel__slide {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+/* Single-item: slide must stretch to fill card */
+.mfsd-hw-card--news-hero:not(.mfsd-hw-carousel) .mfsd-hw-carousel__slide {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+  min-height: 100%;
+}
+
+/* Hero bg needs to reference the slide as its container */
+.mfsd-hw-carousel__slide .mfsd-hw-card__hero-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.mfsd-hw-carousel__slide .mfsd-hw-card__hero-overlay {
+  position: absolute;
+  inset: 0;
 }
