@@ -599,3 +599,147 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   flex-shrink: 0 !important;
   border-radius: 6px !important;
 }
+
+/* ── NEWS CAROUSEL ───────────────────────────────────────────────────────── */
+/* Slides stack via position: absolute. Only the active slide is visible.    */
+/* Single-item widgets have no .mfsd-hw-carousel class — no controls shown. */
+
+.mfsd-hw-carousel {
+  position: relative;
+}
+
+.mfsd-hw-carousel__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mfsd-hw-carousel__slide--active {
+  opacity: 1;
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* Single-item (no carousel class): slide is always visible, no stacking */
+.mfsd-hw-card--news-hero:not(.mfsd-hw-carousel) .mfsd-hw-carousel__slide {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Badge sits above slides */
+.mfsd-hw-carousel .mfsd-hw-card__hero-badge {
+  position: absolute;
+  top: var(--space-md, 16px);
+  left: var(--space-md, 16px);
+  z-index: 10;
+}
+
+
+/* ── ARROWS ──────────────────────────────────────────────────────────────── */
+
+.mfsd-hw-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast, 150ms ease);
+  padding: 0;
+}
+
+.mfsd-hw-carousel__arrow:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.mfsd-hw-carousel__arrow--prev {
+  left: var(--space-sm, 8px);
+}
+
+.mfsd-hw-carousel__arrow--next {
+  right: var(--space-sm, 8px);
+}
+
+/* Gamer theme arrows — cyan tint */
+body.mfsd-role-student .mfsd-hw-carousel__arrow {
+  background: rgba(0, 212, 255, 0.2);
+}
+
+body.mfsd-role-student .mfsd-hw-carousel__arrow:hover {
+  background: rgba(0, 212, 255, 0.4);
+}
+
+
+/* ── DOTS ────────────────────────────────────────────────────────────────── */
+
+.mfsd-hw-carousel__dots {
+  position: absolute;
+  bottom: var(--space-sm, 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill, 999px);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.mfsd-hw-carousel__dot {
+  width: 8px;
+  height: 8px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color var(--transition-fast, 150ms ease),
+              transform var(--transition-fast, 150ms ease);
+}
+
+.mfsd-hw-carousel__dot--active {
+  background: #fff;
+  transform: scale(1.25);
+}
+
+.mfsd-hw-carousel__dot:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Gamer theme dots — cyan active */
+body.mfsd-role-student .mfsd-hw-carousel__dot--active {
+  background: var(--color-accent, #00D4FF);
+}
+
+/* Corporate theme dots — gold active */
+body.mfsd-role-parent .mfsd-hw-carousel__dot--active,
+body.mfsd-role-teacher .mfsd-hw-carousel__dot--active,
+body.mfsd-role-admin .mfsd-hw-carousel__dot--active {
+  background: var(--color-accent, #C9A84C);
+}
+
+
+/* ── MOBILE: slightly smaller arrows ─────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .mfsd-hw-carousel__arrow {
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+  }
+}

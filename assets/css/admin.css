@@ -224,3 +224,18 @@
   line-height: 1.6;
   border-radius: 0 4px 4px 0;
 }
+
+
+/* ── MULTI-ITEM NEWS ARTICLE BLOCKS ──────────────────────────────────────── */
+
+.mfsd-hw-admin__item-block {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+
+.mfsd-hw-admin__item-block:first-child {
+  border-left: 3px solid #C9A84C;
+}

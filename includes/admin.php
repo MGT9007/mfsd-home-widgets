@@ -107,13 +107,32 @@ function mfsd_hw_sanitize_config( string $type, array $raw ): array {
     switch ( $type ) {
         case 'news_internal':
         case 'news_external':
+            // Multi-item carousel config (up to 10 items).
+            $items = [];
+            if ( isset( $raw['items'] ) && is_array( $raw['items'] ) ) {
+                foreach ( array_slice( $raw['items'], 0, 10 ) as $item ) {
+                    $headline = sanitize_text_field( $item['headline'] ?? '' );
+                    $image_id = (int) ( $item['image_id'] ?? 0 );
+                    // Skip completely empty items.
+                    if ( $headline === '' && $image_id === 0 ) continue;
+                    $items[] = [
+                        'headline' => $headline,
+                        'summary'  => sanitize_textarea_field( $item['summary'] ?? '' ),
+                        'image_id' => $image_id,
+                        'link'     => esc_url_raw( $item['link'] ?? '' ),
+                        'cta_text' => sanitize_text_field( $item['cta_text'] ?? 'Read More' ),
+                    ];
+                }
+            }
+            return [ 'items' => $items ];
+
         case 'new_courses':
             return [
                 'headline' => sanitize_text_field( $raw['headline'] ?? '' ),
                 'summary'  => sanitize_textarea_field( $raw['summary'] ?? '' ),
                 'image_id' => (int) ( $raw['image_id'] ?? 0 ),
                 'link'     => esc_url_raw( $raw['link'] ?? '' ),
-                'cta_text' => sanitize_text_field( $raw['cta_text'] ?? 'Read More' ),
+                'cta_text' => sanitize_text_field( $raw['cta_text'] ?? 'Course Details' ),
             ];
 
         case 'shorts':
@@ -431,20 +450,50 @@ function mfsd_hw_render_config_fields( string $type, array $config ): void {
     switch ( $type ) {
         case 'news_internal':
         case 'news_external':
+            // ── Multi-item carousel (up to 10 articles) ──
+            // Backward compat: if old flat config, wrap in items array.
+            if ( isset( $config['items'] ) && is_array( $config['items'] ) ) {
+                $items = $config['items'];
+            } elseif ( ! empty( $config['headline'] ) || ! empty( $config['image_id'] ) ) {
+                $items = [ [
+                    'headline' => $config['headline'] ?? '',
+                    'summary'  => $config['summary']  ?? '',
+                    'image_id' => $config['image_id'] ?? 0,
+                    'link'     => $config['link']     ?? '',
+                    'cta_text' => $config['cta_text'] ?? 'Read More',
+                ] ];
+            } else {
+                $items = [ [ 'headline' => '', 'summary' => '', 'image_id' => 0, 'link' => '', 'cta_text' => 'Read More' ] ];
+            }
+            ?>
+            <div class="mfsd-hw-admin__info-box" style="margin-bottom:20px;">
+              <?php printf(
+                  esc_html__( 'Add up to 10 articles. With 2 or more, the widget becomes a carousel that rotates every 5 seconds. Currently: %d article(s).', 'mfsd-home-widgets' ),
+                  count( $items )
+              ); ?>
+            </div>
+
+            <div id="mfsd-hw-items-container">
+              <?php foreach ( $items as $idx => $item ) : ?>
+                <?php mfsd_hw_render_news_item_fields( $idx, $item, $type ); ?>
+              <?php endforeach; ?>
+            </div>
+
+            <?php if ( count( $items ) < 10 ) : ?>
+              <button type="button" id="mfsd-hw-add-item" class="button" style="margin-top:12px;"
+                      data-type="<?php echo esc_attr( $type ); ?>">
+                + <?php esc_html_e( 'Add Article', 'mfsd-home-widgets' ); ?>
+              </button>
+            <?php endif; ?>
+            <?php
+            break;
+
         case 'new_courses':
-            $cta_default = $type === 'new_courses' ? 'Course Details' : 'Read More';
             mfsd_hw_text_field(     'config[headline]', __( 'Headline',      'mfsd-home-widgets' ), $config['headline'] ?? '' );
             mfsd_hw_textarea_field( 'config[summary]',  __( 'Summary',       'mfsd-home-widgets' ), $config['summary']  ?? '' );
             mfsd_hw_image_field(    'config[image_id]', __( 'Image',         'mfsd-home-widgets' ), (int) ( $config['image_id'] ?? 0 ) );
-
-            // Internal types get a page dropdown; external gets a URL input.
-            if ( $type === 'news_external' ) {
-                mfsd_hw_text_field( 'config[link]', __( 'External URL', 'mfsd-home-widgets' ), $config['link'] ?? '', 'url' );
-            } else {
-                mfsd_hw_page_field( 'config[link]', __( 'Link to Page', 'mfsd-home-widgets' ), $config['link'] ?? '' );
-            }
-
-            mfsd_hw_text_field( 'config[cta_text]', __( 'Button Label', 'mfsd-home-widgets' ), $config['cta_text'] ?? $cta_default );
+            mfsd_hw_page_field( 'config[link]', __( 'Link to Page', 'mfsd-home-widgets' ), $config['link'] ?? '' );
+            mfsd_hw_text_field( 'config[cta_text]', __( 'Button Label', 'mfsd-home-widgets' ), $config['cta_text'] ?? 'Course Details' );
             break;
 
         case 'shorts':
@@ -590,6 +639,96 @@ function mfsd_hw_page_field( string $name, string $label, string $value ): void 
       <p class="description">
         <?php esc_html_e( 'Select the page this widget card should link to.', 'mfsd-home-widgets' ); ?>
       </p>
+    </div>
+    <?php
+}
+
+
+// ─── NEWS ITEM REPEATABLE FIELDS ──────────────────────────────────────────────
+
+/**
+ * Renders one article block inside the multi-item news form.
+ *
+ * @param int    $idx   Zero-based index for the item.
+ * @param array  $item  Item data (headline, summary, image_id, link, cta_text).
+ * @param string $type  Widget type (news_internal or news_external).
+ */
+function mfsd_hw_render_news_item_fields( int $idx, array $item, string $type ): void {
+    $prefix = "config[items][{$idx}]";
+    $uid    = 'mfsd_hw_item_img_' . $idx;
+    $preview = ( (int) ( $item['image_id'] ?? 0 ) ) > 0
+        ? wp_get_attachment_image_url( (int) $item['image_id'], 'thumbnail' ) : '';
+    ?>
+    <div class="mfsd-hw-admin__item-block" data-item-index="<?php echo $idx; ?>">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <strong style="font-size:14px;">
+          <?php printf( esc_html__( 'Article %d', 'mfsd-home-widgets' ), $idx + 1 ); ?>
+        </strong>
+        <?php if ( $idx > 0 ) : ?>
+          <button type="button" class="button mfsd-hw-remove-item"
+                  style="color:#b32d2e;border-color:#b32d2e;">
+            <?php esc_html_e( 'Remove', 'mfsd-home-widgets' ); ?>
+          </button>
+        <?php endif; ?>
+      </div>
+
+      <div class="mfsd-hw-admin__field">
+        <label><?php esc_html_e( 'Headline', 'mfsd-home-widgets' ); ?></label>
+        <input type="text" name="<?php echo esc_attr( $prefix ); ?>[headline]"
+               value="<?php echo esc_attr( $item['headline'] ?? '' ); ?>"
+               style="width:100%;max-width:560px;">
+      </div>
+
+      <div class="mfsd-hw-admin__field">
+        <label><?php esc_html_e( 'Summary', 'mfsd-home-widgets' ); ?></label>
+        <textarea name="<?php echo esc_attr( $prefix ); ?>[summary]" rows="3"
+                  style="width:100%;max-width:560px;font-size:13px;padding:6px;resize:vertical;"><?php echo esc_textarea( $item['summary'] ?? '' ); ?></textarea>
+      </div>
+
+      <div class="mfsd-hw-admin__field">
+        <label><?php esc_html_e( 'Image', 'mfsd-home-widgets' ); ?></label>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <img id="<?php echo esc_attr( $uid ); ?>_preview"
+               src="<?php echo esc_url( $preview ); ?>"
+               style="height:60px;width:auto;max-width:120px;border:1px solid #ccd0d4;border-radius:3px;<?php echo $preview ? '' : 'display:none;'; ?>">
+          <input type="hidden" name="<?php echo esc_attr( $prefix ); ?>[image_id]"
+                 id="<?php echo esc_attr( $uid ); ?>"
+                 value="<?php echo esc_attr( (int) ( $item['image_id'] ?? 0 ) ); ?>">
+          <button type="button" class="button mfsd-hw-media-btn"
+                  data-target="<?php echo esc_attr( $uid ); ?>"
+                  data-preview="<?php echo esc_attr( $uid ); ?>_preview">
+            <?php echo ( (int) ( $item['image_id'] ?? 0 ) ) > 0
+                ? esc_html__( 'Change Image', 'mfsd-home-widgets' )
+                : esc_html__( 'Select Image', 'mfsd-home-widgets' ); ?>
+          </button>
+          <button type="button" class="button mfsd-hw-media-clear"
+                  data-target="<?php echo esc_attr( $uid ); ?>"
+                  data-preview="<?php echo esc_attr( $uid ); ?>_preview"
+                  style="<?php echo ( (int) ( $item['image_id'] ?? 0 ) ) > 0 ? '' : 'display:none;'; ?>">
+            <?php esc_html_e( 'Remove', 'mfsd-home-widgets' ); ?>
+          </button>
+        </div>
+      </div>
+
+      <?php if ( $type === 'news_external' ) : ?>
+        <div class="mfsd-hw-admin__field">
+          <label><?php esc_html_e( 'External URL', 'mfsd-home-widgets' ); ?></label>
+          <input type="url" name="<?php echo esc_attr( $prefix ); ?>[link]"
+                 value="<?php echo esc_attr( $item['link'] ?? '' ); ?>"
+                 style="width:100%;max-width:560px;">
+        </div>
+      <?php else : ?>
+        <?php mfsd_hw_page_field( $prefix . '[link]', __( 'Link to Page', 'mfsd-home-widgets' ), $item['link'] ?? '' ); ?>
+      <?php endif; ?>
+
+      <div class="mfsd-hw-admin__field">
+        <label><?php esc_html_e( 'Button Label', 'mfsd-home-widgets' ); ?></label>
+        <input type="text" name="<?php echo esc_attr( $prefix ); ?>[cta_text]"
+               value="<?php echo esc_attr( $item['cta_text'] ?? 'Read More' ); ?>"
+               style="width:100%;max-width:560px;">
+      </div>
+
+      <hr style="border:none;border-top:2px solid #C9A84C;margin:20px 0;">
     </div>
     <?php
 }
