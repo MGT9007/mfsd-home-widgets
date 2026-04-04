@@ -641,7 +641,12 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   z-index: 10;
 }
 
-
+.mfsd-hw-carousel__slide .mfsd-hw-card__hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
 /* ── ARROWS ──────────────────────────────────────────────────────────────── */
 
 .mfsd-hw-carousel__arrow {
