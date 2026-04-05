@@ -777,3 +777,24 @@ body.mfsd-role-admin .mfsd-hw-carousel__dot--active {
   position: absolute;
   inset: 0;
 }
+
+/* Hero content pinned to bottom of slide */
+.mfsd-hw-carousel__slide {
+  justify-content: flex-end;
+}
+
+.mfsd-hw-carousel__slide .mfsd-hw-card__hero-content {
+  position: relative;
+  z-index: 3;
+  margin-top: auto;
+}
+
+/* Overlay must cover full slide */
+.mfsd-hw-carousel__slide .mfsd-hw-card__hero-overlay {
+  z-index: 2;
+}
+
+/* Badge above everything */
+.mfsd-hw-card--news-hero .mfsd-hw-card__hero-badge {
+  z-index: 10;
+}
