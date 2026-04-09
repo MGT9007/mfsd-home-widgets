@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 4.0.0 — News cards now use full-bleed background image style.
+ * Version: 4.1.0 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -744,30 +744,46 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     $cached = get_transient( $transient_key );
     if ( is_array( $cached ) ) return $cached;
 
+    error_log( 'MFSD_HW RSS: fetching ' . $feed_url );
+
     $response = wp_remote_get( $feed_url, [
         'timeout'    => 10,
         'user-agent' => 'Mozilla/5.0 (compatible; MFSDWidgets/' . MFSD_HW_VERSION . '; +https://mfsd.me)',
     ] );
 
-    if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
+    if ( is_wp_error( $response ) ) {
+        error_log( 'MFSD_HW RSS ERROR: ' . $response->get_error_message() );
+        set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
+        return [];
+    }
+
+    $http_code = wp_remote_retrieve_response_code( $response );
+    if ( $http_code !== 200 ) {
+        error_log( 'MFSD_HW RSS ERROR: HTTP ' . $http_code . ' for ' . $feed_url );
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
 
     $body = wp_remote_retrieve_body( $response );
     if ( empty( $body ) ) {
+        error_log( 'MFSD_HW RSS ERROR: empty body for ' . $feed_url );
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
+
+    error_log( 'MFSD_HW RSS: got ' . strlen( $body ) . ' bytes' );
 
     libxml_use_internal_errors( true );
     $xml = simplexml_load_string( $body );
     libxml_clear_errors();
 
     if ( $xml === false ) {
+        error_log( 'MFSD_HW RSS ERROR: XML parse failed for ' . $feed_url );
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
+
+    error_log( 'MFSD_HW RSS: XML OK, items found' );
 
     // Support RSS 2.0 and Atom.
     $xml_items = [];
