@@ -160,7 +160,7 @@ function mfsd_hw_sanitize_config( string $type, array $raw ): array {
 
         case 'rss_feed':
             return [
-                'feed_url'    => esc_url_raw( $raw['feed_url']    ?? '' ),
+                'feed_url'    => sanitize_text_field( $raw['feed_url'] ?? '' ),
                 'feed_limit'  => max( 1, min( 20, (int) ( $raw['feed_limit'] ?? 10 ) ) ),
                 'feed_prefix' => sanitize_text_field( $raw['feed_prefix'] ?? '' ),
                 'badge_label' => sanitize_text_field( $raw['badge_label'] ?? 'RSS NEWS' ),
