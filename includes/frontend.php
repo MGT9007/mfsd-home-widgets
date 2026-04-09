@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 3.2.0 — News cards now use full-bleed background image style.
+ * Version: 3.3.0 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -551,6 +551,62 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     $badge_slug_val = $latest_badge['badge_slug'] ?? '';
     $badge_name     = mfsd_hw_badge_display_name( $badge_slug_val );
     $badge_img      = mfsd_hw_badge_image_url( $badge_slug_val, $student_id );
+
+    // ── Detect enrolled-but-not-started state (students only) ────────────────
+    // Uses wp_mfsd_enrolments (from MFSD Ordering Utility) — no status column,
+    // a row existing means the student is enrolled.
+    // First task is read dynamically from wp_mfsd_task_order (sequence_order=1)
+    // so it stays correct as admins re-order tasks in Course Manager.
+    $is_not_started     = false;
+    $enrol_course_id    = 0;
+    $enrol_course_name  = '';
+    $first_task_name    = '';
+    $first_task_link    = '';
+    $course_details_url = '';
+
+    if ( $is_student && ! $latest_task && ! $latest_badge && ! $latest_score && $student_id ) {
+        $enrol_table = $wpdb->prefix . 'mfsd_enrolments';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$enrol_table}'" ) === $enrol_table ) {
+            $enrollment = $wpdb->get_row( $wpdb->prepare(
+                "SELECT e.course_id, c.course_name
+                 FROM   {$enrol_table} e
+                 INNER  JOIN {$wpdb->prefix}mfsd_courses c ON c.id = e.course_id AND c.active = 1
+                 WHERE  e.student_id = %d
+                 ORDER  BY e.enrolled_date ASC
+                 LIMIT  1",
+                $student_id
+            ), ARRAY_A );
+
+            if ( $enrollment ) {
+                $is_not_started    = true;
+                $enrol_course_id   = (int) $enrollment['course_id'];
+                $enrol_course_name = $enrollment['course_name'];
+
+                // Fetch the first task in the course by sequence_order.
+                $first_task = $wpdb->get_row( $wpdb->prepare(
+                    "SELECT task_slug, display_name
+                     FROM   {$wpdb->prefix}mfsd_task_order
+                     WHERE  course_id = %d AND active = 1
+                     ORDER  BY sequence_order ASC
+                     LIMIT  1",
+                    $enrol_course_id
+                ), ARRAY_A );
+
+                if ( $first_task ) {
+                    $first_task_name = $first_task['display_name'];
+                    $first_task_slug = $first_task['task_slug'];
+                    $first_task_link = isset( $task_urls[ $first_task_slug ] )
+                        ? home_url( $task_urls[ $first_task_slug ] )
+                        : '';
+                }
+
+                $course_details_url = add_query_arg(
+                    [ 'course_id' => $enrol_course_id ],
+                    home_url( '/about/parent-portal-home/' )
+                );
+            }
+        }
+    }
     ?>
     <div class="mfsd-hw-card mfsd-hw-card--progress" data-widget="progress">
       <div class="mfsd-hw-card__header">
@@ -619,29 +675,46 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
         <?php if ( $student_id && ! $latest_badge && ! $latest_task && ! $latest_score ) : ?>
           <p class="mfsd-hw-card__empty">
-            <?php echo $is_parent
-                ? esc_html__( 'No activity yet for your linked student.', 'mfsd-home-widgets' )
-                : esc_html__( 'Complete your first activity to see achievements here!', 'mfsd-home-widgets' );
-            ?>
+            <?php if ( $is_parent ) : ?>
+              <?php esc_html_e( 'No activity yet for your linked student.', 'mfsd-home-widgets' ); ?>
+            <?php elseif ( $is_not_started && $first_task_name ) : ?>
+              <?php
+              // "Complete Word Association to start My Future Self Foundation Course"
+              printf(
+                  /* translators: 1: link open tag, 2: first task name, 3: link close tag, 4: course name */
+                  __( 'Complete %1$s%2$s%3$s to start %4$s', 'mfsd-home-widgets' ),
+                  $first_task_link
+                      ? '<a href="' . esc_url( $first_task_link ) . '" class="mfsd-hw-card__task-link">'
+                      : '<strong>',
+                  esc_html( $first_task_name ),
+                  $first_task_link ? '</a>' : '</strong>',
+                  '<strong>' . esc_html( $enrol_course_name ) . '</strong>'
+              );
+              ?>
+            <?php else : ?>
+              <?php esc_html_e( 'Complete your first activity to see achievements here!', 'mfsd-home-widgets' ); ?>
+            <?php endif; ?>
           </p>
         <?php endif; ?>
 
       </div>
 
       <a href="<?php echo esc_url(
-            add_query_arg(
-                array_filter( [
-                    'course_id'  => 1,
-                    'student_id' => $is_parent ? $student_id : null,
-                ] ),
-                home_url( '/about/parent-portal-home/' )
-            )
+            $is_not_started && $course_details_url
+                ? $course_details_url
+                : ( $is_parent
+                    ? add_query_arg( [ 'course_id' => 1, 'student_id' => $student_id ], home_url( '/about/parent-portal-home/' ) )
+                    : add_query_arg( [ 'course_id' => 1 ], home_url( '/about/parent-portal-home/' ) )
+                  )
          ); ?>"
          class="mfsd-hw-card__cta">
-        <?php echo $is_parent
-            ? esc_html__( 'View Full Progress', 'mfsd-home-widgets' )
-            : esc_html__( 'View My Progress', 'mfsd-home-widgets' );
-        ?>
+        <?php if ( $is_not_started ) :
+            esc_html_e( 'Start My Course', 'mfsd-home-widgets' );
+        elseif ( $is_parent ) :
+            esc_html_e( 'View Full Progress', 'mfsd-home-widgets' );
+        else :
+            esc_html_e( 'View My Progress', 'mfsd-home-widgets' );
+        endif; ?>
       </a>
     </div>
     <?php
