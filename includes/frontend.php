@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 3.1.0 — News cards now use full-bleed background image style.
+ * Version: 3.2.0 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -26,13 +26,9 @@ function mfsd_hw_render_grid(): void {
         return;
     }
 
-    $count     = count( $widgets );
-    $mod_class = in_array( $count, [ 1, 2, 4, 7 ], true ) ? ' mfsd-hw-grid--' . $count : '';
-
-    echo '<div class="mfsd-hw-grid' . esc_attr( $mod_class ) . '">';
-    foreach ( $widgets as $idx => $w ) {
-        $cell_mod = $mod_class ? ' mfsd-hw-grid__cell--' . ( $idx + 1 ) : '';
-        echo '<div class="mfsd-hw-grid__cell' . esc_attr( $cell_mod ) . '">';
+    echo '<div class="mfsd-hw-grid">';
+    foreach ( $widgets as $w ) {
+        echo '<div class="mfsd-hw-grid__cell">';
         mfsd_hw_render_widget( $w['type'], (array) $w['config'], $role );
         echo '</div>';
     }
@@ -632,9 +628,14 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
       </div>
 
-      <a href="<?php echo esc_url( $is_parent
-            ? add_query_arg( [ 'course_id' => 1, 'student_id' => $student_id ], home_url( '/portal-home/' ) )
-            : home_url( '/portal-home/' )
+      <a href="<?php echo esc_url(
+            add_query_arg(
+                array_filter( [
+                    'course_id'  => 1,
+                    'student_id' => $is_parent ? $student_id : null,
+                ] ),
+                home_url( '/about/parent-portal-home/' )
+            )
          ); ?>"
          class="mfsd-hw-card__cta">
         <?php echo $is_parent
