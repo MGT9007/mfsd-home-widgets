@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 4.1.0 — News cards now use full-bleed background image style.
+ * Version: 4.2.0 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -739,10 +739,10 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     if ( empty( $feed_url ) ) return [];
 
     $limit         = max( 1, min( 20, $limit ) );
-    $transient_key = 'mfsd_hw_rss_' . md5( $feed_url . $limit );
+    $transient_key = 'mfsd_hw_rss_v2_' . md5( $feed_url . $limit );
 
     $cached = get_transient( $transient_key );
-    if ( is_array( $cached ) ) return $cached;
+    if ( is_array( $cached ) && ! empty( $cached ) ) return $cached;
 
     error_log( 'MFSD_HW RSS: fetching ' . $feed_url );
 
