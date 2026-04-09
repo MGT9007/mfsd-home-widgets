@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 3.3.0 — News cards now use full-bleed background image style.
+ * Version: 4.0.0 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -53,6 +53,7 @@ function mfsd_hw_render_widget( string $type, array $config, string $role ): voi
         case 'new_courses':   mfsd_hw_card_courses( $config );           break;
         case 'top_scores':    mfsd_hw_card_scores( $config, $role );     break;
         case 'progress':      mfsd_hw_card_progress( $config, $role );   break;
+        case 'rss_feed':      mfsd_hw_card_rss( $config );               break;
     }
 }
 
@@ -716,6 +717,188 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
             esc_html_e( 'View My Progress', 'mfsd-home-widgets' );
         endif; ?>
       </a>
+    </div>
+    <?php
+}
+
+
+
+// ─── RSS FEED FETCH ───────────────────────────────────────────────────────────
+
+/**
+ * Fetch and cache RSS headlines for the widget.
+ * Reuses the same transient approach as the ticker tape plugin if available,
+ * otherwise implements its own identical logic.
+ *
+ * @param string $feed_url
+ * @param int    $limit
+ * @param string $prefix
+ * @return array[]  Each item: [ 'title' => string, 'link' => string, 'summary' => string ]
+ */
+function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = '' ): array {
+    if ( empty( $feed_url ) ) return [];
+
+    $limit         = max( 1, min( 20, $limit ) );
+    $transient_key = 'mfsd_hw_rss_' . md5( $feed_url . $limit );
+
+    $cached = get_transient( $transient_key );
+    if ( is_array( $cached ) ) return $cached;
+
+    $response = wp_remote_get( $feed_url, [
+        'timeout'    => 10,
+        'user-agent' => 'Mozilla/5.0 (compatible; MFSDWidgets/' . MFSD_HW_VERSION . '; +https://mfsd.me)',
+    ] );
+
+    if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
+        set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
+        return [];
+    }
+
+    $body = wp_remote_retrieve_body( $response );
+    if ( empty( $body ) ) {
+        set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
+        return [];
+    }
+
+    libxml_use_internal_errors( true );
+    $xml = simplexml_load_string( $body );
+    libxml_clear_errors();
+
+    if ( $xml === false ) {
+        set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
+        return [];
+    }
+
+    // Support RSS 2.0 and Atom.
+    $xml_items = [];
+    if ( isset( $xml->channel->item ) ) {
+        $xml_items = $xml->channel->item;
+    } elseif ( isset( $xml->entry ) ) {
+        $xml_items = $xml->entry;
+    }
+
+    $prefix  = trim( $prefix );
+    $results = [];
+    $count   = 0;
+    foreach ( $xml_items as $item ) {
+        if ( $count >= $limit ) break;
+        $title   = wp_strip_all_tags( (string) $item->title );
+        $link    = (string) ( $item->link ?? ( isset( $item->link['href'] ) ? $item->link['href'] : '' ) );
+        $summary = wp_strip_all_tags( (string) ( $item->description ?? $item->summary ?? '' ) );
+        // Trim summary to ~160 chars.
+        if ( mb_strlen( $summary ) > 160 ) {
+            $summary = mb_substr( $summary, 0, 157 ) . '…';
+        }
+        if ( $title ) {
+            $results[] = [
+                'title'   => $prefix !== '' ? $prefix . ' ' . $title : $title,
+                'link'    => $link,
+                'summary' => $summary,
+            ];
+            $count++;
+        }
+    }
+
+    set_transient( $transient_key, $results, 30 * MINUTE_IN_SECONDS );
+    return $results;
+}
+
+
+// ─── CARD: RSS Feed ───────────────────────────────────────────────────────────
+//
+// Displays live RSS headlines as a full-bleed hero carousel,
+// styled consistently with the news card.
+// Each headline is one carousel slide.
+// Auto-rotates every 5 seconds; left/right arrows and dots for manual nav.
+
+function mfsd_hw_card_rss( array $c ): void {
+    $feed_url    = $c['feed_url']    ?? '';
+    $feed_limit  = (int) ( $c['feed_limit']  ?? 10 );
+    $feed_prefix = $c['feed_prefix'] ?? '';
+    $badge_label = strtoupper( $c['badge_label'] ?? 'RSS NEWS' );
+    $cta_text    = $c['cta_text']    ?? 'Read Full Story';
+    $link_out    = ! empty( $c['link_out'] );
+
+    $items = mfsd_hw_fetch_rss( $feed_url, $feed_limit, $feed_prefix );
+
+    if ( empty( $items ) ) {
+        // Show a placeholder card if feed is empty or unreachable.
+        ?>
+        <div class="mfsd-hw-card mfsd-hw-card--news-hero">
+          <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--active">
+            <div class="mfsd-hw-card__hero-bg" style="background-image:none;background-color:#1a1a1a;"></div>
+            <div class="mfsd-hw-card__hero-overlay"></div>
+            <div class="mfsd-hw-card__hero-content">
+              <h3 class="mfsd-hw-card__hero-headline">
+                <?php esc_html_e( 'Feed unavailable — check back soon.', 'mfsd-home-widgets' ); ?>
+              </h3>
+            </div>
+          </div>
+          <div class="mfsd-hw-card__hero-badge">
+            <span class="mfsd-hw-card__icon">📡</span>
+            <?php echo esc_html( $badge_label ); ?>
+          </div>
+        </div>
+        <?php
+        return;
+    }
+
+    $count       = count( $items );
+    $is_carousel = $count > 1;
+    $wrapper_cls = 'mfsd-hw-card mfsd-hw-card--news-hero mfsd-hw-card--rss';
+    if ( $is_carousel ) $wrapper_cls .= ' mfsd-hw-carousel';
+    ?>
+    <div class="<?php echo esc_attr( $wrapper_cls ); ?>">
+
+      <?php foreach ( $items as $i => $item ) :
+          $active = $i === 0 ? ' mfsd-hw-carousel__slide--active' : '';
+      ?>
+        <div class="mfsd-hw-carousel__slide<?php echo $active; ?>">
+
+          <?php // RSS items have no image — use a styled gradient background ?>
+          <div class="mfsd-hw-card__hero-bg mfsd-hw-card__hero-bg--rss"
+               style="background-image:none;">
+          </div>
+          <div class="mfsd-hw-card__hero-overlay mfsd-hw-card__hero-overlay--rss"></div>
+
+          <div class="mfsd-hw-card__hero-content">
+            <h3 class="mfsd-hw-card__hero-headline">
+              <?php echo esc_html( $item['title'] ); ?>
+            </h3>
+            <?php if ( ! empty( $item['summary'] ) ) : ?>
+              <p class="mfsd-hw-card__hero-summary">
+                <?php echo esc_html( $item['summary'] ); ?>
+              </p>
+            <?php endif; ?>
+            <?php if ( ! empty( $item['link'] ) ) : ?>
+              <a href="<?php echo esc_url( $item['link'] ); ?>"
+                 class="mfsd-hw-card__hero-cta"
+                 <?php echo $link_out ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
+                <?php echo esc_html( $cta_text ); ?> →
+              </a>
+            <?php endif; ?>
+          </div>
+
+        </div>
+      <?php endforeach; ?>
+
+      <?php // Badge — always visible ?>
+      <div class="mfsd-hw-card__hero-badge">
+        <span class="mfsd-hw-card__icon">📡</span>
+        <?php echo esc_html( $badge_label ); ?>
+      </div>
+
+      <?php if ( $is_carousel ) : ?>
+        <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--prev" aria-label="Previous">‹</button>
+        <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="Next">›</button>
+        <div class="mfsd-hw-carousel__dots">
+          <?php for ( $d = 0; $d < $count; $d++ ) : ?>
+            <button class="mfsd-hw-carousel__dot<?php echo $d === 0 ? ' mfsd-hw-carousel__dot--active' : ''; ?>"
+                    aria-label="Slide <?php echo $d + 1; ?>"></button>
+          <?php endfor; ?>
+        </div>
+      <?php endif; ?>
+
     </div>
     <?php
 }

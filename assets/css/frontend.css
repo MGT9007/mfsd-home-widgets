@@ -837,3 +837,25 @@ body.mfsd-role-admin .mfsd-hw-carousel__dot--active {
 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-badge {
   z-index: 10;
 }
+
+/* ── RSS FEED CARD ───────────────────────────────────────────────────────── */
+
+/* Dark gradient background for RSS slides (no image available from feed) */
+.mfsd-hw-card__hero-bg--rss {
+  background: linear-gradient( 135deg, #0d1b2a 0%, #1a2e44 40%, #0d2137 100% );
+}
+
+/* Slightly different overlay tint for RSS to give it its own feel */
+.mfsd-hw-card__hero-overlay--rss {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 20, 40, 0.50) 55%,
+    rgba(0, 20, 40, 0.15) 100%
+  );
+}
+
+/* Slide counter indicator in top-right of RSS cards */
+.mfsd-hw-card--rss .mfsd-hw-carousel__dots {
+  bottom: 12px;
+}

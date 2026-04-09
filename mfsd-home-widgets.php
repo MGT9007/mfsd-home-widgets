@@ -8,7 +8,7 @@
  *               visible to any role combination. Six widget types available:
  *               MFS News (Internal), External News, Shorts Video, New Courses,
  *               Top Scores, and Progress & Achievements.
- * Version:      4.4.0
+ * Version:      5.0.0
  * Author:       MisterT9007
  * Author URI:   https://s47d.co.uk
  * Text Domain:  mfsd-home-widgets
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-define( 'MFSD_HW_VERSION', '4.4.0' );
+define( 'MFSD_HW_VERSION', '5.0.0' );
 define( 'MFSD_HW_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'MFSD_HW_URI',     plugin_dir_url( __FILE__ ) );
 define( 'MFSD_HW_TABLE',   'mfsd_hw_widgets' );
@@ -62,6 +62,11 @@ function mfsd_hw_widget_types(): array {
             'label'       => __( 'Progress & Achievements', 'mfsd-home-widgets' ),
             'icon'        => 'dashicons-awards',
             'description' => __( 'Students see their own achievements. Parents see their linked student\'s last completed task.', 'mfsd-home-widgets' ),
+        ],
+        'rss_feed' => [
+            'label'       => __( 'RSS News Feed', 'mfsd-home-widgets' ),
+            'icon'        => 'dashicons-rss',
+            'description' => __( 'Live headlines from any RSS or Atom feed, displayed as a rotating carousel. Role-targeted.', 'mfsd-home-widgets' ),
         ],
     ];
 }

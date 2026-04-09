@@ -151,11 +151,51 @@ function mfsd_hw_sanitize_config( string $type, array $raw ): array {
                 'mode'        => sanitize_key( $raw['mode'] ?? 'global' ),
             ];
 
+        case 'rss_feed':
+            ?>
+            <div class="mfsd-hw-admin__info-box" style="margin-bottom:20px;">
+              <?php esc_html_e( 'Headlines are fetched from the RSS feed and displayed as a rotating carousel — one slide per headline. Results are cached for 30 minutes.', 'mfsd-home-widgets' ); ?>
+            </div>
+
+            <?php mfsd_hw_text_field( 'config[feed_url]', __( 'Feed URL *', 'mfsd-home-widgets' ), $config['feed_url'] ?? '', 'url' ); ?>
+
+            <div class="mfsd-hw-admin__field">
+              <label><?php esc_html_e( 'Max Headlines', 'mfsd-home-widgets' ); ?></label>
+              <input type="number" name="config[feed_limit]"
+                     value="<?php echo esc_attr( $config['feed_limit'] ?? 10 ); ?>"
+                     min="1" max="20" style="width:80px;">
+              <p class="description"><?php esc_html_e( 'How many headlines to pull from the feed (1–20). Each becomes one carousel slide.', 'mfsd-home-widgets' ); ?></p>
+            </div>
+
+            <?php mfsd_hw_text_field( 'config[feed_prefix]',  __( 'Headline Prefix',    'mfsd-home-widgets' ), $config['feed_prefix']  ?? '' ); ?>
+            <?php mfsd_hw_text_field( 'config[badge_label]',  __( 'Badge Label',        'mfsd-home-widgets' ), $config['badge_label']  ?? 'RSS NEWS' ); ?>
+            <?php mfsd_hw_text_field( 'config[cta_text]',     __( 'Button Label',       'mfsd-home-widgets' ), $config['cta_text']     ?? 'Read Full Story' ); ?>
+
+            <div class="mfsd-hw-admin__field">
+              <label class="mfsd-hw-admin__check">
+                <input type="checkbox" name="config[link_out]" value="1"
+                       <?php checked( ! empty( $config['link_out'] ) ); ?>>
+                <?php esc_html_e( 'Open story links in a new tab', 'mfsd-home-widgets' ); ?>
+              </label>
+            </div>
+            <?php
+            break;
+
         case 'progress':
             return [
                 'show_badge' => ! empty( $raw['show_badge'] ),
                 'show_score' => ! empty( $raw['show_score'] ),
                 'show_task'  => ! empty( $raw['show_task'] ),
+            ];
+
+        case 'rss_feed':
+            return [
+                'feed_url'    => esc_url_raw( $raw['feed_url']    ?? '' ),
+                'feed_limit'  => max( 1, min( 20, (int) ( $raw['feed_limit'] ?? 10 ) ) ),
+                'feed_prefix' => sanitize_text_field( $raw['feed_prefix'] ?? '' ),
+                'badge_label' => sanitize_text_field( $raw['badge_label'] ?? 'RSS NEWS' ),
+                'cta_text'    => sanitize_text_field( $raw['cta_text']    ?? 'Read Full Story' ),
+                'link_out'    => ! empty( $raw['link_out'] ),
             ];
 
         default:
@@ -534,6 +574,36 @@ function mfsd_hw_render_config_fields( string $type, array $config ): void {
               <label class="mfsd-hw-admin__check" style="margin-top:6px;">
                 <input type="radio" name="config[mode]" value="student" <?php checked( $config['mode'] ?? 'global', 'student' ); ?>>
                 <?php esc_html_e( "Student's own scores (profile view)", 'mfsd-home-widgets' ); ?>
+              </label>
+            </div>
+            <?php
+            break;
+
+        case 'rss_feed':
+            ?>
+            <div class="mfsd-hw-admin__info-box" style="margin-bottom:20px;">
+              <?php esc_html_e( 'Headlines are fetched from the RSS feed and displayed as a rotating carousel — one slide per headline. Results are cached for 30 minutes.', 'mfsd-home-widgets' ); ?>
+            </div>
+
+            <?php mfsd_hw_text_field( 'config[feed_url]', __( 'Feed URL *', 'mfsd-home-widgets' ), $config['feed_url'] ?? '', 'url' ); ?>
+
+            <div class="mfsd-hw-admin__field">
+              <label><?php esc_html_e( 'Max Headlines', 'mfsd-home-widgets' ); ?></label>
+              <input type="number" name="config[feed_limit]"
+                     value="<?php echo esc_attr( $config['feed_limit'] ?? 10 ); ?>"
+                     min="1" max="20" style="width:80px;">
+              <p class="description"><?php esc_html_e( 'How many headlines to pull from the feed (1–20). Each becomes one carousel slide.', 'mfsd-home-widgets' ); ?></p>
+            </div>
+
+            <?php mfsd_hw_text_field( 'config[feed_prefix]',  __( 'Headline Prefix',    'mfsd-home-widgets' ), $config['feed_prefix']  ?? '' ); ?>
+            <?php mfsd_hw_text_field( 'config[badge_label]',  __( 'Badge Label',        'mfsd-home-widgets' ), $config['badge_label']  ?? 'RSS NEWS' ); ?>
+            <?php mfsd_hw_text_field( 'config[cta_text]',     __( 'Button Label',       'mfsd-home-widgets' ), $config['cta_text']     ?? 'Read Full Story' ); ?>
+
+            <div class="mfsd-hw-admin__field">
+              <label class="mfsd-hw-admin__check">
+                <input type="checkbox" name="config[link_out]" value="1"
+                       <?php checked( ! empty( $config['link_out'] ) ); ?>>
+                <?php esc_html_e( 'Open story links in a new tab', 'mfsd-home-widgets' ); ?>
               </label>
             </div>
             <?php
