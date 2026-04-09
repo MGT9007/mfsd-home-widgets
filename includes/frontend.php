@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 3.0.0 — News cards now use full-bleed background image style.
+ * Version: 3.1.0 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -26,9 +26,13 @@ function mfsd_hw_render_grid(): void {
         return;
     }
 
-    echo '<div class="mfsd-hw-grid">';
-    foreach ( $widgets as $w ) {
-        echo '<div class="mfsd-hw-grid__cell">';
+    $count     = count( $widgets );
+    $mod_class = in_array( $count, [ 1, 2, 4, 7 ], true ) ? ' mfsd-hw-grid--' . $count : '';
+
+    echo '<div class="mfsd-hw-grid' . esc_attr( $mod_class ) . '">';
+    foreach ( $widgets as $idx => $w ) {
+        $cell_mod = $mod_class ? ' mfsd-hw-grid__cell--' . ( $idx + 1 ) : '';
+        echo '<div class="mfsd-hw-grid__cell' . esc_attr( $cell_mod ) . '">';
         mfsd_hw_render_widget( $w['type'], (array) $w['config'], $role );
         echo '</div>';
     }
