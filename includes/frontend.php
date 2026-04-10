@@ -773,26 +773,6 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     }
 
 
-    // Decompress if gzip-encoded.
-    if ( substr( $body, 0, 2 ) === "" ) {
-        $body = gzdecode( $body );
-    }
-
-    // Strip BOM if present.
-    $body = preg_replace( '/^ï»¿/', '', $body );
-
-    // Some feeds have content before the XML declaration — strip it.
-    $xml_start = strpos( $body, '<?xml' );
-    if ( $xml_start === false ) {
-        $xml_start = strpos( $body, '<rss' );
-    }
-    if ( $xml_start === false ) {
-        $xml_start = strpos( $body, '<feed' );
-    }
-    if ( $xml_start !== false && $xml_start > 0 ) {
-        $body = substr( $body, $xml_start );
-    }
-
     libxml_use_internal_errors( true );
     $xml = simplexml_load_string( $body );
     $xml_errors = libxml_get_errors();
