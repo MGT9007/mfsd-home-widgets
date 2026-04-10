@@ -26,9 +26,13 @@ function mfsd_hw_render_grid(): void {
         return;
     }
 
-    echo '<div class="mfsd-hw-grid">';
-    foreach ( $widgets as $w ) {
-        echo '<div class="mfsd-hw-grid__cell">';
+    $count     = count( $widgets );
+    $mod_class = in_array( $count, [ 1, 2, 4, 7 ], true ) ? ' mfsd-hw-grid--' . $count : '';
+
+    echo '<div class="mfsd-hw-grid' . esc_attr( $mod_class ) . '">';
+    foreach ( $widgets as $idx => $w ) {
+        $cell_mod = $mod_class ? ' mfsd-hw-grid__cell--' . ( $idx + 1 ) : '';
+        echo '<div class="mfsd-hw-grid__cell' . esc_attr( $cell_mod ) . '">';
         mfsd_hw_render_widget( $w['type'], (array) $w['config'], $role );
         echo '</div>';
     }
@@ -53,7 +57,7 @@ function mfsd_hw_render_widget( string $type, array $config, string $role ): voi
         case 'new_courses':   mfsd_hw_card_courses( $config );           break;
         case 'top_scores':    mfsd_hw_card_scores( $config, $role );     break;
         case 'progress':      mfsd_hw_card_progress( $config, $role );   break;
-        case 'rss_feed':      error_log('MFSD_HW: render_widget rss_feed called'); mfsd_hw_card_rss( $config );               break;
+        case 'rss_feed':      mfsd_hw_card_rss( $config );               break;
     }
 }
 
