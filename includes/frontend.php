@@ -744,7 +744,6 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     $cached = get_transient( $transient_key );
     if ( is_array( $cached ) && ! empty( $cached ) ) return $cached;
 
-    error_log( 'MFSD_HW RSS: fetching ' . $feed_url );
 
     // Sanitise the URL — remove any backslash escaping from JSON storage.
     $feed_url = str_replace( '\/', '/', $feed_url );
@@ -757,26 +756,22 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     ] );
 
     if ( is_wp_error( $response ) ) {
-        error_log( 'MFSD_HW RSS ERROR: ' . $response->get_error_message() );
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
 
     $http_code = wp_remote_retrieve_response_code( $response );
     if ( $http_code !== 200 ) {
-        error_log( 'MFSD_HW RSS ERROR: HTTP ' . $http_code . ' for ' . $feed_url );
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
 
     $body = wp_remote_retrieve_body( $response );
     if ( empty( $body ) ) {
-        error_log( 'MFSD_HW RSS ERROR: empty body for ' . $feed_url );
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
 
-    error_log( 'MFSD_HW RSS: got ' . strlen( $body ) . ' bytes' );
 
     // Decompress if gzip-encoded.
     if ( substr( $body, 0, 2 ) === "" ) {
@@ -804,15 +799,12 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     libxml_clear_errors();
 
     if ( $xml === false ) {
-        error_log( 'MFSD_HW RSS ERROR: XML parse failed for ' . $feed_url . ' first 200: ' . substr( $body, 0, 200 ) );
         if ( ! empty( $xml_errors ) ) {
-            error_log( 'MFSD_HW RSS XML error: ' . $xml_errors[0]->message );
         }
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
 
-    error_log( 'MFSD_HW RSS: XML OK, items found' );
 
     // Support RSS 2.0 and Atom.
     $xml_items = [];
@@ -857,7 +849,6 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
 // Auto-rotates every 5 seconds; left/right arrows and dots for manual nav.
 
 function mfsd_hw_card_rss( array $c ): void {
-    error_log( 'MFSD_HW CARD_RSS called, config: ' . json_encode( $c ) );
     $feed_url    = $c['feed_url']    ?? '';
     $feed_limit  = (int) ( $c['feed_limit']  ?? 10 );
     $feed_prefix = $c['feed_prefix'] ?? '';
