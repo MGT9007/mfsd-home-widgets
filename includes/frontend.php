@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 4.2.0 — News cards now use full-bleed background image style.
+ * Version: 3.3.0 — News cards now use full-bleed background image style.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -53,7 +53,7 @@ function mfsd_hw_render_widget( string $type, array $config, string $role ): voi
         case 'new_courses':   mfsd_hw_card_courses( $config );           break;
         case 'top_scores':    mfsd_hw_card_scores( $config, $role );     break;
         case 'progress':      mfsd_hw_card_progress( $config, $role );   break;
-        case 'rss_feed':      mfsd_hw_card_rss( $config );               break;
+        case 'rss_feed':      error_log('MFSD_HW: render_widget rss_feed called'); mfsd_hw_card_rss( $config );               break;
     }
 }
 
@@ -828,6 +828,7 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
 // Auto-rotates every 5 seconds; left/right arrows and dots for manual nav.
 
 function mfsd_hw_card_rss( array $c ): void {
+    error_log( 'MFSD_HW CARD_RSS called, config: ' . json_encode( $c ) );
     $feed_url    = $c['feed_url']    ?? '';
     $feed_limit  = (int) ( $c['feed_limit']  ?? 10 );
     $feed_prefix = $c['feed_prefix'] ?? '';
