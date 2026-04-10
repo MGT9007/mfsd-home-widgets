@@ -58,13 +58,23 @@ function mfsd_hw_handle_save(): void {
     $roles     = is_array( $roles_raw ) ? array_map( 'sanitize_key', $roles_raw ) : [ 'all' ];
     if ( empty( $roles ) ) $roles = [ 'all' ];
 
+    // Per-role sort orders — one number per role slug submitted.
+    $role_sort_raw    = $_POST['role_sort_orders'] ?? [];
+    $role_sort_orders = [];
+    foreach ( mfsd_hw_roles() as $slug => $unused ) {
+        if ( isset( $role_sort_raw[ $slug ] ) && $role_sort_raw[ $slug ] !== '' ) {
+            $role_sort_orders[ $slug ] = (int) $role_sort_raw[ $slug ];
+        }
+    }
+
     $data = [
-        'type'       => $type,
-        'label'      => sanitize_text_field( $_POST['label'] ?? '' ),
-        'roles'      => $roles,
-        'active'     => isset( $_POST['active'] ) ? 1 : 0,
-        'sort_order' => (int) ( $_POST['sort_order'] ?? 0 ),
-        'config'     => mfsd_hw_sanitize_config( $type, $_POST['config'] ?? [] ),
+        'type'             => $type,
+        'label'            => sanitize_text_field( $_POST['label'] ?? '' ),
+        'roles'            => $roles,
+        'active'           => isset( $_POST['active'] ) ? 1 : 0,
+        'sort_order'       => (int) ( $_POST['sort_order'] ?? 0 ),
+        'role_sort_orders' => $role_sort_orders,
+        'config'           => mfsd_hw_sanitize_config( $type, $_POST['config'] ?? [] ),
     ];
 
     if ( $id > 0 ) {
@@ -248,6 +258,7 @@ function mfsd_hw_render_list(): void {
             <th><?php esc_html_e( 'Label', 'mfsd-home-widgets' ); ?></th>
             <th><?php esc_html_e( 'Type', 'mfsd-home-widgets' ); ?></th>
             <th><?php esc_html_e( 'Visible to', 'mfsd-home-widgets' ); ?></th>
+            <th style="width:160px;"><?php esc_html_e( 'Role Order', 'mfsd-home-widgets' ); ?></th>
             <th style="width:80px;"><?php esc_html_e( 'Status', 'mfsd-home-widgets' ); ?></th>
             <th><?php esc_html_e( 'Actions', 'mfsd-home-widgets' ); ?></th>
           </tr>
@@ -257,6 +268,7 @@ function mfsd_hw_render_list(): void {
             $is_active   = (int) $w['active'] === 1;
             $type_info   = $types[ $w['type'] ] ?? [ 'label' => $w['type'], 'icon' => 'dashicons-admin-generic' ];
             $role_labels = array_map( fn( $r ) => $roles[$r] ?? $r, (array) $w['roles'] );
+            $rso         = (array) ( $w['role_sort_orders'] ?? [] );
           ?>
             <tr class="mfsd-hw-admin__list-row<?php echo $is_active ? '' : ' mfsd-hw-admin__list-row--paused'; ?>">
 
@@ -276,6 +288,18 @@ function mfsd_hw_render_list(): void {
                 <?php foreach ( $role_labels as $rl ) : ?>
                   <span class="mfsd-hw-admin__role-pill"><?php echo esc_html( $rl ); ?></span>
                 <?php endforeach; ?>
+              </td>
+
+              <td style="font-size:11px;line-height:1.8;">
+                <?php if ( empty( $rso ) ) : ?>
+                  <span style="color:#aaa;">—</span>
+                <?php else : ?>
+                  <?php foreach ( $rso as $role_slug => $order_val ) : ?>
+                    <span class="mfsd-hw-admin__role-pill">
+                      <?php echo esc_html( ucfirst( $role_slug ) ); ?>: <?php echo (int) $order_val; ?>
+                    </span>
+                  <?php endforeach; ?>
+                <?php endif; ?>
               </td>
 
               <td>
@@ -426,11 +450,35 @@ function mfsd_hw_render_form( ?array $widget, string $type ): void {
 
           <div class="mfsd-hw-admin__sidebar-box">
             <h3><?php esc_html_e( 'Grid Position', 'mfsd-home-widgets' ); ?></h3>
-            <label for="mfsd_hw_order"><?php esc_html_e( 'Sort Order', 'mfsd-home-widgets' ); ?></label>
+            <p class="description" style="margin-bottom:10px;">
+              <?php esc_html_e( 'Set the position of this widget in each role\'s grid. Lower numbers appear first. Leave blank to use the default order.', 'mfsd-home-widgets' ); ?>
+            </p>
+            <?php
+            $saved_rso   = $widget ? (array) ( $widget['role_sort_orders'] ?? [] ) : [];
+            $all_roles_g = mfsd_hw_roles();
+            foreach ( $all_roles_g as $rslug => $rlabel ) :
+                $val = $saved_rso[ $rslug ] ?? '';
+            ?>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <label style="font-size:12px;font-weight:600;color:#50575e;">
+                  <?php echo esc_html( $rlabel ); ?>
+                </label>
+                <input type="number"
+                       name="role_sort_orders[<?php echo esc_attr( $rslug ); ?>]"
+                       value="<?php echo esc_attr( $val ); ?>"
+                       min="0" max="999"
+                       placeholder="—"
+                       style="width:60px;text-align:center;">
+              </div>
+            <?php endforeach; ?>
+            <hr>
+            <label for="mfsd_hw_order" style="font-size:12px;font-weight:600;color:#50575e;">
+              <?php esc_html_e( 'Default (all roles)', 'mfsd-home-widgets' ); ?>
+            </label>
             <input type="number" id="mfsd_hw_order" name="sort_order"
                    value="<?php echo esc_attr( $sort_order ); ?>"
-                   min="0" max="999" style="width:80px;display:block;margin-top:6px;">
-            <p class="description" style="margin-top:6px;"><?php esc_html_e( 'Lower = appears earlier in the grid.', 'mfsd-home-widgets' ); ?></p>
+                   min="0" max="999" style="width:60px;display:block;margin-top:6px;text-align:center;">
+            <p class="description" style="margin-top:6px;"><?php esc_html_e( 'Used when no role-specific order is set.', 'mfsd-home-widgets' ); ?></p>
           </div>
 
           <div class="mfsd-hw-admin__sidebar-box">

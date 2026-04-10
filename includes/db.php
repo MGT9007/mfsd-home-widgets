@@ -30,15 +30,16 @@ function mfsd_hw_create_table(): void {
     $charset_collate = $wpdb->get_charset_collate();
 
     $sql = "CREATE TABLE IF NOT EXISTS {$table} (
-        id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
-        type        VARCHAR(50)   NOT NULL,
-        label       VARCHAR(200)  NOT NULL DEFAULT '',
-        roles       VARCHAR(500)  NOT NULL DEFAULT '[\"all\"]',
-        active      TINYINT(1)    NOT NULL DEFAULT 1,
-        sort_order  INT           NOT NULL DEFAULT 0,
-        config      LONGTEXT      NOT NULL,
-        created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        id               INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+        type             VARCHAR(50)   NOT NULL,
+        label            VARCHAR(200)  NOT NULL DEFAULT '',
+        roles            VARCHAR(500)  NOT NULL DEFAULT '[\"all\"]',
+        active           TINYINT(1)    NOT NULL DEFAULT 1,
+        sort_order       INT           NOT NULL DEFAULT 0,
+        role_sort_orders VARCHAR(500)  NOT NULL DEFAULT '{}',
+        config           LONGTEXT      NOT NULL,
+        created_at       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at       DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         KEY type (type),
         KEY sort_order (sort_order)
@@ -46,6 +47,12 @@ function mfsd_hw_create_table(): void {
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta( $sql );
+
+    // Live migration: add role_sort_orders column to existing installs.
+    $col = $wpdb->get_results( "SHOW COLUMNS FROM `{$table}` LIKE 'role_sort_orders'" );
+    if ( empty( $col ) ) {
+        $wpdb->query( "ALTER TABLE `{$table}` ADD COLUMN `role_sort_orders` VARCHAR(500) NOT NULL DEFAULT '{}' AFTER `sort_order`" );
+    }
 
     update_option( 'mfsd_hw_db_version', MFSD_HW_VERSION );
 }
@@ -164,9 +171,22 @@ function mfsd_hw_get_for_role( string $role ): array {
     foreach ( $rows as $row ) {
         $roles = json_decode( $row['roles'], true ) ?: [ 'all' ];
         if ( in_array( 'all', $roles, true ) || in_array( $role, $roles, true ) ) {
-            $visible[] = mfsd_hw_decode_row( $row );
+            $decoded = mfsd_hw_decode_row( $row );
+
+            // Use the per-role sort order if one has been set for this role,
+            // otherwise fall back to the global sort_order.
+            $role_orders = $decoded['role_sort_orders'];
+            $decoded['_effective_order'] = isset( $role_orders[ $role ] )
+                ? (int) $role_orders[ $role ]
+                : (int) $decoded['sort_order'];
+
+            $visible[] = $decoded;
         }
     }
+
+    // Sort by the effective order for this role.
+    usort( $visible, fn( $a, $b ) => $a['_effective_order'] <=> $b['_effective_order'] );
+
     return $visible;
 }
 
@@ -180,13 +200,14 @@ function mfsd_hw_insert( array $data ) {
     global $wpdb;
     $table  = $wpdb->prefix . MFSD_HW_TABLE;
     $result = $wpdb->insert( $table, [
-        'type'       => $data['type'],
-        'label'      => $data['label']      ?? '',
-        'roles'      => json_encode( $data['roles'] ?? [ 'all' ] ),
-        'active'     => (int) ( $data['active'] ?? 1 ),
-        'sort_order' => (int) ( $data['sort_order'] ?? 0 ),
-        'config'     => json_encode( $data['config'] ?? [] ),
-    ], [ '%s', '%s', '%s', '%d', '%d', '%s' ] );
+        'type'             => $data['type'],
+        'label'            => $data['label']            ?? '',
+        'roles'            => json_encode( $data['roles'] ?? [ 'all' ] ),
+        'active'           => (int) ( $data['active'] ?? 1 ),
+        'sort_order'       => (int) ( $data['sort_order'] ?? 0 ),
+        'role_sort_orders' => json_encode( $data['role_sort_orders'] ?? [] ),
+        'config'           => json_encode( $data['config'] ?? [] ),
+    ], [ '%s', '%s', '%s', '%d', '%d', '%s', '%s' ] );
     return $result ? $wpdb->insert_id : false;
 }
 
@@ -201,14 +222,15 @@ function mfsd_hw_update( int $id, array $data ): bool {
     global $wpdb;
     $table  = $wpdb->prefix . MFSD_HW_TABLE;
     $result = $wpdb->update( $table, [
-        'type'       => $data['type'],
-        'label'      => $data['label']      ?? '',
-        'roles'      => json_encode( $data['roles'] ?? [ 'all' ] ),
-        'active'     => (int) ( $data['active'] ?? 1 ),
-        'sort_order' => (int) ( $data['sort_order'] ?? 0 ),
-        'config'     => json_encode( $data['config'] ?? [] ),
+        'type'             => $data['type'],
+        'label'            => $data['label']            ?? '',
+        'roles'            => json_encode( $data['roles'] ?? [ 'all' ] ),
+        'active'           => (int) ( $data['active'] ?? 1 ),
+        'sort_order'       => (int) ( $data['sort_order'] ?? 0 ),
+        'role_sort_orders' => json_encode( $data['role_sort_orders'] ?? [] ),
+        'config'           => json_encode( $data['config'] ?? [] ),
     ], [ 'id' => $id ],
-    [ '%s', '%s', '%s', '%d', '%d', '%s' ],
+    [ '%s', '%s', '%s', '%d', '%d', '%s', '%s' ],
     [ '%d' ] );
     return $result !== false;
 }
@@ -232,8 +254,9 @@ function mfsd_hw_delete( int $id ): bool {
  * @return array
  */
 function mfsd_hw_decode_row( array $row ): array {
-    $row['roles']  = json_decode( $row['roles'],  true ) ?: [ 'all' ];
-    $row['config'] = json_decode( $row['config'], true ) ?: [];
+    $row['roles']            = json_decode( $row['roles'],            true ) ?: [ 'all' ];
+    $row['config']           = json_decode( $row['config'],           true ) ?: [];
+    $row['role_sort_orders'] = json_decode( $row['role_sort_orders'] ?? '{}', true ) ?: [];
     return $row;
 }
 

@@ -12,9 +12,11 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-lg, 24px);
-  padding: var(--space-xl, 40px) var(--space-lg, 24px);
-  max-width: var(--content-max-width, 1200px);
+  padding: var(--space-xl, 40px) var(--space-md, 16px);
+  max-width: 1600px;
+  width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* 1 widget — full width */
