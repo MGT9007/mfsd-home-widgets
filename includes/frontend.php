@@ -746,9 +746,14 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
 
     error_log( 'MFSD_HW RSS: fetching ' . $feed_url );
 
+    // Sanitise the URL — remove any backslash escaping from JSON storage.
+    $feed_url = str_replace( '\/', '/', $feed_url );
+
     $response = wp_remote_get( $feed_url, [
-        'timeout'    => 10,
-        'user-agent' => 'Mozilla/5.0 (compatible; MFSDWidgets/' . MFSD_HW_VERSION . '; +https://mfsd.me)',
+        'timeout'     => 15,
+        'redirection' => 5,
+        'user-agent'  => 'Mozilla/5.0 (compatible; MFSDWidgets/' . MFSD_HW_VERSION . '; +https://mfsd.me)',
+        'headers'     => [ 'Accept' => 'application/rss+xml, application/xml, text/xml, */*' ],
     ] );
 
     if ( is_wp_error( $response ) ) {
