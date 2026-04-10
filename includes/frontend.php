@@ -778,12 +778,36 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
 
     error_log( 'MFSD_HW RSS: got ' . strlen( $body ) . ' bytes' );
 
+    // Decompress if gzip-encoded.
+    if ( substr( $body, 0, 2 ) === "" ) {
+        $body = gzdecode( $body );
+    }
+
+    // Strip BOM if present.
+    $body = preg_replace( '/^ï»¿/', '', $body );
+
+    // Some feeds have content before the XML declaration — strip it.
+    $xml_start = strpos( $body, '<?xml' );
+    if ( $xml_start === false ) {
+        $xml_start = strpos( $body, '<rss' );
+    }
+    if ( $xml_start === false ) {
+        $xml_start = strpos( $body, '<feed' );
+    }
+    if ( $xml_start !== false && $xml_start > 0 ) {
+        $body = substr( $body, $xml_start );
+    }
+
     libxml_use_internal_errors( true );
     $xml = simplexml_load_string( $body );
+    $xml_errors = libxml_get_errors();
     libxml_clear_errors();
 
     if ( $xml === false ) {
-        error_log( 'MFSD_HW RSS ERROR: XML parse failed for ' . $feed_url );
+        error_log( 'MFSD_HW RSS ERROR: XML parse failed for ' . $feed_url . ' first 200: ' . substr( $body, 0, 200 ) );
+        if ( ! empty( $xml_errors ) ) {
+            error_log( 'MFSD_HW RSS XML error: ' . $xml_errors[0]->message );
+        }
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
