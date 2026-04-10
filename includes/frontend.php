@@ -739,7 +739,7 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     if ( empty( $feed_url ) ) return [];
 
     $limit         = max( 1, min( 20, $limit ) );
-    $transient_key = 'mfsd_hw_rss_v2_' . md5( $feed_url . $limit );
+    $transient_key = 'mfsd_hw_rss_v3_' . md5( $feed_url . $limit );
 
     $cached = get_transient( $transient_key );
     if ( is_array( $cached ) && ! empty( $cached ) ) return $cached;
