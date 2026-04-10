@@ -817,20 +817,62 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     $prefix  = trim( $prefix );
     $results = [];
     $count   = 0;
+
+    // Register media namespace for feeds that use media:thumbnail / media:content.
+    $namespaces = $xml->getNamespaces( true );
+
     foreach ( $xml_items as $item ) {
         if ( $count >= $limit ) break;
         $title   = wp_strip_all_tags( (string) $item->title );
-        $link    = (string) ( $item->link ?? ( isset( $item->link['href'] ) ? $item->link['href'] : '' ) );
+        $link    = (string) ( $item->link ?? '' );
+
+        // Atom feeds use link[href] attribute.
+        if ( empty( $link ) && isset( $item->link ) ) {
+            $link_attrs = $item->link->attributes();
+            $link = (string) ( $link_attrs['href'] ?? '' );
+        }
+
         $summary = wp_strip_all_tags( (string) ( $item->description ?? $item->summary ?? '' ) );
-        // Trim summary to ~160 chars.
         if ( mb_strlen( $summary ) > 160 ) {
             $summary = mb_substr( $summary, 0, 157 ) . '…';
         }
+
+        // ── Extract image URL ─────────────────────────────────────────────────
+        $image_url = '';
+
+        // 1. <enclosure type="image/..."> — used by Sky Sports, many news feeds.
+        if ( isset( $item->enclosure ) ) {
+            $enc = $item->enclosure->attributes();
+            $enc_type = (string) ( $enc['type'] ?? '' );
+            if ( strpos( $enc_type, 'image' ) !== false ) {
+                $image_url = (string) ( $enc['url'] ?? '' );
+            }
+        }
+
+        // 2. <media:content> or <media:thumbnail> — used by BBC and others.
+        if ( empty( $image_url ) && isset( $namespaces['media'] ) ) {
+            $media = $item->children( $namespaces['media'] );
+            if ( isset( $media->thumbnail ) ) {
+                $mt = $media->thumbnail->attributes();
+                $image_url = (string) ( $mt['url'] ?? '' );
+            }
+            if ( empty( $image_url ) && isset( $media->content ) ) {
+                $mc = $media->content->attributes();
+                $mc_type = (string) ( $mc['type'] ?? '' );
+                if ( empty( $mc_type ) || strpos( $mc_type, 'image' ) !== false ) {
+                    $image_url = (string) ( $mc['url'] ?? '' );
+                }
+            }
+        }
+
+        // 3. <image> channel-level fallback (not per-item, skip for now).
+
         if ( $title ) {
             $results[] = [
-                'title'   => $prefix !== '' ? $prefix . ' ' . $title : $title,
-                'link'    => $link,
-                'summary' => $summary,
+                'title'     => $prefix !== '' ? $prefix . ' ' . $title : $title,
+                'link'      => $link,
+                'summary'   => $summary,
+                'image_url' => esc_url( $image_url ),
             ];
             $count++;
         }
@@ -888,15 +930,16 @@ function mfsd_hw_card_rss( array $c ): void {
     <div class="<?php echo esc_attr( $wrapper_cls ); ?>">
 
       <?php foreach ( $items as $i => $item ) :
-          $active = $i === 0 ? ' mfsd-hw-carousel__slide--active' : '';
+          $active    = $i === 0 ? ' mfsd-hw-carousel__slide--active' : '';
+          $img_url   = ! empty( $item['image_url'] ) ? $item['image_url'] : '';
+          $has_image = ! empty( $img_url );
       ?>
         <div class="mfsd-hw-carousel__slide<?php echo $active; ?>">
 
-          <?php // RSS items have no image — use a styled gradient background ?>
-          <div class="mfsd-hw-card__hero-bg mfsd-hw-card__hero-bg--rss"
-               style="background-image:none;">
+          <div class="mfsd-hw-card__hero-bg<?php echo $has_image ? '' : ' mfsd-hw-card__hero-bg--rss'; ?>"
+               style="<?php echo $has_image ? 'background-image:url(' . esc_url( $img_url ) . ');' : 'background-image:none;'; ?>">
           </div>
-          <div class="mfsd-hw-card__hero-overlay mfsd-hw-card__hero-overlay--rss"></div>
+          <div class="mfsd-hw-card__hero-overlay<?php echo $has_image ? '' : ' mfsd-hw-card__hero-overlay--rss'; ?>"></div>
 
           <div class="mfsd-hw-card__hero-content">
             <h3 class="mfsd-hw-card__hero-headline">
