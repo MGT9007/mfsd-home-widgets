@@ -841,11 +841,27 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
         $image_url = '';
 
         // 1. <enclosure type="image/..."> — used by Sky Sports, many news feeds.
+        // SimpleXML reads enclosure attributes directly from the element.
         if ( isset( $item->enclosure ) ) {
-            $enc = $item->enclosure->attributes();
-            $enc_type = (string) ( $enc['type'] ?? '' );
-            if ( strpos( $enc_type, 'image' ) !== false ) {
-                $image_url = (string) ( $enc['url'] ?? '' );
+            $enc_attrs = $item->enclosure->attributes();
+            $enc_url   = (string) ( $enc_attrs['url']  ?? '' );
+            $enc_type  = (string) ( $enc_attrs['type'] ?? '' );
+            if ( ! empty( $enc_url ) && ( empty( $enc_type ) || strpos( $enc_type, 'image' ) !== false ) ) {
+                $image_url = $enc_url;
+            }
+        }
+        // Fallback: check enclosure as a child element via xpath.
+        if ( empty( $image_url ) ) {
+            $enclosures = $item->xpath( 'enclosure' );
+            if ( ! empty( $enclosures ) ) {
+                foreach ( $enclosures as $enc ) {
+                    $enc_url  = (string) ( $enc['url']  ?? '' );
+                    $enc_type = (string) ( $enc['type'] ?? '' );
+                    if ( ! empty( $enc_url ) && ( empty( $enc_type ) || strpos( $enc_type, 'image' ) !== false ) ) {
+                        $image_url = $enc_url;
+                        break;
+                    }
+                }
             }
         }
 
