@@ -15,28 +15,34 @@
   padding: var(--space-lg, 24px);
   width: 100%;
   box-sizing: border-box;
-  /* Ensure rows have enough height — each row at least 280px */
-  grid-auto-rows: minmax(280px, auto);
+  grid-auto-rows: minmax(220px, auto);
 }
 
 /* Grid cells always stretch to fill their row */
 .mfsd-hw-grid__cell {
   display: flex;
   flex-direction: column;
-  min-height: 280px;
 }
 
-/* Cards always fill their cell */
-.mfsd-hw-grid__cell > .mfsd-hw-card,
-.mfsd-hw-grid__cell > .mfsd-hw-card--news-hero {
+/* Cards always fill their cell height */
+.mfsd-hw-grid__cell .mfsd-hw-card {
   flex: 1;
+  height: 100%;
 }
 
 /* ── BACKGROUND FIX ──────────────────────────────────────────────────────── */
-/* Override the theme's off-white mfsd-site-main background on the front page.
- * body.mfsd-front-page is added by functions.php via is_front_page(). */
-body.mfsd-front-page .mfsd-site-main {
-  background-color: var(--color-bg-page, #111);
+/* The theme sets mfsd-site-main to --color-bg-content (off-white) which
+   shows as a large blank gap below the widget grid on the front page.
+   Override it here unconditionally — dark background works on all pages
+   since plugin CSS only loads on the front page anyway (is_front_page check
+   in mfsd_hw_frontend_assets). Also target mfsd-home-page directly. */
+.mfsd-site-main {
+  background-color: var(--color-bg-page, #111111) !important;
+}
+
+.mfsd-home-page,
+.mfsd-home-widgets-zone {
+  background-color: var(--color-bg-page, #111111);
 }
 
 /* 1 widget — full width */
@@ -65,7 +71,7 @@ body.mfsd-front-page .mfsd-site-main {
  */
 .mfsd-hw-grid--7 {
   grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: auto;
+  grid-template-rows: 320px 220px 220px 220px 220px;
   grid-template-areas:
     "cell-1 cell-1"
     "cell-2 cell-3"
@@ -90,6 +96,7 @@ body.mfsd-front-page .mfsd-site-main {
  */
 .mfsd-hw-grid--7b {
   grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 220px 220px 220px;
   grid-template-areas:
     "cell-1 cell-2 cell-3"
     "cell-1 cell-4 cell-4"
@@ -119,6 +126,7 @@ body.mfsd-front-page .mfsd-site-main {
  */
 .mfsd-hw-grid--7c {
   grid-template-columns: 3fr 1fr 1fr 1fr;
+  grid-template-rows: 220px 220px 220px;
   grid-template-areas:
     "cell-1 cell-2 cell-3 cell-3"
     "cell-1 cell-4 cell-4 cell-5"
