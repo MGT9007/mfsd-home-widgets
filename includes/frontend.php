@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 
 add_action( 'mfsd_home_widgets', 'mfsd_hw_render_grid' );
 
+if ( ! function_exists( 'mfsd_hw_render_grid' ) ) :
 function mfsd_hw_render_grid(): void {
     if ( ! is_user_logged_in() ) return;
 
@@ -33,7 +34,7 @@ function mfsd_hw_render_grid(): void {
     // For 7 widgets, honour the chosen layout (7 = Layout A, 7b = Layout B).
     // For other counts use automatic sizing classes.
     if ( $count === 7 ) {
-        $mod_class = ' mfsd-hw-grid--' . ( $layout === '7b' ? '7b' : '7' );
+        $mod_class = ' mfsd-hw-grid--' . ( in_array( $layout, [ '7b', '7c' ], true ) ? $layout : '7' );
     } elseif ( in_array( $count, [ 1, 2, 4 ], true ) ) {
         $mod_class = ' mfsd-hw-grid--' . $count;
     } else {
@@ -49,7 +50,9 @@ function mfsd_hw_render_grid(): void {
     }
     echo '</div>';
 }
+endif; // mfsd_hw_render_grid
 
+if ( ! function_exists( 'mfsd_hw_role_fallback' ) ) :
 function mfsd_hw_role_fallback(): string {
     $user  = wp_get_current_user();
     $roles = (array) $user->roles;
@@ -59,7 +62,9 @@ function mfsd_hw_role_fallback(): string {
     if ( in_array( 'student',       $roles, true ) ) return 'student';
     return 'parent';
 }
+endif; // mfsd_hw_role_fallback
 
+if ( ! function_exists( 'mfsd_hw_get_layout_for_role' ) ) :
 /**
  * Return the chosen layout slug for a role.
  * Stored as a JSON object in wp_options: { "student": "7b", "parent": "7", ... }
@@ -69,8 +74,9 @@ function mfsd_hw_get_layout_for_role( string $role ): string {
     $layouts = get_option( 'mfsd_hw_role_layouts', [] );
     if ( ! is_array( $layouts ) ) $layouts = [];
     $val = $layouts[ $role ] ?? '7';
-    return in_array( $val, [ '7', '7b' ], true ) ? $val : '7';
+    return in_array( $val, [ '7', '7b', '7c' ], true ) ? $val : '7';
 }
+endif; // mfsd_hw_get_layout_for_role
 
 function mfsd_hw_render_widget( string $type, array $config, string $role ): void {
     switch ( $type ) {

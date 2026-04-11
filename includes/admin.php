@@ -20,7 +20,7 @@ function mfsd_hw_handle_save_layouts(): void {
     if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorised' );
 
     $raw     = $_POST['role_layouts'] ?? [];
-    $allowed = [ '7', '7b' ];
+    $allowed = [ '7', '7b', '7c' ];
     $layouts = [];
     foreach ( mfsd_hw_roles() as $slug => $unused ) {
         $val = sanitize_key( $raw[ $slug ] ?? '7' );
@@ -328,6 +328,16 @@ function mfsd_hw_render_layouts_tab(): void {
                 [ 1, 2, 3 ],
                 [ 1, 4, 4 ],
                 [ 5, 6, 7 ],
+            ],
+            'cols' => 3,
+        ],
+        '7c' => [
+            'label'   => __( 'Layout C — Tall Left, Asymmetric Right', 'mfsd-home-widgets' ),
+            'desc'    => __( 'Tall widget spans full left column. Right side has two equal top, one wide + one narrow middle, one narrow + one wide bottom.', 'mfsd-home-widgets' ),
+            'areas'   => [
+                [ 1, 2, 3 ],
+                [ 1, 4, 5 ],
+                [ 1, 6, 7 ],
             ],
             'cols' => 3,
         ],
