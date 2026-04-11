@@ -12,9 +12,9 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-lg, 24px);
-  padding: var(--space-xl, 40px) var(--space-lg, 24px);
-  max-width: var(--content-max-width, 1200px);
-  margin: 0 auto;
+  padding: var(--space-lg, 24px);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* 1 widget — full width */
