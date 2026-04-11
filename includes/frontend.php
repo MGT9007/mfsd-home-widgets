@@ -26,8 +26,19 @@ function mfsd_hw_render_grid(): void {
         return;
     }
 
-    $count     = count( $widgets );
-    $mod_class = in_array( $count, [ 1, 2, 4, 7 ], true ) ? ' mfsd-hw-grid--' . $count : '';
+    $count   = count( $widgets );
+    $layout  = mfsd_hw_get_layout_for_role( $role );
+
+    // Determine the CSS modifier class.
+    // For 7 widgets, honour the chosen layout (7 = Layout A, 7b = Layout B).
+    // For other counts use automatic sizing classes.
+    if ( $count === 7 ) {
+        $mod_class = ' mfsd-hw-grid--' . ( $layout === '7b' ? '7b' : '7' );
+    } elseif ( in_array( $count, [ 1, 2, 4 ], true ) ) {
+        $mod_class = ' mfsd-hw-grid--' . $count;
+    } else {
+        $mod_class = '';
+    }
 
     echo '<div class="mfsd-hw-grid' . esc_attr( $mod_class ) . '">';
     foreach ( $widgets as $idx => $w ) {
@@ -49,6 +60,18 @@ function mfsd_hw_role_fallback(): string {
     return 'parent';
 }
 
+/**
+ * Return the chosen layout slug for a role.
+ * Stored as a JSON object in wp_options: { "student": "7b", "parent": "7", ... }
+ * Valid values: '7' (Layout A) or '7b' (Layout B). Defaults to '7'.
+ */
+function mfsd_hw_get_layout_for_role( string $role ): string {
+    $layouts = get_option( 'mfsd_hw_role_layouts', [] );
+    if ( ! is_array( $layouts ) ) $layouts = [];
+    $val = $layouts[ $role ] ?? '7';
+    return in_array( $val, [ '7', '7b' ], true ) ? $val : '7';
+}
+
 function mfsd_hw_render_widget( string $type, array $config, string $role ): void {
     switch ( $type ) {
         case 'news_internal': mfsd_hw_card_news( 'internal', $config ); break;
@@ -57,7 +80,7 @@ function mfsd_hw_render_widget( string $type, array $config, string $role ): voi
         case 'new_courses':   mfsd_hw_card_courses( $config );           break;
         case 'top_scores':    mfsd_hw_card_scores( $config, $role );     break;
         case 'progress':      mfsd_hw_card_progress( $config, $role );   break;
-        case 'rss_feed':      mfsd_hw_card_rss( $config );               break;
+        case 'rss_feed':      error_log('MFSD_HW: render_widget rss_feed called'); mfsd_hw_card_rss( $config );               break;
     }
 }
 
