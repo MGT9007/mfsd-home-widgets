@@ -332,14 +332,14 @@ function mfsd_hw_render_layouts_tab(): void {
             'cols' => 3,
         ],
         '7c' => [
-            'label'   => __( 'Layout C — Tall Left, Asymmetric Right', 'mfsd-home-widgets' ),
-            'desc'    => __( 'Tall widget spans full left column. Right side has two equal top, one wide + one narrow middle, one narrow + one wide bottom.', 'mfsd-home-widgets' ),
+            'label'   => __( 'Layout C — Large Left, Alternating Right', 'mfsd-home-widgets' ),
+            'desc'    => __( 'Widget 1 fills the left half. Right side alternates: row 1 narrow+wide, row 2 wide+narrow, row 3 narrow+wide.', 'mfsd-home-widgets' ),
             'areas'   => [
-                [ 1, 2, 3 ],
-                [ 1, 4, 5 ],
-                [ 1, 6, 7 ],
+                [ 1, 2, 3, 3 ],
+                [ 1, 4, 4, 5 ],
+                [ 1, 6, 7, 7 ],
             ],
-            'cols' => 3,
+            'cols' => 4,
         ],
     ];
 
