@@ -15,6 +15,28 @@
   padding: var(--space-lg, 24px);
   width: 100%;
   box-sizing: border-box;
+  /* Ensure rows have enough height — each row at least 280px */
+  grid-auto-rows: minmax(280px, auto);
+}
+
+/* Grid cells always stretch to fill their row */
+.mfsd-hw-grid__cell {
+  display: flex;
+  flex-direction: column;
+  min-height: 280px;
+}
+
+/* Cards always fill their cell */
+.mfsd-hw-grid__cell > .mfsd-hw-card,
+.mfsd-hw-grid__cell > .mfsd-hw-card--news-hero {
+  flex: 1;
+}
+
+/* ── BACKGROUND FIX ──────────────────────────────────────────────────────── */
+/* Override the theme's off-white mfsd-site-main background on the front page.
+ * body.mfsd-front-page is added by functions.php via is_front_page(). */
+body.mfsd-front-page .mfsd-site-main {
+  background-color: var(--color-bg-page, #111);
 }
 
 /* 1 widget — full width */
@@ -140,11 +162,6 @@
   .mfsd-hw-grid--4 {
     grid-template-columns: 1fr;
   }
-}
-
-.mfsd-hw-grid__cell {
-  display: flex;
-  flex-direction: column;
 }
 
 .mfsd-hw-empty {
