@@ -110,6 +110,11 @@
 .mfsd-hw-grid--7c .mfsd-hw-grid__cell--5 { grid-area: cell-5; }
 .mfsd-hw-grid--7c .mfsd-hw-grid__cell--6 { grid-area: cell-6; }
 .mfsd-hw-grid--7c .mfsd-hw-grid__cell--7 { grid-area: cell-7; }
+
+@media (max-width: 960px) {
+  .mfsd-hw-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .mfsd-hw-grid--1 {
     grid-template-columns: 1fr;
   }
