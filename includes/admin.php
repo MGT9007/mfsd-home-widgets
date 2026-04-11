@@ -254,7 +254,7 @@ function mfsd_hw_render_list(): void {
       <table class="widefat mfsd-hw-admin__list-table">
         <thead>
           <tr>
-            <th style="width:50px;"><?php esc_html_e( 'Order', 'mfsd-home-widgets' ); ?></th>
+            <th style="width:50px;"><?php esc_html_e( 'ID', 'mfsd-home-widgets' ); ?></th>
             <th><?php esc_html_e( 'Label', 'mfsd-home-widgets' ); ?></th>
             <th><?php esc_html_e( 'Type', 'mfsd-home-widgets' ); ?></th>
             <th><?php esc_html_e( 'Visible to', 'mfsd-home-widgets' ); ?></th>
@@ -272,7 +272,7 @@ function mfsd_hw_render_list(): void {
           ?>
             <tr class="mfsd-hw-admin__list-row<?php echo $is_active ? '' : ' mfsd-hw-admin__list-row--paused'; ?>">
 
-              <td class="mfsd-hw-admin__list-order"><?php echo esc_html( $w['sort_order'] ); ?></td>
+              <td class="mfsd-hw-admin__list-order" style="color:#aaa;"><?php echo (int) $w['id']; ?></td>
 
               <td>
                 <strong><?php echo esc_html( $w['label'] ?: $type_info['label'] ); ?></strong>
@@ -290,16 +290,27 @@ function mfsd_hw_render_list(): void {
                 <?php endforeach; ?>
               </td>
 
-              <td style="font-size:11px;line-height:1.8;">
-                <?php if ( empty( $rso ) ) : ?>
-                  <span style="color:#aaa;">—</span>
-                <?php else : ?>
-                  <?php foreach ( $rso as $role_slug => $order_val ) : ?>
-                    <span class="mfsd-hw-admin__role-pill">
-                      <?php echo esc_html( ucfirst( $role_slug ) ); ?>: <?php echo (int) $order_val; ?>
-                    </span>
-                  <?php endforeach; ?>
-                <?php endif; ?>
+              <td style="font-size:11px;line-height:2;">
+                <?php
+                // Show effective position for every role this widget is visible to.
+                // If the widget is visible to 'all', expand to all concrete roles.
+                $widget_roles = (array) $w['roles'];
+                $concrete     = in_array( 'all', $widget_roles, true )
+                    ? array_keys( array_filter( $roles, fn( $s ) => $s !== 'all', ARRAY_FILTER_USE_KEY ) )
+                    : array_filter( $widget_roles, fn( $r ) => $r !== 'all' );
+
+                foreach ( $concrete as $rslug ) :
+                    if ( ! isset( $roles[ $rslug ] ) ) continue;
+                    $has_override = isset( $rso[ $rslug ] ) && $rso[ $rslug ] !== '';
+                    $effective    = $has_override ? (int) $rso[ $rslug ] : (int) $w['sort_order'];
+                    $pill_style   = $has_override
+                        ? 'background:#1d2327;color:#C9A84C;'   // gold = custom override
+                        : 'background:#3c434a;color:#ccc;';      // grey = using default
+                ?>
+                  <span class="mfsd-hw-admin__role-pill" style="<?php echo $pill_style; ?>">
+                    <?php echo esc_html( ucfirst( $rslug ) ); ?>: <?php echo $effective; ?>
+                  </span>
+                <?php endforeach; ?>
               </td>
 
               <td>
