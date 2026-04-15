@@ -350,6 +350,16 @@ function mfsd_hw_render_layouts_tab(): void {
     // Widgets visible to this role, in their effective order.
     $role_widgets = mfsd_hw_get_for_role( $active_role );
     $widget_count = count( $role_widgets );
+    // Auto-layout previews for non-7 counts.
+    // These match the CSS classes applied by mfsd_hw_render_grid().
+    $auto_layouts = [
+        1 => [ 'label' => '1 widget — full width',         'areas' => [ [ 1 ] ],             'cols' => 1 ],
+        2 => [ 'label' => '2 widgets — side by side',      'areas' => [ [ 1, 2 ] ],           'cols' => 2 ],
+        3 => [ 'label' => '3 widgets — 3 columns',         'areas' => [ [ 1, 2, 3 ] ],        'cols' => 3 ],
+        4 => [ 'label' => '4 widgets — 2×2 grid',          'areas' => [ [ 1, 2 ], [ 3, 4 ] ], 'cols' => 2 ],
+        5 => [ 'label' => '5 widgets — 3-col, last 2 wide','areas' => [ [ 1, 2, 3 ], [ 4, 4, 5 ] ], 'cols' => 3 ],
+        6 => [ 'label' => '6 widgets — 3×2 grid',          'areas' => [ [ 1, 2, 3 ], [ 4, 5, 6 ] ], 'cols' => 3 ],
+    ];
     ?>
 
     <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -366,41 +376,74 @@ function mfsd_hw_render_layouts_tab(): void {
               <?php esc_html_e( 'Layout per Role', 'mfsd-home-widgets' ); ?>
             </h3>
             <p class="description" style="margin:8px 0 20px;">
-              <?php esc_html_e( 'Choose which grid layout to use for each role. Only applies when that role has exactly 7 active widgets.', 'mfsd-home-widgets' ); ?>
+              <?php esc_html_e( 'Layout selection applies when a role has exactly 7 active widgets. For other counts the layout is automatic — a preview is shown below.', 'mfsd-home-widgets' ); ?>
             </p>
 
             <?php foreach ( $all_roles as $rslug => $rlabel ) :
-                $current = $saved_layouts[ $rslug ] ?? '7';
+                $current       = $saved_layouts[ $rslug ] ?? '7';
+                $role_wids     = mfsd_hw_get_for_role( $rslug );
+                $count         = count( $role_wids );
             ?>
-              <div style="margin-bottom:24px;">
-                <h4 style="margin:0 0 10px;font-size:13px;font-weight:700;color:#1d2327;">
+              <div style="margin-bottom:28px;padding-bottom:24px;border-bottom:1px solid #f0f0f1;">
+                <h4 style="margin:0 0 8px;font-size:13px;font-weight:700;color:#1d2327;display:flex;align-items:center;gap:8px;">
                   <?php echo esc_html( $rlabel ); ?>
+                  <span style="font-size:11px;font-weight:400;background:#f0f0f1;color:#50575e;padding:2px 8px;border-radius:10px;">
+                    <?php printf( esc_html__( '%d widget(s)', 'mfsd-home-widgets' ), $count ); ?>
+                  </span>
                 </h4>
-                <div style="display:flex;gap:16px;flex-wrap:wrap;">
-                  <?php foreach ( $layouts as $lslug => $linfo ) : ?>
-                    <label style="cursor:pointer;flex:1;min-width:200px;max-width:300px;">
-                      <input type="radio"
-                             name="role_layouts[<?php echo esc_attr( $rslug ); ?>]"
-                             value="<?php echo esc_attr( $lslug ); ?>"
-                             <?php checked( $current, $lslug ); ?>
-                             style="position:absolute;opacity:0;pointer-events:none;"
-                             class="mfsd-hw-layout-radio">
-                      <div class="mfsd-hw-layout-card<?php echo $current === $lslug ? ' mfsd-hw-layout-card--active' : ''; ?>"
-                           style="border:2px solid <?php echo $current === $lslug ? '#C9A84C' : '#ddd'; ?>;border-radius:6px;padding:12px;background:#fff;transition:border-color .15s;">
-                        <?php
-                        // Render the mini grid thumbnail
-                        mfsd_hw_render_layout_thumbnail( $linfo['areas'], $linfo['cols'] );
-                        ?>
-                        <strong style="display:block;margin-top:8px;font-size:12px;color:#1d2327;">
-                          <?php echo esc_html( $linfo['label'] ); ?>
-                        </strong>
-                        <span style="font-size:11px;color:#666;line-height:1.4;">
-                          <?php echo esc_html( $linfo['desc'] ); ?>
-                        </span>
-                      </div>
-                    </label>
-                  <?php endforeach; ?>
-                </div>
+
+                <?php if ( $count === 7 ) : ?>
+                  <?php /* Show layout selector for 7-widget roles */ ?>
+                  <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                    <?php foreach ( $layouts as $lslug => $linfo ) : ?>
+                      <label style="cursor:pointer;flex:1;min-width:200px;max-width:300px;">
+                        <input type="radio"
+                               name="role_layouts[<?php echo esc_attr( $rslug ); ?>]"
+                               value="<?php echo esc_attr( $lslug ); ?>"
+                               <?php checked( $current, $lslug ); ?>
+                               style="position:absolute;opacity:0;pointer-events:none;"
+                               class="mfsd-hw-layout-radio">
+                        <div class="mfsd-hw-layout-card<?php echo $current === $lslug ? ' mfsd-hw-layout-card--active' : ''; ?>"
+                             style="border:2px solid <?php echo $current === $lslug ? '#C9A84C' : '#ddd'; ?>;border-radius:6px;padding:12px;background:#fff;transition:border-color .15s;">
+                          <?php mfsd_hw_render_layout_thumbnail( $linfo['areas'], $linfo['cols'], $role_wids, $widget_types ); ?>
+                          <strong style="display:block;margin-top:8px;font-size:12px;color:#1d2327;">
+                            <?php echo esc_html( $linfo['label'] ); ?>
+                          </strong>
+                          <span style="font-size:11px;color:#666;line-height:1.4;">
+                            <?php echo esc_html( $linfo['desc'] ); ?>
+                          </span>
+                        </div>
+                      </label>
+                    <?php endforeach; ?>
+                  </div>
+
+                <?php elseif ( $count === 0 ) : ?>
+                  <p style="color:#888;font-size:12px;font-style:italic;margin:0;">
+                    <?php esc_html_e( 'No active widgets for this role.', 'mfsd-home-widgets' ); ?>
+                  </p>
+
+                <?php else : ?>
+                  <?php /* Show auto-layout preview for non-7 counts */ ?>
+                  <div style="display:flex;align-items:flex-start;gap:16px;">
+                    <div style="flex-shrink:0;">
+                      <?php
+                      $auto = $auto_layouts[ $count ] ?? null;
+                      if ( $auto ) {
+                          mfsd_hw_render_layout_thumbnail( $auto['areas'], $auto['cols'], $role_wids, $widget_types );
+                      }
+                      ?>
+                    </div>
+                    <div>
+                      <p style="margin:0 0 4px;font-size:12px;color:#50575e;">
+                        <strong><?php echo esc_html( $auto_layouts[ $count ]['label'] ?? "Auto ({$count} widgets)" ); ?></strong>
+                      </p>
+                      <p style="margin:0;font-size:11px;color:#888;">
+                        <?php esc_html_e( 'Layout is automatic for this widget count. Add or remove widgets to reach 7 to unlock layout selection.', 'mfsd-home-widgets' ); ?>
+                      </p>
+                    </div>
+                  </div>
+                <?php endif; ?>
+
               </div>
             <?php endforeach; ?>
 
