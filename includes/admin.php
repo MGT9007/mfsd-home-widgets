@@ -20,7 +20,7 @@ function mfsd_hw_handle_save_layouts(): void {
     if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorised' );
 
     $raw     = $_POST['role_layouts'] ?? [];
-    $allowed = [ '7', '7b', '7c' ];
+    $allowed = [ '7', '7b', '7c', '6', '6b', '6c' ];
     $layouts = [];
     foreach ( mfsd_hw_roles() as $slug => $unused ) {
         $val = sanitize_key( $raw[ $slug ] ?? '7' );
@@ -358,7 +358,7 @@ function mfsd_hw_render_layouts_tab(): void {
         3 => [ 'label' => '3 widgets — 3 columns',         'areas' => [ [ 1, 2, 3 ] ],        'cols' => 3 ],
         4 => [ 'label' => '4 widgets — 2×2 grid',          'areas' => [ [ 1, 2 ], [ 3, 4 ] ], 'cols' => 2 ],
         5 => [ 'label' => '5 widgets — 3-col, last 2 wide','areas' => [ [ 1, 2, 3 ], [ 4, 4, 5 ] ], 'cols' => 3 ],
-        6 => [ 'label' => '6 widgets — tall left, stacked right',
+        6 => [ 'label' => '6 widgets — Layout A: tall left, stacked right',
                'areas' => [
                    [ 1, 2 ],
                    [ 1, 3 ],
@@ -366,6 +366,20 @@ function mfsd_hw_render_layouts_tab(): void {
                    [ 5, 6 ],
                ],
                'cols' => 2 ],
+        '6b' => [ 'label' => '6 widgets — Layout B: large left, equal pairs stacked right',
+               'areas' => [
+                   [ 1, 1, 1, 2, 2, 3, 3 ],
+                   [ 1, 1, 1, 4, 4, 5, 5 ],
+                   [ 1, 1, 1, 4, 4, 5, 5 ],
+               ],
+               'cols' => 7 ],
+        '6c' => [ 'label' => '6 widgets — Layout C: large left, tall narrow + small pairs right',
+               'areas' => [
+                   [ 1, 1, 1, 2, 3, 4 ],
+                   [ 1, 1, 1, 2, 5, 6 ],
+                   [ 1, 1, 1, 2, 5, 6 ],
+               ],
+               'cols' => 6 ],
     ];
     ?>
 
@@ -429,8 +443,34 @@ function mfsd_hw_render_layouts_tab(): void {
                     <?php esc_html_e( 'No active widgets for this role.', 'mfsd-home-widgets' ); ?>
                   </p>
 
+                <?php elseif ( $count === 6 ) : ?>
+                  <?php /* Show layout selector for 6-widget roles */ ?>
+                  <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                    <?php foreach ( [ 6, '6b', '6c' ] as $lslug ) :
+                        $linfo = $auto_layouts[ $lslug ] ?? null;
+                        if ( ! $linfo ) continue;
+                        $is_selected = ( ( $saved_layouts[ $rslug ] ?? '6' ) === (string) $lslug );
+                    ?>
+                      <label style="cursor:pointer;flex:1;min-width:200px;max-width:300px;">
+                        <input type="radio"
+                               name="role_layouts[<?php echo esc_attr( $rslug ); ?>]"
+                               value="<?php echo esc_attr( $lslug ); ?>"
+                               <?php checked( $is_selected, true ); ?>
+                               style="position:absolute;opacity:0;pointer-events:none;"
+                               class="mfsd-hw-layout-radio">
+                        <div class="mfsd-hw-layout-card<?php echo $is_selected ? ' mfsd-hw-layout-card--active' : ''; ?>"
+                             style="border:2px solid <?php echo $is_selected ? '#C9A84C' : '#ddd'; ?>;border-radius:6px;padding:12px;background:#fff;transition:border-color .15s;">
+                          <?php mfsd_hw_render_layout_thumbnail( $linfo['areas'], $linfo['cols'], $role_wids, $widget_types ); ?>
+                          <strong style="display:block;margin-top:8px;font-size:12px;color:#1d2327;">
+                            <?php echo esc_html( $linfo['label'] ); ?>
+                          </strong>
+                        </div>
+                      </label>
+                    <?php endforeach; ?>
+                  </div>
+
                 <?php else : ?>
-                  <?php /* Show auto-layout preview for non-7 counts */ ?>
+                  <?php /* Show auto-layout preview for all other counts */ ?>
                   <div style="display:flex;align-items:flex-start;gap:16px;">
                     <div style="flex-shrink:0;">
                       <?php
