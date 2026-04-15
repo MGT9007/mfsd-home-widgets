@@ -358,7 +358,14 @@ function mfsd_hw_render_layouts_tab(): void {
         3 => [ 'label' => '3 widgets — 3 columns',         'areas' => [ [ 1, 2, 3 ] ],        'cols' => 3 ],
         4 => [ 'label' => '4 widgets — 2×2 grid',          'areas' => [ [ 1, 2 ], [ 3, 4 ] ], 'cols' => 2 ],
         5 => [ 'label' => '5 widgets — 3-col, last 2 wide','areas' => [ [ 1, 2, 3 ], [ 4, 4, 5 ] ], 'cols' => 3 ],
-        6 => [ 'label' => '6 widgets — 3×2 grid',          'areas' => [ [ 1, 2, 3 ], [ 4, 5, 6 ] ], 'cols' => 3 ],
+        6 => [ 'label' => '6 widgets — tall left, stacked right',
+               'areas' => [
+                   [ 1, 2 ],
+                   [ 1, 3 ],
+                   [ 4, 6 ],
+                   [ 5, 6 ],
+               ],
+               'cols' => 2 ],
     ];
     ?>
 
