@@ -77,7 +77,7 @@ function mfsd_hw_get_layout_for_role( string $role ): string {
     $layouts = get_option( 'mfsd_hw_role_layouts', [] );
     if ( ! is_array( $layouts ) ) $layouts = [];
     $val = $layouts[ $role ] ?? '7';
-    return in_array( $val, [ '7', '7b', '7c' ], true ) ? $val : '7';
+    return in_array( $val, [ '7', '7b', '7c', '6', '6b' ], true ) ? $val : '7';
 }
 endif; // mfsd_hw_get_layout_for_role
 
