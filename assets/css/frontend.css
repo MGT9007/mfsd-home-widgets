@@ -88,6 +88,7 @@
 .mfsd-hw-grid--6 {
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: 1fr 1fr 1fr 1fr;
+  grid-auto-rows: unset;
   grid-template-areas:
     "cell-1 cell-2"
     "cell-1 cell-3"
@@ -117,6 +118,8 @@
 .mfsd-hw-grid--6b {
   grid-template-columns: 3fr 1fr 1fr 1fr 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
+  grid-auto-rows: unset;
+  grid-auto-rows: unset;
   grid-template-areas:
     "cell-1 cell-2 cell-2 cell-3 cell-3 cell-4 cell-4"
     "cell-1 cell-5 cell-5 cell-5 cell-6 cell-6 cell-6"
@@ -141,6 +144,7 @@
 .mfsd-hw-grid--7 {
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: 1.5fr 1fr 1fr 1fr 1fr;
+  grid-auto-rows: unset;
   grid-template-areas:
     "cell-1 cell-1"
     "cell-2 cell-3"
@@ -166,6 +170,7 @@
 .mfsd-hw-grid--7b {
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: 1fr 1fr 1fr;
+  grid-auto-rows: unset;
   grid-template-areas:
     "cell-1 cell-2 cell-3"
     "cell-1 cell-4 cell-4"
@@ -196,6 +201,7 @@
 .mfsd-hw-grid--7c {
   grid-template-columns: 3fr 1fr 1fr 1fr;
   grid-template-rows: 1fr 1fr 1fr;
+  grid-auto-rows: unset;
   grid-template-areas:
     "cell-1 cell-2 cell-3 cell-3"
     "cell-1 cell-4 cell-4 cell-5"
