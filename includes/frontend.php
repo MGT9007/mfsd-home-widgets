@@ -37,7 +37,7 @@ function mfsd_hw_render_grid(): void {
     if ( $count === 7 ) {
         $mod_class = ' mfsd-hw-grid--' . ( in_array( $layout, [ '7b', '7c' ], true ) ? $layout : '7' );
     } elseif ( $count === 6 ) {
-        $mod_class = ' mfsd-hw-grid--' . ( $layout === '6b' ? '6b' : '6' );
+        $mod_class = ' mfsd-hw-grid--' . ( in_array( $layout, [ '6b', '6c' ], true ) ? $layout : '6' );
     } elseif ( in_array( $count, [ 1, 2, 4 ], true ) ) {
         $mod_class = ' mfsd-hw-grid--' . $count;
     } else {
@@ -77,7 +77,7 @@ function mfsd_hw_get_layout_for_role( string $role ): string {
     $layouts = get_option( 'mfsd_hw_role_layouts', [] );
     if ( ! is_array( $layouts ) ) $layouts = [];
     $val = $layouts[ $role ] ?? '7';
-    return in_array( $val, [ '7', '7b', '7c', '6', '6b' ], true ) ? $val : '7';
+    return in_array( $val, [ '7', '7b', '7c', '6', '6b', '6c' ], true ) ? $val : '7';
 }
 endif; // mfsd_hw_get_layout_for_role
 

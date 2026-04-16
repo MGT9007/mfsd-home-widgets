@@ -20,7 +20,7 @@ function mfsd_hw_handle_save_layouts(): void {
     if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorised' );
 
     $raw     = $_POST['role_layouts'] ?? [];
-    $allowed = [ '7', '7b', '7c', '6', '6b' ];
+    $allowed = [ '7', '7b', '7c', '6', '6b', '6c' ];
     $layouts = [];
     foreach ( mfsd_hw_roles() as $slug => $unused ) {
         $val = sanitize_key( $raw[ $slug ] ?? '7' );
@@ -373,6 +373,13 @@ function mfsd_hw_render_layouts_tab(): void {
                    [ 1, 1, 1, 1, 1, 1, 5, 5, 5, 6, 6, 6 ],
                ],
                'cols' => 12 ],
+        '6c' => [ 'label' => '6 widgets — Layout C',
+               'areas' => [
+                   [ 1, 1, 1, 1, 1, 1, 5, 5, 5, 6, 6, 6 ],
+                   [ 1, 1, 1, 1, 1, 1, 5, 5, 5, 6, 6, 6 ],
+                   [ 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4 ],
+               ],
+               'cols' => 12 ],
     ];
     ?>
 
@@ -439,7 +446,7 @@ function mfsd_hw_render_layouts_tab(): void {
                 <?php elseif ( $count === 6 ) : ?>
                   <?php /* Show layout selector for 6-widget roles */ ?>
                   <div style="display:flex;gap:16px;flex-wrap:wrap;">
-                    <?php foreach ( [ 6, '6b' ] as $lslug ) :
+                    <?php foreach ( [ 6, '6b', '6c' ] as $lslug ) :
                         $linfo = $auto_layouts[ $lslug ] ?? null;
                         if ( ! $linfo ) continue;
                         $is_selected = ( ( $saved_layouts[ $rslug ] ?? '6' ) === (string) $lslug );
