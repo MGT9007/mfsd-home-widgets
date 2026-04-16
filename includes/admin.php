@@ -445,13 +445,13 @@ function mfsd_hw_render_layouts_tab(): void {
 
                 <?php elseif ( $count === 6 ) : ?>
                   <?php /* Show layout selector for 6-widget roles */ ?>
-                  <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                  <div style="display:flex;flex-direction:column;gap:16px;">
                     <?php foreach ( [ 6, '6b', '6c' ] as $lslug ) :
                         $linfo = $auto_layouts[ $lslug ] ?? null;
                         if ( ! $linfo ) continue;
                         $is_selected = ( ( $saved_layouts[ $rslug ] ?? '6' ) === (string) $lslug );
                     ?>
-                      <label style="cursor:pointer;flex:1;min-width:200px;max-width:300px;">
+                      <label style="cursor:pointer;display:block;">
                         <input type="radio"
                                name="role_layouts[<?php echo esc_attr( $rslug ); ?>]"
                                value="<?php echo esc_attr( $lslug ); ?>"
@@ -459,7 +459,7 @@ function mfsd_hw_render_layouts_tab(): void {
                                style="position:absolute;opacity:0;pointer-events:none;"
                                class="mfsd-hw-layout-radio">
                         <div class="mfsd-hw-layout-card<?php echo $is_selected ? ' mfsd-hw-layout-card--active' : ''; ?>"
-                             style="border:2px solid <?php echo $is_selected ? '#C9A84C' : '#ddd'; ?>;border-radius:6px;padding:12px;background:#fff;transition:border-color .15s;">
+                             style="border:2px solid <?php echo $is_selected ? '#C9A84C' : '#ddd'; ?>;border-radius:6px;padding:12px;background:#fff;transition:border-color .15s;display:inline-block;">
                           <?php mfsd_hw_render_layout_thumbnail( $linfo['areas'], $linfo['cols'], $role_wids, $widget_types ); ?>
                           <strong style="display:block;margin-top:8px;font-size:12px;color:#1d2327;">
                             <?php echo esc_html( $linfo['label'] ); ?>
