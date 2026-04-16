@@ -78,13 +78,65 @@
   grid-template-columns: repeat(2, 1fr);
 }
 
+/* 6 widgets — tall left, stacked right
+ *
+ *  [ 1 (tall) |  2  ]
+ *  [ 1        |  3  ]
+ *  [ 4        |  6 (tall) ]
+ *  [ 5        |  6  ]
+ */
+.mfsd-hw-grid--6 {
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: 1fr 1fr 1fr 1fr;
+  grid-template-areas:
+    "cell-1 cell-2"
+    "cell-1 cell-3"
+    "cell-4 cell-6"
+    "cell-5 cell-6";
+}
+
+.mfsd-hw-grid--6 .mfsd-hw-grid__cell--1 { grid-area: cell-1; }
+.mfsd-hw-grid--6 .mfsd-hw-grid__cell--2 { grid-area: cell-2; }
+.mfsd-hw-grid--6 .mfsd-hw-grid__cell--3 { grid-area: cell-3; }
+.mfsd-hw-grid--6 .mfsd-hw-grid__cell--4 { grid-area: cell-4; }
+.mfsd-hw-grid--6 .mfsd-hw-grid__cell--5 { grid-area: cell-5; }
+.mfsd-hw-grid--6 .mfsd-hw-grid__cell--6 { grid-area: cell-6; }
+
+/* 6 widgets — Layout B
+ *
+ *  col widths: [ 3fr | 1fr | 1fr | 1fr | 1fr | 1fr | 1fr ]  (1 left + 6 equal right)
+ *
+ *  [ 1  1  1 |  2     |  3     |  4     ]  ← 2, 3, 4 each span 2 right cols
+ *  [ 1  1  1 |  5        5     |  6  6  ]  ← 5 and 6 each span 3 right cols (equal)
+ *  [ 1  1  1 |  5        5     |  6  6  ]
+ *
+ *  Widget 1 = large left (3fr, full height)
+ *  Widgets 2, 3, 4 = equal small top-right (1 row each)
+ *  Widgets 5, 6 = equal wide bottom-right (2 rows, 1.5× each)
+ */
+.mfsd-hw-grid--6b {
+  grid-template-columns: 3fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-areas:
+    "cell-1 cell-2 cell-2 cell-3 cell-3 cell-4 cell-4"
+    "cell-1 cell-5 cell-5 cell-5 cell-6 cell-6 cell-6"
+    "cell-1 cell-5 cell-5 cell-5 cell-6 cell-6 cell-6";
+}
+
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--1 { grid-area: cell-1; }
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 { grid-area: cell-2; }
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 { grid-area: cell-3; }
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 { grid-area: cell-4; }
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--5 { grid-area: cell-5; }
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--6 { grid-area: cell-6; }
+
 /* 7 widgets — banner + asymmetric 2-column grid
  *
- *  [ -------- 0 -------- ]
- *  [  1  (tall) |  2  ]
- *  [            |  3  ]
- *  [  5  |  4 (tall) ]
- *  [  6  |            ]
+ *  banner top, then:
+ *  1 tall left  |  2 top right
+ *               |  3 mid right
+ *  5 left  |  4 tall right
+ *  6 left  |
  */
 .mfsd-hw-grid--7 {
   grid-template-columns: repeat(2, 1fr);
@@ -165,6 +217,27 @@
   .mfsd-hw-grid--1 {
     grid-template-columns: 1fr;
   }
+  .mfsd-hw-grid--6 {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "cell-1"
+      "cell-2"
+      "cell-3"
+      "cell-4"
+      "cell-5"
+      "cell-6";
+  }
+  .mfsd-hw-grid--6,
+  .mfsd-hw-grid--6b {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "cell-1"
+      "cell-2"
+      "cell-3"
+      "cell-4"
+      "cell-5"
+      "cell-6";
+  }
   /* 7-widget layouts collapse to single column on tablet */
   .mfsd-hw-grid--7,
   .mfsd-hw-grid--7b,
@@ -198,63 +271,7 @@
 }
 
 
-/* ── FLUID TYPOGRAPHY ────────────────────────────────────────────────────── */
-/* clamp(min, preferred, max) — scales with viewport width.
-   At 1440px wide: 1vw = 14.4px, 2vw = 28.8px. */
-
-.mfsd-hw-card__header {
-  font-size: clamp(12px, 1.1vw, 20px);
-  padding: clamp(8px, 0.7vw, 14px) clamp(12px, 1.2vw, 24px);
-}
-.mfsd-hw-card__icon { font-size: clamp(14px, 1.2vw, 22px); }
-.mfsd-hw-card__headline { font-size: clamp(15px, 1.4vw, 24px); }
-.mfsd-hw-card__summary { font-size: clamp(13px, 1.1vw, 18px); }
-.mfsd-hw-card__subtitle { font-size: clamp(13px, 1vw, 17px); }
-.mfsd-hw-card__cta {
-  font-size: clamp(13px, 1.1vw, 18px);
-  padding: clamp(8px, 0.8vw, 16px) clamp(14px, 1.3vw, 26px);
-}
-.mfsd-hw-card__hero-badge {
-  font-size: clamp(11px, 1vw, 17px);
-  padding: clamp(4px, 0.4vw, 8px) clamp(10px, 1vw, 18px);
-  top: clamp(10px, 1vw, 20px);
-  left: clamp(10px, 1vw, 20px);
-}
-.mfsd-hw-card__hero-headline { font-size: clamp(18px, 1.8vw, 32px); }
-.mfsd-hw-card__hero-summary { font-size: clamp(13px, 1.1vw, 18px); }
-.mfsd-hw-card__hero-content {
-  padding: clamp(16px, 1.5vw, 30px);
-  gap: clamp(6px, 0.6vw, 12px);
-}
-.mfsd-hw-card__hero-cta {
-  font-size: clamp(12px, 1vw, 17px);
-  padding: clamp(6px, 0.7vw, 14px) clamp(14px, 1.4vw, 26px);
-  margin-top: clamp(8px, 0.8vw, 16px);
-}
-.mfsd-hw-scores-table { font-size: clamp(12px, 1vw, 17px); }
-.mfsd-hw-scores-table th {
-  font-size: clamp(11px, 0.9vw, 15px);
-  padding: clamp(4px, 0.4vw, 8px) clamp(8px, 0.8vw, 14px);
-}
-.mfsd-hw-scores-table td {
-  padding: clamp(6px, 0.6vw, 12px) clamp(8px, 0.8vw, 14px);
-}
-.mfsd-hw-card__stat {
-  font-size: clamp(13px, 1.1vw, 18px);
-  gap: clamp(8px, 0.8vw, 16px);
-}
-.mfsd-hw-card__badge-img {
-  width: clamp(44px, 4vw, 80px) !important;
-  height: clamp(44px, 4vw, 80px) !important;
-}
-.mfsd-hw-card__thumb {
-  width: clamp(90px, 8vw, 160px);
-  height: clamp(60px, 5.5vw, 110px);
-}
-.mfsd-hw-card__video-thumb {
-  width: clamp(90px, 8vw, 160px);
-  height: clamp(60px, 5.5vw, 110px);
-}
+/* ── BASE CARD ───────────────────────────────────────────────────────────── */
 
 .mfsd-hw-card {
   display: flex;

@@ -32,9 +32,12 @@ function mfsd_hw_render_grid(): void {
 
     // Determine the CSS modifier class.
     // For 7 widgets, honour the chosen layout (7 = Layout A, 7b = Layout B).
+    // For 6 widgets, honour the chosen layout (6 = Layout A, 6b = Layout B).
     // For other counts use automatic sizing classes.
     if ( $count === 7 ) {
         $mod_class = ' mfsd-hw-grid--' . ( in_array( $layout, [ '7b', '7c' ], true ) ? $layout : '7' );
+    } elseif ( $count === 6 ) {
+        $mod_class = ' mfsd-hw-grid--' . ( $layout === '6b' ? '6b' : '6' );
     } elseif ( in_array( $count, [ 1, 2, 4 ], true ) ) {
         $mod_class = ' mfsd-hw-grid--' . $count;
     } else {
