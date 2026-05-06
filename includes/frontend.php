@@ -385,6 +385,7 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
 function mfsd_hw_task_url_map(): array {
     return [
         // Week 1
+        'solution_lens'          => '/my-future-self-foundation-course/week-1/solution-lens/',
         'word_association'       => '/my-future-self-foundation-course/week-1/word-association/',
         'junk_jobs'              => '/my-future-self-foundation-course/week-1/junk-jobs/',
         'personality_test_week_1'=> '/my-future-self-foundation-course/week-1/week-1-personality-test/',
@@ -400,6 +401,7 @@ function mfsd_hw_task_url_map(): array {
  */
 function mfsd_hw_task_display_name( string $slug ): string {
     $names = [
+        'solution_lens'           => 'Solution Lens',
         'word_association'        => 'Word Association',
         'junk_jobs'               => 'Junk Jobs',
         'personality_test_week_1' => 'Who Am I (Part 1)',
@@ -414,6 +416,7 @@ function mfsd_hw_task_display_name( string $slug ): string {
  */
 function mfsd_hw_badge_display_name( string $slug ): string {
     $names = [
+        'badge_solution_lens'   => 'The Lens',
         'badge_word_assoc'      => 'Word Association',
         'badge_junk_jobs'       => 'Junk Jobs',
         'badge_who_am_i_1'     => 'Who Am I',
@@ -435,6 +438,11 @@ function mfsd_hw_badge_image_url( string $slug, int $student_id = 0 ): string {
     if ( in_array( $slug, [ 'badge_who_am_i_1', 'badge_who_am_i_2' ], true ) && $student_id ) {
         $avatar_url = mfsd_hw_get_character_avatar( $student_id );
         if ( $avatar_url ) return $avatar_url;
+    }
+
+    // ── Solution Lens badge lives in its own plugin ───────────────────────────
+    if ( $slug === 'badge_solution_lens' ) {
+        return plugins_url( 'mfsd-solution-lens/images/badge_solution_lens.png' );
     }
 
     // ── Standard badges: use Quest Log badge artwork ─────────────────────────
