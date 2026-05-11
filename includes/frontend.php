@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 3.3.0 — News cards now use full-bleed background image style.
+ * Version: 3.4.0 — Who Am I badge renders as composite (frame + character overlay); badge_solution_lens added to image map.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -430,15 +430,10 @@ function mfsd_hw_badge_display_name( string $slug ): string {
 
 /**
  * Get the badge image URL from the Quest Log plugin assets.
- * Who Am I badges use the personality character avatar instead.
+ * For Who Am I badges this returns the frame URL; the character overlay
+ * is handled separately by mfsd_hw_card_progress() via mfsd_hw_get_character_avatar().
  */
 function mfsd_hw_badge_image_url( string $slug, int $student_id = 0 ): string {
-
-    // ── Who Am I badges: pull the personality character avatar ────────────────
-    if ( in_array( $slug, [ 'badge_who_am_i_1', 'badge_who_am_i_2' ], true ) && $student_id ) {
-        $avatar_url = mfsd_hw_get_character_avatar( $student_id );
-        if ( $avatar_url ) return $avatar_url;
-    }
 
     // ── Solution Lens badge lives in its own plugin ───────────────────────────
     if ( $slug === 'badge_solution_lens' ) {
@@ -449,7 +444,7 @@ function mfsd_hw_badge_image_url( string $slug, int $student_id = 0 ): string {
     $images = [
         'badge_word_assoc'      => 'badge_word_assoc.png',
         'badge_junk_jobs'       => 'badge_junk_jobs.png',
-        'badge_who_am_i_1'     => 'badge_who_am_i_1.png',
+        'badge_who_am_i_1'      => 'badge_who_am_i_1.png',
         'badge_super_strengths' => 'badge_super_strengths.png',
         'badge_rag_w1'          => 'badge_rag_w1.png',
     ];
@@ -595,6 +590,8 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     // ── Resolve badge display ────────────────────────────────────────────────
     $badge_slug_val = $latest_badge['badge_slug'] ?? '';
     $badge_name     = mfsd_hw_badge_display_name( $badge_slug_val );
+    $is_who_am_i_b  = in_array( $badge_slug_val, [ 'badge_who_am_i_1', 'badge_who_am_i_2' ], true );
+    $badge_char_url = ( $is_who_am_i_b && $student_id ) ? mfsd_hw_get_character_avatar( $student_id ) : '';
     $badge_img      = mfsd_hw_badge_image_url( $badge_slug_val, $student_id );
 
     // ── Detect enrolled-but-not-started state (students only) ────────────────
@@ -676,9 +673,21 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         <?php if ( $student_id && ( $latest_badge || $latest_task ) ) : ?>
           <div class="mfsd-hw-card__stat mfsd-hw-card__stat--badge">
             <?php if ( $show_badge && $latest_badge ) : ?>
-              <img class="mfsd-hw-card__badge-img"
-                   src="<?php echo esc_url( $badge_img ); ?>"
-                   alt="<?php echo esc_attr( $badge_name ); ?>">
+              <?php if ( $is_who_am_i_b ) : ?>
+                <div class="mfsd-hw-card__badge-who-am-i"
+                     style="width:56px;height:56px;flex-shrink:0;position:relative;background:url('<?php echo esc_url( $badge_img ); ?>') center/contain no-repeat;">
+                  <?php if ( $badge_char_url ) : ?>
+                    <img src="<?php echo esc_url( $badge_char_url ); ?>"
+                         alt="<?php echo esc_attr( $badge_name ); ?>"
+                         width="36" height="36"
+                         style="width:36px;height:36px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:contain;">
+                  <?php endif; ?>
+                </div>
+              <?php else : ?>
+                <img class="mfsd-hw-card__badge-img"
+                     src="<?php echo esc_url( $badge_img ); ?>"
+                     alt="<?php echo esc_attr( $badge_name ); ?>">
+              <?php endif; ?>
             <?php endif; ?>
             <div>
               <strong><?php echo $is_parent
