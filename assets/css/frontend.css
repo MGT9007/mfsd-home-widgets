@@ -554,6 +554,7 @@
   height: 40px;
   object-fit: contain;
   display: block;
+  mix-blend-mode: lighten;
 }
 
 .mfsd-hw-progress-row__label {
@@ -833,6 +834,7 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   object-fit: contain !important;
   flex-shrink: 0 !important;
   border-radius: 6px !important;
+  mix-blend-mode: lighten;
 }
 
 /* ── NEWS CAROUSEL ───────────────────────────────────────────────────────── */
