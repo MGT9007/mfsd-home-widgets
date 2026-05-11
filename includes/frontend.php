@@ -5,7 +5,7 @@
  * Renders all active widget instances visible to the current role,
  * in sort_order sequence, in a 3-column CSS grid.
  *
- * Version: 3.4.0 — Who Am I badge renders as composite (frame + character overlay); badge_solution_lens added to image map.
+ * Version: 3.5.0 — Badge now derived from latest task slug (in sync); Who Am I composite rendering; solution_lens badge added.
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -412,6 +412,21 @@ function mfsd_hw_task_display_name( string $slug ): string {
 }
 
 /**
+ * Task slug → badge slug mapping.
+ * Keeps badge display in sync with the latest completed task.
+ */
+function mfsd_hw_task_badge_map(): array {
+    return [
+        'solution_lens'           => 'badge_solution_lens',
+        'word_association'        => 'badge_word_assoc',
+        'junk_jobs'               => 'badge_junk_jobs',
+        'personality_test_week_1' => 'badge_who_am_i_1',
+        'super_strengths'         => 'badge_super_strengths',
+        'rag_week_1'              => 'badge_rag_w1',
+    ];
+}
+
+/**
  * Human-friendly display name for a badge slug.
  */
 function mfsd_hw_badge_display_name( string $slug ): string {
@@ -534,23 +549,8 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         }
     }
 
-    // ── Latest badge (from Quest Log: wp_mfsd_badges) ────────────────────────
-    // FIX: column is student_id (not user_id)
-    $latest_badge = null;
-    if ( $show_badge && $student_id ) {
-        $badges_table = $wpdb->prefix . 'mfsd_badges';
-        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$badges_table}'" ) === $badges_table ) {
-            $latest_badge = $wpdb->get_row( $wpdb->prepare(
-                "SELECT * FROM {$badges_table}
-                 WHERE student_id = %d
-                 ORDER BY earned_at DESC
-                 LIMIT 1",
-                $student_id
-            ), ARRAY_A );
-        }
-    }
-
     // ── Latest completed task (from ordering system: wp_mfsd_task_progress) ──
+    // Fetched first so the badge can be derived from the task slug.
     $latest_task = null;
     if ( $show_task && $student_id ) {
         $task_table = $wpdb->prefix . 'mfsd_task_progress';
@@ -563,6 +563,34 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
                  LIMIT 1",
                 $student_id
             ), ARRAY_A );
+        }
+    }
+
+    // ── Badge: prefer the badge that matches the latest task ─────────────────
+    // This keeps badge and task in sync even when badges are awarded out of order.
+    // Falls back to the most-recently-earned badge if no task-derived slug is found.
+    $latest_badge = null;
+    if ( $show_badge && $student_id ) {
+        $badges_table = $wpdb->prefix . 'mfsd_badges';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$badges_table}'" ) === $badges_table ) {
+            $derived_slug   = mfsd_hw_task_badge_map()[ $latest_task['task_slug'] ?? '' ] ?? '';
+            if ( $derived_slug ) {
+                $latest_badge = $wpdb->get_row( $wpdb->prepare(
+                    "SELECT * FROM {$badges_table}
+                     WHERE student_id = %d AND badge_slug = %s
+                     LIMIT 1",
+                    $student_id, $derived_slug
+                ), ARRAY_A );
+            }
+            if ( ! $latest_badge ) {
+                $latest_badge = $wpdb->get_row( $wpdb->prepare(
+                    "SELECT * FROM {$badges_table}
+                     WHERE student_id = %d
+                     ORDER BY earned_at DESC
+                     LIMIT 1",
+                    $student_id
+                ), ARRAY_A );
+            }
         }
     }
 
