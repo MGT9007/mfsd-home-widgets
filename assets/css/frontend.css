@@ -857,10 +857,11 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   z-index: 3;
   background: transparent;
   border-top: none;
-  padding: 0;
-  gap: 0;
-  display: block;
-  position: relative;
+  padding: 0 0 0 0;
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline,
@@ -869,12 +870,10 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline {
-  position: absolute;
-  bottom: 36px;
-  left: 10px;
-  right: 10px;
   color: #fff !important;
   font-size: 12px;
+  padding: 0 10px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-summary,
@@ -892,11 +891,9 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  border-top: none;
+  background-color: rgba(0,0,0,0.72) !important;
+  color: #fff !important;
+  border-top: 1px solid rgba(255,255,255,0.15) !important;
   margin-top: 0;
   padding: 6px 10px;
   font-size: 11px;
