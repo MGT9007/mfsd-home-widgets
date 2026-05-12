@@ -416,6 +416,20 @@ function mfsd_hw_task_badge_map(): array {
 }
 
 /**
+ * Task slug → icon emoji (matches parent portal metadata).
+ */
+function mfsd_hw_task_icon_map(): array {
+    return [
+        'solution_lens'           => '🔍',
+        'word_association'        => '💭',
+        'junk_jobs'               => '🗑️',
+        'personality_test_week_1' => '🧠',
+        'super_strengths'         => '💪',
+        'rag_week_1'              => '🚦',
+    ];
+}
+
+/**
  * Human-friendly display name for a badge slug.
  */
 function mfsd_hw_badge_display_name( string $slug ): string {
@@ -732,20 +746,15 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
               $ct_active    = $ci === 0 ? ' mfsd-hw-carousel__slide--active' : '';
               $ct_status    = ( $ci === $last_completed_idx ) ? '★ Last Completed' : '✓ Completed';
           ?>
-            <div class="mfsd-hw-carousel__slide<?php echo $ct_active; ?>">
-              <?php if ( $ct_bimg ) : ?>
-                <?php if ( $ct_who_am_i ) : ?>
-                  <div class="mfsd-hw-card__achievement-badge-bg-whoami"
-                       style="background-image:url('<?php echo esc_url( $ct_bimg ); ?>');">
-                    <?php if ( $ct_char ) : ?>
-                      <img src="<?php echo esc_url( $ct_char ); ?>" alt="">
-                    <?php endif; ?>
-                  </div>
-                <?php else : ?>
-                  <img class="mfsd-hw-card__achievement-badge-bg"
-                       src="<?php echo esc_url( $ct_bimg ); ?>"
-                       alt="">
-                <?php endif; ?>
+            <div class="mfsd-hw-carousel__slide<?php echo $ct_active; ?>"
+                 <?php if ( $ct_bimg && ! $ct_who_am_i ) : ?>style="--hw-badge-bg: url('<?php echo esc_url( $ct_bimg ); ?>')"<?php endif; ?>>
+              <?php if ( $ct_who_am_i && $ct_bimg ) : ?>
+                <div class="mfsd-hw-card__achievement-badge-bg-whoami"
+                     style="background-image:url('<?php echo esc_url( $ct_bimg ); ?>');">
+                  <?php if ( $ct_char ) : ?>
+                    <img src="<?php echo esc_url( $ct_char ); ?>" alt="">
+                  <?php endif; ?>
+                </div>
               <?php endif; ?>
               <div class="mfsd-hw-card__achievement-header">
                 <span class="mfsd-hw-card__achievement-status"><?php echo esc_html( $ct_status ); ?></span>
@@ -760,18 +769,14 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
           <?php endforeach; ?>
 
           <?php if ( $next_task ) :
-              $nt_slug  = $next_task['task_slug'] ?? '';
-              $nt_name  = ! empty( $next_task['display_name'] ) ? $next_task['display_name'] : mfsd_hw_task_display_name( $nt_slug );
-              $nt_link  = isset( $task_urls[ $nt_slug ] ) ? home_url( $task_urls[ $nt_slug ] ) : '';
-              $nt_bslug = $task_badge_m[ $nt_slug ] ?? '';
-              $nt_bimg  = $nt_bslug ? mfsd_hw_badge_image_url( $nt_bslug, $student_id ) : '';
+              $task_icons = mfsd_hw_task_icon_map();
+              $nt_slug    = $next_task['task_slug'] ?? '';
+              $nt_name    = ! empty( $next_task['display_name'] ) ? $next_task['display_name'] : mfsd_hw_task_display_name( $nt_slug );
+              $nt_link    = isset( $task_urls[ $nt_slug ] ) ? home_url( $task_urls[ $nt_slug ] ) : '';
+              $nt_icon    = $task_icons[ $nt_slug ] ?? '🎯';
           ?>
             <div class="mfsd-hw-carousel__slide">
-              <?php if ( $nt_bimg ) : ?>
-                <img class="mfsd-hw-card__achievement-badge-bg mfsd-hw-card__achievement-badge-bg--next"
-                     src="<?php echo esc_url( $nt_bimg ); ?>"
-                     alt="">
-              <?php endif; ?>
+              <span class="mfsd-hw-card__task-icon-backdrop" aria-hidden="true"><?php echo $nt_icon; ?></span>
               <div class="mfsd-hw-card__achievement-header">
                 <span class="mfsd-hw-card__next-label">Next Up</span>
               </div>

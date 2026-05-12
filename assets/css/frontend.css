@@ -949,14 +949,14 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
 
 /* ── PROGRESS CARD CAROUSEL ─────────────────────────────────────────────── */
 
-/* Body: no padding — slides fill it edge-to-edge and stretch to fill height */
+/* Body: no padding — slides fill it edge-to-edge */
 .mfsd-hw-card--progress .mfsd-hw-card__body.mfsd-hw-carousel {
   padding: 0;
   overflow: hidden;
   min-height: 0;
 }
 
-/* Slide: fills the full body height, column layout, text centred over badge */
+/* Slide: column flex, content centred vertically */
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide {
   display: none;
   position: relative;
@@ -974,23 +974,24 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   display: flex;
 }
 
-/* Badge fills the slide as a large centred backdrop */
-.mfsd-hw-card__achievement-badge-bg {
+/* Badge backdrop via ::before — always sits behind child content, no z-index battles */
+.mfsd-hw-card--progress .mfsd-hw-carousel__slide::before {
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 80%;
   height: 80%;
-  object-fit: contain;
-  object-position: center;
+  background-image: var(--hw-badge-bg, none);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   opacity: 0.30;
-  mix-blend-mode: lighten;
   pointer-events: none;
-  z-index: 0;
 }
 
-/* Who Am I: composite frame+character as backdrop */
+/* Who Am I: composite frame+character overlay (two layers, needs real element) */
 .mfsd-hw-card__achievement-badge-bg-whoami {
   position: absolute;
   top: 50%;
@@ -1002,9 +1003,7 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   background-repeat: no-repeat;
   background-position: center;
   opacity: 0.30;
-  mix-blend-mode: lighten;
   pointer-events: none;
-  z-index: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1016,10 +1015,9 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   object-fit: contain;
 }
 
-/* Status + date at the top, over the backdrop */
+/* Status + date group */
 .mfsd-hw-card__achievement-header {
   position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -1049,22 +1047,28 @@ body.mfsd-role-student .mfsd-hw-card__achievement-status {
   color: var(--color-accent-2, #9333EA);
 }
 
-/* Task link — plain text, centred over the backdrop */
+/* Large emoji icon as backdrop for Next Up slide */
+.mfsd-hw-card__task-icon-backdrop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 80px;
+  line-height: 1;
+  opacity: 0.25;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Task link — plain text */
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide .mfsd-hw-card__task-link {
   position: relative;
-  z-index: 1;
   font-size: 13px;
 }
 
 /* Next Up task link — purple */
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide .mfsd-hw-card__task-link--next {
   color: var(--color-accent-2, #9333EA) !important;
-}
-
-/* Next Up badge backdrop — slightly more faded / greyscale (not yet earned) */
-.mfsd-hw-card__achievement-badge-bg--next {
-  opacity: 0.20;
-  filter: grayscale(60%);
 }
 
 /* Centre arrows vertically */
