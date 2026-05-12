@@ -703,10 +703,11 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   z-index: 2;
 }
 
-/* Image panel fills upper portion of the slide */
+/* Image panel: capped at 55% of slide height so text area always has room */
 .mfsd-hw-card__hero-panel {
   flex: 1;
   min-height: 0;
+  max-height: 55%;
   overflow: hidden;
   background-color: var(--color-card-header-bg, #1d2327);
 }

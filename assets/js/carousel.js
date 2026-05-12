@@ -13,6 +13,26 @@
 ( function() {
   'use strict';
 
+  // ── Grid height: fill from grid top to viewport bottom ─────────────────────
+  // CSS flex chain alone is insufficient when theme ancestors have height:auto.
+  // This measures directly and sets an explicit height on the grid element.
+  function fitGrid() {
+    var grid = document.querySelector( '.mfsd-hw-grid' );
+    if ( ! grid ) return;
+    grid.style.height = '';
+    var top       = grid.getBoundingClientRect().top;
+    var available = window.innerHeight - top;
+    if ( available > 100 ) {
+      grid.style.height = available + 'px';
+    }
+  }
+
+  document.addEventListener( 'DOMContentLoaded', fitGrid );
+  window.addEventListener( 'load', fitGrid );
+  window.addEventListener( 'resize', fitGrid );
+
+  // ── Carousel init ───────────────────────────────────────────────────────────
+
   document.querySelectorAll( '.mfsd-hw-carousel' ).forEach( function( carousel ) {
     var slides  = carousel.querySelectorAll( '.mfsd-hw-carousel__slide' );
     var dots    = carousel.querySelectorAll( '.mfsd-hw-carousel__dot' );
