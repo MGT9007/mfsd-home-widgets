@@ -857,8 +857,9 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   z-index: 3;
   background: transparent;
   border-top: none;
-  padding: 8px 10px 14px;
+  padding: 8px 10px 12px;
   gap: 8px;
+  margin-bottom: 10px;
 }
 
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline,
