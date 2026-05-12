@@ -949,36 +949,81 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
 
 /* ── PROGRESS CARD CAROUSEL ─────────────────────────────────────────────── */
 
-/* Body: remove padding so slides fill edge-to-edge */
+/* Body: no padding — slides fill it edge-to-edge and stretch to fill height */
 .mfsd-hw-card--progress .mfsd-hw-card__body.mfsd-hw-carousel {
   padding: 0;
   overflow: hidden;
+  min-height: 0;
 }
 
-/* Slide: column — status top, badge centre (flex:1), link bottom */
+/* Slide: fills the full body height, column layout, text overlaid on badge */
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide {
   display: none;
+  position: relative;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 10px 16px 12px;
-  gap: 6px;
+  justify-content: space-between;
+  padding: 14px 16px;
+  overflow: hidden;
+  flex: 1;
+  min-height: 120px;
 }
 
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide--active {
   display: flex;
 }
 
-/* Status + date grouped at the top */
-.mfsd-hw-card__achievement-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
+/* Badge fills the slide as a large centred backdrop */
+.mfsd-hw-card__achievement-badge-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  object-position: center;
+  opacity: 0.30;
+  mix-blend-mode: lighten;
+  pointer-events: none;
+  z-index: 0;
 }
 
-/* Status label: "✓ Completed" / "★ Last Completed" */
+/* Who Am I: composite frame+character as backdrop */
+.mfsd-hw-card__achievement-badge-bg-whoami {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 80%;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.30;
+  mix-blend-mode: lighten;
+  pointer-events: none;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfsd-hw-card__achievement-badge-bg-whoami img {
+  width: 60%;
+  height: 60%;
+  object-fit: contain;
+}
+
+/* Status + date at the top, over the backdrop */
+.mfsd-hw-card__achievement-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Status label */
 .mfsd-hw-card__achievement-status {
   display: block;
   font-size: 11px;
@@ -992,91 +1037,6 @@ body.mfsd-role-student .mfsd-hw-card__achievement-status {
   color: var(--color-accent, #00D4FF);
 }
 
-/* Badge area: grows to fill all available vertical space */
-.mfsd-hw-card__achievement-badge {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 0;
-  width: 100%;
-}
-
-/* Badge image: as large as the flex area allows */
-.mfsd-hw-card__achievement-badge-img {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  mix-blend-mode: lighten;
-}
-
-/* Who Am I: frame div with character nested inside */
-.mfsd-hw-card__achievement-badge-whoami {
-  width: 100%;
-  height: 100%;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.mfsd-hw-card__achievement-badge-whoami img {
-  width: 60%;
-  height: 60%;
-  object-fit: contain;
-}
-
-/* Next Up icon when no badge image */
-.mfsd-hw-card__achievement-badge-icon {
-  font-size: 72px;
-  line-height: 1;
-}
-
-/* Task / next-task link — mini button at the bottom of the slide */
-.mfsd-hw-card__achievement-link {
-  display: block;
-  width: 100%;
-  padding: 6px 10px;
-  text-align: center;
-  font-family: var(--font-nav);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  border: 1px solid var(--color-accent, #C9A84C);
-  border-radius: var(--radius-sm, 4px);
-  color: var(--color-accent, #C9A84C);
-  flex-shrink: 0;
-  transition: background-color 150ms ease;
-}
-
-.mfsd-hw-card__achievement-link:hover {
-  background-color: rgba(201, 168, 76, 0.15);
-}
-
-body.mfsd-role-student .mfsd-hw-card__achievement-link {
-  border-color: var(--color-accent, #00D4FF);
-  color: var(--color-accent, #00D4FF);
-}
-
-body.mfsd-role-student .mfsd-hw-card__achievement-link:hover {
-  background-color: rgba(0, 212, 255, 0.1);
-}
-
-/* Next Up variant — purple */
-.mfsd-hw-card__achievement-link--next {
-  border-color: var(--color-accent-2, #9333EA);
-  color: var(--color-accent-2, #9333EA);
-}
-
-.mfsd-hw-card__achievement-link--next:hover {
-  background-color: rgba(147, 51, 234, 0.15);
-}
-
 /* "Next Up" label */
 .mfsd-hw-card__next-label {
   display: block;
@@ -1085,6 +1045,19 @@ body.mfsd-role-student .mfsd-hw-card__achievement-link:hover {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-accent-2, #9333EA);
+}
+
+/* Task link at the bottom — plain text, sits above the backdrop */
+.mfsd-hw-card--progress .mfsd-hw-carousel__slide .mfsd-hw-card__task-link {
+  position: relative;
+  z-index: 1;
+  font-size: 13px;
+  align-self: flex-start;
+}
+
+/* Next Up task link — purple */
+.mfsd-hw-card--progress .mfsd-hw-carousel__slide .mfsd-hw-card__task-link--next {
+  color: var(--color-accent-2, #9333EA) !important;
 }
 
 /* Centre arrows vertically */
