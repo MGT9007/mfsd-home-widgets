@@ -891,10 +891,7 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta {
-  background-color: var(--color-card-header-bg, #111) !important;
-  color: var(--color-accent, #C9A84C) !important;
-  border: none !important;
-  border-top: 1px solid var(--color-rule, rgba(201,168,76,0.25)) !important;
+  border-top: none;
   margin-top: 0;
   padding: 6px 10px;
   font-size: 11px;
