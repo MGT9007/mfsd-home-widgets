@@ -982,8 +982,8 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80%;
-  height: 80%;
+  width: 92%;
+  height: 92%;
   background-image: var(--hw-badge-bg, none);
   background-size: contain;
   background-repeat: no-repeat;
@@ -998,8 +998,8 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80%;
-  height: 80%;
+  width: 92%;
+  height: 92%;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -1055,7 +1055,7 @@ body.mfsd-role-student .mfsd-hw-card__achievement-status {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 80px;
+  font-size: 96px;
   line-height: 1;
   opacity: 0.25;
   pointer-events: none;
