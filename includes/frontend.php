@@ -809,7 +809,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
       ?>
 
         <div class="mfsd-hw-card__body mfsd-hw-carousel">
-          <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--active">
+          <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--active mfsd-hw-carousel__slide--not-started">
             <span class="mfsd-hw-card__task-icon-backdrop" aria-hidden="true"><?php echo $ns_icon; ?></span>
             <div class="mfsd-hw-card__achievement-header">
               <span class="mfsd-hw-card__next-label"><?php esc_html_e( 'Start Your Course', 'mfsd-home-widgets' ); ?></span>

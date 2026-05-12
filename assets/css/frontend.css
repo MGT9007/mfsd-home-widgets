@@ -1073,6 +1073,19 @@ body.mfsd-role-student .mfsd-hw-card__achievement-status {
   color: var(--color-accent-2, #9333EA) !important;
 }
 
+/* Not-started slide: larger icon and text to fill the available space */
+.mfsd-hw-carousel__slide--not-started .mfsd-hw-card__task-icon-backdrop {
+  font-size: 150px;
+}
+
+.mfsd-hw-carousel__slide--not-started .mfsd-hw-card__next-label {
+  font-size: 15px;
+}
+
+.mfsd-hw-carousel__slide--not-started .mfsd-hw-card__task-link {
+  font-size: 18px;
+}
+
 /* Centre arrows vertically */
 .mfsd-hw-card--progress .mfsd-hw-carousel__arrow {
   top: 50%;
