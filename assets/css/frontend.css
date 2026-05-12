@@ -955,18 +955,62 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   overflow: hidden;
 }
 
-/* Slides: hidden until active */
+/* Slides: hidden until active.
+   position: relative contains the backdrop; justify-content: flex-end
+   pushes the text content to the bottom over the badge ghost. */
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide {
   display: none;
+  position: relative;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-end;
   padding: var(--space-md, 16px);
   gap: var(--space-sm, 8px);
-  min-height: 80px;
+  min-height: 120px;
+  overflow: hidden;
 }
 
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide--active {
   display: flex;
+}
+
+/* Large ghost badge centred in the slide as a visual backdrop */
+.mfsd-hw-card__badge-backdrop {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -55%);
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: lighten;
+}
+
+/* Who Am I: frame rendered as a positioned div with character inside */
+.mfsd-hw-card__badge-backdrop--frame {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mfsd-hw-card__badge-backdrop__char {
+  width: 65%;
+  height: 65%;
+  object-fit: contain;
+}
+
+/* Text content sits at the bottom, in front of the backdrop */
+.mfsd-hw-card__achievement-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 /* Centre arrows vertically over card content */
@@ -974,7 +1018,7 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   top: 50%;
 }
 
-/* "✓ Completed" status label */
+/* "✓ Completed" / "★ Last Completed" status label */
 .mfsd-hw-card__achievement-status {
   display: block;
   font-size: 11px;

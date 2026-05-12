@@ -733,33 +733,28 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
               $ct_status    = ( $ci === $last_completed_idx ) ? '★ Last Completed' : '✓ Completed';
           ?>
             <div class="mfsd-hw-carousel__slide<?php echo $ct_active; ?>">
-              <div class="mfsd-hw-card__stat mfsd-hw-card__stat--badge">
-                <?php if ( $ct_bimg ) : ?>
-                  <?php if ( $ct_who_am_i ) : ?>
-                    <div class="mfsd-hw-card__badge-who-am-i"
-                         style="width:72px;height:72px;flex-shrink:0;position:relative;background:url('<?php echo esc_url( $ct_bimg ); ?>') center/contain no-repeat;">
-                      <?php if ( $ct_char ) : ?>
-                        <img src="<?php echo esc_url( $ct_char ); ?>" alt="" width="48" height="48"
-                             style="width:48px;height:48px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:contain;">
-                      <?php endif; ?>
-                    </div>
-                  <?php else : ?>
-                    <img class="mfsd-hw-card__badge-img"
-                         src="<?php echo esc_url( $ct_bimg ); ?>"
-                         alt="<?php echo esc_attr( mfsd_hw_badge_display_name( $ct_bslug ) ); ?>">
-                  <?php endif; ?>
+              <?php if ( $ct_bimg ) : ?>
+                <?php if ( $ct_who_am_i ) : ?>
+                  <div class="mfsd-hw-card__badge-backdrop mfsd-hw-card__badge-backdrop--frame"
+                       style="background-image:url('<?php echo esc_url( $ct_bimg ); ?>');">
+                    <?php if ( $ct_char ) : ?>
+                      <img class="mfsd-hw-card__badge-backdrop__char"
+                           src="<?php echo esc_url( $ct_char ); ?>" alt="">
+                    <?php endif; ?>
+                  </div>
                 <?php else : ?>
-                  <span class="mfsd-hw-card__stat-icon">⭐</span>
+                  <img class="mfsd-hw-card__badge-backdrop"
+                       src="<?php echo esc_url( $ct_bimg ); ?>" alt="">
                 <?php endif; ?>
-                <div>
-                  <span class="mfsd-hw-card__achievement-status"><?php echo esc_html( $ct_status ); ?></span>
-                  <a href="<?php echo esc_url( $ct_link ); ?>" class="mfsd-hw-card__task-link">
-                    <?php echo esc_html( $ct_name ); ?> →
-                  </a>
-                  <?php if ( $ct_date ) : ?>
-                    <span class="mfsd-hw-card__date"><?php echo esc_html( $ct_date ); ?></span>
-                  <?php endif; ?>
-                </div>
+              <?php endif; ?>
+              <div class="mfsd-hw-card__achievement-content">
+                <span class="mfsd-hw-card__achievement-status"><?php echo esc_html( $ct_status ); ?></span>
+                <a href="<?php echo esc_url( $ct_link ); ?>" class="mfsd-hw-card__task-link">
+                  <?php echo esc_html( $ct_name ); ?> →
+                </a>
+                <?php if ( $ct_date ) : ?>
+                  <span class="mfsd-hw-card__date"><?php echo esc_html( $ct_date ); ?></span>
+                <?php endif; ?>
               </div>
             </div>
           <?php endforeach; ?>
