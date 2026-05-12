@@ -605,6 +605,168 @@ body.mfsd-role-student .mfsd-hw-card__game-name {
 }
 
 
+/* ── SCORES — ARCADE PROMO TILES (no-scores fallback) ────────────────────── */
+
+.mfsd-hw-card--scores .mfsd-hw-card__body--arcade-promo {
+  padding: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.mfsd-hw-carousel__slide--arcade {
+  display: none;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 14px;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 120px;
+}
+
+.mfsd-hw-carousel__slide--arcade.mfsd-hw-carousel__slide--active {
+  display: flex;
+}
+
+/* Thumbnail as full-bleed backdrop */
+.mfsd-hw-carousel__slide--arcade::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--hw-arcade-thumb, none);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.40;
+  pointer-events: none;
+}
+
+/* Gradient so text at the bottom is always readable */
+.mfsd-hw-carousel__slide--arcade::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0,0,0,0.88) 0%,
+    rgba(0,0,0,0.35) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Raise all direct children above both pseudo-elements */
+.mfsd-hw-carousel__slide--arcade > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Category pill — top-right corner */
+.mfsd-hw-card__arcade-category {
+  position: absolute !important;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,0,0,0.65);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  z-index: 2 !important;
+}
+
+/* "NEW" badge — top-left corner */
+.mfsd-hw-card__arcade-new-badge {
+  position: absolute !important;
+  top: 10px;
+  left: 10px;
+  background: var(--color-accent-2, #9333EA);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  z-index: 2 !important;
+}
+
+/* Game name */
+.mfsd-hw-card__arcade-name {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-accent, #C9A84C);
+  line-height: 1.2;
+}
+
+body.mfsd-role-student .mfsd-hw-card__arcade-name {
+  color: #FFD000;
+  text-shadow: 0 0 8px rgba(255,208,0,0.35);
+}
+
+/* Description */
+.mfsd-hw-card__arcade-desc {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(255,255,255,0.80);
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Coin cost */
+.mfsd-hw-card__arcade-coins {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: rgba(255,255,255,0.60);
+}
+
+/* Play button */
+.mfsd-hw-card__arcade-play {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 5px 14px;
+  background: var(--color-btn-primary-bg);
+  color: var(--color-btn-primary-text) !important;
+  font-family: var(--font-nav);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  border-radius: var(--radius-sm, 4px);
+  transition: background-color var(--transition-fast, 150ms ease);
+}
+
+.mfsd-hw-card__arcade-play:hover {
+  background: var(--color-btn-primary-hover);
+  color: var(--color-btn-primary-text) !important;
+}
+
+body.mfsd-role-student .mfsd-hw-card__arcade-play {
+  background: transparent;
+  border: 2px solid var(--color-accent-2, #9333EA);
+  color: var(--color-text-light, #F5F5F5) !important;
+}
+
+body.mfsd-role-student .mfsd-hw-card__arcade-play:hover {
+  background: rgba(147,51,234,0.25);
+  box-shadow: var(--glow-purple, 0 0 8px rgba(147,51,234,0.50));
+}
+
+
 /* ── PROGRESS ROWS ───────────────────────────────────────────────────────── */
 
 .mfsd-hw-progress-row {

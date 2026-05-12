@@ -270,6 +270,29 @@ function mfsd_hw_card_courses( array $c ): void {
 }
 
 
+// ─── HELPER: find the arcade lobby page URL ───────────────────────────────────
+
+function mfsd_hw_get_arcade_page_url(): string {
+    global $wpdb;
+    $page_id = $wpdb->get_var(
+        "SELECT ID FROM {$wpdb->posts}
+         WHERE post_status = 'publish'
+           AND post_type IN ('page','post')
+           AND post_content LIKE '%[mfsd_arcade%'
+         LIMIT 1"
+    );
+    if ( $page_id ) {
+        $url = get_permalink( (int) $page_id );
+        return $url ? rtrim( $url, '/' ) . '/' : '';
+    }
+    $page = get_page_by_path( 'arcade' );
+    if ( $page ) {
+        return get_permalink( $page->ID ) ?: home_url( '/arcade/' );
+    }
+    return home_url( '/arcade/' );
+}
+
+
 // ─── CARD: Top Scores / Leaderboard ──────────────────────────────────────────
 
 function mfsd_hw_card_scores( array $c, string $role ): void {
@@ -362,6 +385,28 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
     }
 
     $slide_count = count( $games_data );
+
+    // ── Append latest arcade game as a promo tile if student hasn't played it ─
+    $latest_game_promo = null;
+    $arcade_page_url   = '';
+    if ( ( $is_student || $is_parent ) && $has_g_table && ! empty( $games_data ) ) {
+        $latest_game = $wpdb->get_row(
+            "SELECT title, slug, description, category, thumbnail_url, min_coins
+             FROM {$games_table}
+             WHERE active = 1
+             ORDER BY id DESC LIMIT 1",
+            ARRAY_A
+        );
+        if ( $latest_game ) {
+            $played_slugs = array_column( $games_data, 'slug' );
+            if ( ! in_array( $latest_game['slug'], $played_slugs, true ) ) {
+                $latest_game_promo = $latest_game;
+                $arcade_page_url   = mfsd_hw_get_arcade_page_url();
+                $slide_count++;
+            }
+        }
+    }
+
     $is_carousel = $slide_count > 1;
 
     $cat_icons = [
@@ -377,10 +422,78 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
         <?php echo esc_html( $title ); ?>
       </div>
 
-      <?php if ( empty( $games_data ) ) : ?>
+      <?php if ( empty( $games_data ) ) :
+          // ── No scores: cycle through arcade game tiles as a teaser ──────
+          $arcade_games    = [];
+          $arcade_page_url = '';
+          if ( $has_g_table ) {
+              $arcade_games = $wpdb->get_results(
+                  "SELECT title, slug, description, category, thumbnail_url, min_coins
+                   FROM {$games_table}
+                   WHERE active = 1
+                   ORDER BY sort_order ASC",
+                  ARRAY_A
+              ) ?: [];
+              if ( ! empty( $arcade_games ) ) {
+                  $arcade_page_url = mfsd_hw_get_arcade_page_url();
+              }
+          }
+
+          if ( empty( $arcade_games ) ) : ?>
         <div class="mfsd-hw-card__body">
-          <p class="mfsd-hw-card__empty"><?php esc_html_e( 'No scores recorded yet.', 'mfsd-home-widgets' ); ?></p>
+          <p class="mfsd-hw-card__empty"><?php esc_html_e( 'No scores yet — visit the Arcade to play!', 'mfsd-home-widgets' ); ?></p>
         </div>
+
+          <?php else :
+              $ag_count    = count( $arcade_games );
+              $ag_carousel = $ag_count > 1;
+          ?>
+        <div class="mfsd-hw-card__body<?php echo $ag_carousel ? ' mfsd-hw-carousel' : ''; ?> mfsd-hw-card__body--arcade-promo">
+
+          <?php foreach ( $arcade_games as $agi => $ag ) :
+              $ag_active   = $agi === 0 ? ' mfsd-hw-carousel__slide--active' : '';
+              $ag_cat_icon = $cat_icons[ $ag['category'] ] ?? '🎮';
+              $ag_cat_name = strtoupper( $ag['category'] ?? '' );
+              $ag_thumb    = $ag['thumbnail_url'] ?? '';
+              $ag_slug     = $ag['slug'] ?? '';
+              $ag_play_url = $arcade_page_url
+                  ? add_query_arg( 'game', $ag_slug, $arcade_page_url )
+                  : '';
+          ?>
+            <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--arcade<?php echo $ag_active; ?>"
+                 <?php if ( $ag_thumb ) : ?>style="--hw-arcade-thumb: url('<?php echo esc_url( $ag_thumb ); ?>')"<?php endif; ?>>
+              <div class="mfsd-hw-card__arcade-category">
+                <span><?php echo $ag_cat_icon; ?></span>
+                <span><?php echo esc_html( $ag_cat_name ); ?></span>
+              </div>
+              <span class="mfsd-hw-card__arcade-name"><?php echo esc_html( $ag['title'] ); ?></span>
+              <?php if ( ! empty( $ag['description'] ) ) : ?>
+                <p class="mfsd-hw-card__arcade-desc"><?php echo esc_html( $ag['description'] ); ?></p>
+              <?php endif; ?>
+              <?php if ( ! empty( $ag['min_coins'] ) && (int) $ag['min_coins'] > 0 ) : ?>
+                <span class="mfsd-hw-card__arcade-coins">🪙 <?php echo esc_html( number_format( (int) $ag['min_coins'] ) ); ?> coins to play</span>
+              <?php endif; ?>
+              <?php if ( $ag_play_url ) : ?>
+                <a href="<?php echo esc_url( $ag_play_url ); ?>" class="mfsd-hw-card__arcade-play">
+                  <?php esc_html_e( 'Play', 'mfsd-home-widgets' ); ?> →
+                </a>
+              <?php endif; ?>
+            </div>
+          <?php endforeach; ?>
+
+          <?php if ( $ag_carousel ) : ?>
+            <div class="mfsd-hw-carousel__dots">
+              <?php for ( $d = 0; $d < $ag_count; $d++ ) : ?>
+                <button class="mfsd-hw-carousel__dot<?php echo $d === 0 ? ' mfsd-hw-carousel__dot--active' : ''; ?>"
+                        aria-label="<?php echo esc_attr( sprintf( __( 'Slide %d', 'mfsd-home-widgets' ), $d + 1 ) ); ?>"></button>
+              <?php endfor; ?>
+            </div>
+            <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--prev" aria-label="<?php esc_attr_e( 'Previous', 'mfsd-home-widgets' ); ?>">‹</button>
+            <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="<?php esc_attr_e( 'Next', 'mfsd-home-widgets' ); ?>">›</button>
+          <?php endif; ?>
+
+        </div>
+          <?php endif; ?>
 
       <?php else : ?>
         <div class="mfsd-hw-card__body<?php echo $is_carousel ? ' mfsd-hw-carousel' : ''; ?>">
@@ -414,6 +527,35 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
               </table>
             </div>
           <?php endforeach; ?>
+
+          <?php if ( $latest_game_promo ) :
+              $lg_thumb    = $latest_game_promo['thumbnail_url'] ?? '';
+              $lg_cat_icon = $cat_icons[ $latest_game_promo['category'] ] ?? '🎮';
+              $lg_cat_name = strtoupper( $latest_game_promo['category'] ?? '' );
+              $lg_slug     = $latest_game_promo['slug'] ?? '';
+              $lg_play_url = $arcade_page_url ? add_query_arg( 'game', $lg_slug, $arcade_page_url ) : '';
+          ?>
+            <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--arcade"
+                 <?php if ( $lg_thumb ) : ?>style="--hw-arcade-thumb: url('<?php echo esc_url( $lg_thumb ); ?>')"<?php endif; ?>>
+              <div class="mfsd-hw-card__arcade-category">
+                <span><?php echo $lg_cat_icon; ?></span>
+                <span><?php echo esc_html( $lg_cat_name ); ?></span>
+              </div>
+              <div class="mfsd-hw-card__arcade-new-badge"><?php esc_html_e( 'NEW', 'mfsd-home-widgets' ); ?></div>
+              <span class="mfsd-hw-card__arcade-name"><?php echo esc_html( $latest_game_promo['title'] ); ?></span>
+              <?php if ( ! empty( $latest_game_promo['description'] ) ) : ?>
+                <p class="mfsd-hw-card__arcade-desc"><?php echo esc_html( $latest_game_promo['description'] ); ?></p>
+              <?php endif; ?>
+              <?php if ( ! empty( $latest_game_promo['min_coins'] ) && (int) $latest_game_promo['min_coins'] > 0 ) : ?>
+                <span class="mfsd-hw-card__arcade-coins">🪙 <?php echo esc_html( number_format( (int) $latest_game_promo['min_coins'] ) ); ?> coins to play</span>
+              <?php endif; ?>
+              <?php if ( $lg_play_url ) : ?>
+                <a href="<?php echo esc_url( $lg_play_url ); ?>" class="mfsd-hw-card__arcade-play">
+                  <?php esc_html_e( 'Play', 'mfsd-home-widgets' ); ?> →
+                </a>
+              <?php endif; ?>
+            </div>
+          <?php endif; ?>
 
           <?php if ( $is_carousel ) : ?>
             <div class="mfsd-hw-carousel__dots">
