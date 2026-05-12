@@ -897,6 +897,29 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   font-size: 11px;
 }
 
+/* Hover: restore button highlight — specificity (0,6,0) beats static rule above */
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover {
+  background-color: var(--color-btn-primary-hover, #E2C06A);
+  color: var(--color-btn-primary-text, #fff);
+}
+
+/* Student hover: purple tint + glow — specificity (0,7,1) beats student static rule */
+body.mfsd-role-student .mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+body.mfsd-role-student .mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+body.mfsd-role-student .mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover,
+body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content .mfsd-hw-card__cta:hover {
+  background-color: rgba(147, 51, 234, 0.25);
+  box-shadow: var(--glow-purple, 0 0 8px rgba(147, 51, 234, 0.50));
+  color: var(--color-text-light, #F5F5F5);
+}
+
 /* Task link in Progress widget — append to frontend.css */
 .mfsd-hw-card__task-link {
   color: var(--color-accent, #C9A84C) !important;
