@@ -926,20 +926,21 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
             }
         }
 
-        // 2. <media:content> or <media:thumbnail> — used by BBC and others.
-        // Prefer media:content (full-size) over media:thumbnail (small crop).
+        // 2. <media:thumbnail> or <media:content> — used by BBC and others.
+        // Prefer media:thumbnail: it is reliably a landscape photo crop.
+        // media:content can be portrait or video — worse for cover backgrounds.
         if ( empty( $image_url ) && isset( $namespaces['media'] ) ) {
             $media = $item->children( $namespaces['media'] );
-            if ( isset( $media->content ) ) {
-                $mc = $media->content->attributes();
-                $mc_type = (string) ( $mc['type'] ?? '' );
-                if ( empty( $mc_type ) || strpos( $mc_type, 'image' ) !== false ) {
-                    $image_url = (string) ( $mc['url'] ?? '' );
-                }
-            }
-            if ( empty( $image_url ) && isset( $media->thumbnail ) ) {
+            if ( isset( $media->thumbnail ) ) {
                 $mt = $media->thumbnail->attributes();
                 $image_url = (string) ( $mt['url'] ?? '' );
+            }
+            if ( empty( $image_url ) && isset( $media->content ) ) {
+                $mc = $media->content->attributes();
+                $mc_type = (string) ( $mc['type'] ?? '' );
+                if ( strpos( $mc_type, 'image' ) !== false ) {
+                    $image_url = (string) ( $mc['url'] ?? '' );
+                }
             }
         }
 
