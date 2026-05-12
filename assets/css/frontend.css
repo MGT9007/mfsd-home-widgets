@@ -853,12 +853,14 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content {
   grid-area: 1 / 1;
-  align-self: end;
+  align-self: stretch;
   z-index: 3;
   background: transparent;
   border-top: none;
-  padding: 8px 10px 40px;
-  gap: 8px;
+  padding: 0;
+  gap: 0;
+  display: block;
+  position: relative;
 }
 
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline,
@@ -867,6 +869,10 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline {
+  position: absolute;
+  bottom: 36px;
+  left: 10px;
+  right: 10px;
   color: #fff !important;
   font-size: 12px;
 }
@@ -890,7 +896,6 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 4;
   border-top: none;
   margin-top: 0;
   padding: 6px 10px;
