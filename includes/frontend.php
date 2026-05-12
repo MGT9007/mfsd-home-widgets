@@ -809,7 +809,7 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     if ( empty( $feed_url ) ) return [];
 
     $limit         = max( 1, min( 20, $limit ) );
-    $transient_key = 'mfsd_hw_rss_v3_' . md5( $feed_url . $limit );
+    $transient_key = 'mfsd_hw_rss_v4_' . md5( $feed_url . $limit );
 
     $cached = get_transient( $transient_key );
     if ( is_array( $cached ) && ! empty( $cached ) ) return $cached;
@@ -826,18 +826,21 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     ] );
 
     if ( is_wp_error( $response ) ) {
+        error_log( 'MFSD_HW RSS: WP_Error fetching ' . $feed_url . ' — ' . $response->get_error_message() );
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
 
     $http_code = wp_remote_retrieve_response_code( $response );
     if ( $http_code !== 200 ) {
+        error_log( 'MFSD_HW RSS: HTTP ' . $http_code . ' from ' . $feed_url );
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
 
     $body = wp_remote_retrieve_body( $response );
     if ( empty( $body ) ) {
+        error_log( 'MFSD_HW RSS: empty body from ' . $feed_url );
         set_transient( $transient_key, [], 5 * MINUTE_IN_SECONDS );
         return [];
     }
@@ -935,6 +938,42 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
 
         // 3. <image> channel-level fallback (not per-item, skip for now).
 
+        // 4. <img> embedded in <description> HTML — used by IGN, Kotaku,
+        //    and most WordPress-based gaming/news feeds. The HTML is entity-
+        //    encoded in the RSS, so decode it first.
+        if ( empty( $image_url ) ) {
+            $raw_desc = html_entity_decode( (string) ( $item->description ?? '' ), ENT_QUOTES | ENT_HTML5 );
+            if ( preg_match( '/<img[^>]+src=["\']([^"\']+)["\']/', $raw_desc, $m ) ) {
+                $candidate = $m[1];
+                if ( strpos( $candidate, 'http' ) === 0 ) {
+                    $image_url = $candidate;
+                }
+            }
+        }
+
+        // 5. <content:encoded> — WordPress.com and self-hosted WP feeds include
+        //    full post HTML here; grab the first <img> if description had none.
+        if ( empty( $image_url ) ) {
+            $item_ns = $item->getNamespaces( true );
+            if ( isset( $item_ns['content'] ) ) {
+                $content_ch = $item->children( $item_ns['content'] );
+                if ( isset( $content_ch->encoded ) ) {
+                    $raw_content = html_entity_decode( (string) $content_ch->encoded, ENT_QUOTES | ENT_HTML5 );
+                    if ( preg_match( '/<img[^>]+src=["\']([^"\']+)["\']/', $raw_content, $m ) ) {
+                        $candidate = $m[1];
+                        if ( strpos( $candidate, 'http' ) === 0 ) {
+                            $image_url = $candidate;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Diagnostic: log image extraction result for first 3 items.
+        if ( $count < 3 ) {
+            error_log( 'MFSD_HW RSS[' . $feed_url . '] item ' . $count . ': "' . substr( $title, 0, 60 ) . '" img=' . ( $image_url ?: 'NONE' ) );
+        }
+
         if ( $title ) {
             $results[] = [
                 'title'     => $prefix !== '' ? $prefix . ' ' . $title : $title,
@@ -967,6 +1006,17 @@ function mfsd_hw_card_rss( array $c ): void {
     $link_out    = ! empty( $c['link_out'] );
 
     $items = mfsd_hw_fetch_rss( $feed_url, $feed_limit, $feed_prefix );
+
+    // Diagnostic log — fires every render (not cached). Remove after diagnosis.
+    $img_count = count( array_filter( $items, fn( $i ) => ! empty( $i['image_url'] ) ) );
+    error_log( sprintf(
+        'MFSD_HW card_rss[%s]: feed="%s" items=%d with_images=%d first_img=%s',
+        $badge_label,
+        substr( $feed_url, 0, 120 ),
+        count( $items ),
+        $img_count,
+        ! empty( $items[0]['image_url'] ) ? $items[0]['image_url'] : 'NONE'
+    ) );
 
     if ( empty( $items ) ) {
         ?>
