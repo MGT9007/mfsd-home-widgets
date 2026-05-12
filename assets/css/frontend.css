@@ -664,7 +664,7 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 /* Image lives in a bounded <img> panel — no full-bleed overlay.           */
 
 .mfsd-hw-card--news-hero {
-  container-type: size;
+  container-type: inline-size;
   container-name: news-hero;
   display: flex;
   flex-direction: column;
@@ -787,12 +787,14 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   .mfsd-hw-card__hero-headline { font-size: 14px; }
 }
 
-/* ── SMALL CARD LAYOUT (container query ≤280px tall) ──────────────────── */
-/* Single-row narrow cells (e.g. Gamer News in 6b layout) are too short   */
-/* for the panel layout. Switch to full-bleed image with text overlaid at  */
-/* the bottom — header at top and button at bottom are the only solid bars. */
+/* ── SMALL CARD LAYOUT (container query ≤270px wide) ──────────────────── */
+/* Narrow cells (e.g. Gamer News in 6b layout) can't fit the panel layout. */
+/* Switch to full-bleed image with text overlaid at the bottom — header at */
+/* top and button at bottom are the only solid bars.                        */
+/* Uses width query (inline-size containment) — height is unreliable in a  */
+/* flex chain where card height is set by JS.                               */
 
-@container news-hero (max-height: 280px) {
+@container news-hero (max-width: 270px) {
   /* Image becomes full-bleed background behind everything */
   .mfsd-hw-card__hero-panel {
     position: absolute;
