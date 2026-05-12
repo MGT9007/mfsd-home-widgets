@@ -275,83 +275,160 @@ function mfsd_hw_card_courses( array $c ): void {
 function mfsd_hw_card_scores( array $c, string $role ): void {
     global $wpdb;
 
-    $limit      = (int) ( $c['score_count'] ?? 5 );
-    $mode       = $c['mode'] ?? 'global';
-    $is_student = $role === 'student';
-    $title      = $mode === 'student' ? "MY STUDENT'S SCORES" : 'TOP SCORES';
+    $limit       = (int) ( $c['score_count'] ?? 5 );
+    $mode        = $c['mode'] ?? 'global';
+    $is_student  = $role === 'student';
+    $is_parent   = in_array( $role, [ 'parent', 'teacher' ], true );
+    $current_uid = get_current_user_id();
+    $title       = ( $is_parent && $mode === 'student' ) ? "MY STUDENT'S SCORES" : 'TOP SCORES';
 
-    $scores      = [];
-    // FIX: actual table is wp_mfsd_arcade_scores (not wp_mfsd_leaderboard)
-    // Columns: student_id, score, game_slug, initials, created_at
     $scores_table = $wpdb->prefix . 'mfsd_arcade_scores';
+    $games_table  = $wpdb->prefix . 'mfsd_arcade_games';
 
-    if ( $wpdb->get_var( "SHOW TABLES LIKE '{$scores_table}'" ) === $scores_table ) {
+    // Who to highlight with "YOU" — current student or linked student for parents.
+    $highlight_uid = $current_uid;
+    if ( $is_parent ) {
+        $linked = mfsd_hw_get_linked_student_id( $current_uid );
+        if ( $linked ) $highlight_uid = $linked;
+    }
 
-        $game_where = '';
-        if ( ! empty( $c['games'] ) && $c['games'] !== 'all' ) {
-            $game_where = $wpdb->prepare( ' AND s.game_slug = %s', $c['games'] );
-        }
+    $games_data  = [];
+    $has_scores  = $wpdb->get_var( "SHOW TABLES LIKE '{$scores_table}'" ) === $scores_table;
+    $has_g_table = $wpdb->get_var( "SHOW TABLES LIKE '{$games_table}'" ) === $games_table;
 
-        if ( $mode === 'student' && ! $is_student ) {
-            // Parent view: show linked student's scores.
-            $student_id = mfsd_hw_get_linked_student_id( get_current_user_id() );
-
-            if ( $student_id ) {
-                $scores = $wpdb->get_results( $wpdb->prepare(
-                    "SELECT s.*, u.display_name
-                     FROM {$scores_table} s
-                     LEFT JOIN {$wpdb->users} u ON s.student_id = u.ID
-                     WHERE s.student_id = %d {$game_where}
-                     ORDER BY s.score DESC LIMIT %d",
-                    $student_id, $limit
+    if ( $has_scores ) {
+        // ── Get game list ──────────────────────────────────────────────────
+        if ( $has_g_table ) {
+            if ( $is_student || $is_parent ) {
+                // Only games the highlighted student has played.
+                $games = $wpdb->get_results( $wpdb->prepare(
+                    "SELECT g.slug, g.title, g.category
+                     FROM {$games_table} g
+                     INNER JOIN {$scores_table} s ON s.game_slug = g.slug AND s.student_id = %d
+                     WHERE g.active = 1
+                     GROUP BY g.slug
+                     ORDER BY g.sort_order ASC",
+                    $highlight_uid
                 ), ARRAY_A ) ?: [];
+            } else {
+                // Global: all active games that have at least one score.
+                $games = $wpdb->get_results(
+                    "SELECT g.slug, g.title, g.category
+                     FROM {$games_table} g
+                     INNER JOIN {$scores_table} s ON s.game_slug = g.slug
+                     WHERE g.active = 1
+                     GROUP BY g.slug
+                     ORDER BY g.sort_order ASC"
+                , ARRAY_A ) ?: [];
             }
         } else {
-            // Global leaderboard.
-            $scores = $wpdb->get_results( $wpdb->prepare(
-                "SELECT s.*, u.display_name
+            // Fallback: derive from scores table only (no titles available).
+            if ( $is_student || $is_parent ) {
+                $slugs = $wpdb->get_col( $wpdb->prepare(
+                    "SELECT DISTINCT game_slug FROM {$scores_table} WHERE student_id = %d ORDER BY game_slug ASC",
+                    $highlight_uid
+                ) ) ?: [];
+            } else {
+                $slugs = $wpdb->get_col( "SELECT DISTINCT game_slug FROM {$scores_table} ORDER BY game_slug ASC" ) ?: [];
+            }
+            $games = array_map( fn( $s ) => [
+                'slug'     => $s,
+                'title'    => ucwords( str_replace( [ '-', '_' ], ' ', $s ) ),
+                'category' => '',
+            ], $slugs );
+        }
+
+        // ── Per-game leaderboard ───────────────────────────────────────────
+        foreach ( $games as $game ) {
+            $rows = $wpdb->get_results( $wpdb->prepare(
+                "SELECT s.student_id, s.score, s.initials, u.display_name
                  FROM {$scores_table} s
                  LEFT JOIN {$wpdb->users} u ON s.student_id = u.ID
-                 WHERE 1=1 {$game_where}
-                 ORDER BY s.score DESC LIMIT %d",
-                $limit
+                 WHERE s.game_slug = %s
+                 ORDER BY s.score DESC
+                 LIMIT %d",
+                $game['slug'], $limit
             ), ARRAY_A ) ?: [];
+
+            if ( ! empty( $rows ) ) {
+                $games_data[] = [
+                    'slug'     => $game['slug'],
+                    'title'    => $game['title'],
+                    'category' => $game['category'] ?? '',
+                    'rows'     => $rows,
+                ];
+            }
         }
     }
+
+    $slide_count = count( $games_data );
+    $is_carousel = $slide_count > 1;
+
+    $cat_icons = [
+        'retro'      => '🕹️',
+        'puzzle'     => '🧩',
+        'platformer' => '🎮',
+        'action'     => '⚡',
+    ];
     ?>
     <div class="mfsd-hw-card mfsd-hw-card--scores">
       <div class="mfsd-hw-card__header">
         <span class="mfsd-hw-card__icon">🏆</span>
         <?php echo esc_html( $title ); ?>
       </div>
-      <div class="mfsd-hw-card__body">
-        <?php if ( empty( $scores ) ) : ?>
+
+      <?php if ( empty( $games_data ) ) : ?>
+        <div class="mfsd-hw-card__body">
           <p class="mfsd-hw-card__empty"><?php esc_html_e( 'No scores recorded yet.', 'mfsd-home-widgets' ); ?></p>
-        <?php else : ?>
-          <table class="mfsd-hw-scores-table">
-            <thead>
-              <tr>
-                <th><?php esc_html_e( 'Rank', 'mfsd-home-widgets' ); ?></th>
-                <th><?php esc_html_e( 'Player', 'mfsd-home-widgets' ); ?></th>
-                <th><?php esc_html_e( 'Game', 'mfsd-home-widgets' ); ?></th>
-                <th><?php esc_html_e( 'Score', 'mfsd-home-widgets' ); ?></th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php foreach ( $scores as $i => $row ) : ?>
-                <tr class="<?php echo $i === 0 ? 'mfsd-hw-scores-table__row--first' : ''; ?>">
-                  <td class="mfsd-hw-scores-table__rank">
-                    <?php echo $i === 0 ? '🥇' : ( $i === 1 ? '🥈' : ( $i === 2 ? '🥉' : ( $i + 1 ) ) ); ?>
-                  </td>
-                  <td><?php echo esc_html( $row['display_name'] ?? 'Unknown' ); ?></td>
-                  <td><?php echo esc_html( $row['game_slug'] ?? '' ); ?></td>
-                  <td class="mfsd-hw-scores-table__score"><?php echo esc_html( number_format( (int) $row['score'] ) ); ?></td>
-                </tr>
-              <?php endforeach; ?>
-            </tbody>
-          </table>
-        <?php endif; ?>
-      </div>
+        </div>
+
+      <?php else : ?>
+        <div class="mfsd-hw-card__body<?php echo $is_carousel ? ' mfsd-hw-carousel' : ''; ?>">
+
+          <?php foreach ( $games_data as $gi => $game ) :
+              $active   = $gi === 0 ? ' mfsd-hw-carousel__slide--active' : '';
+              $cat_icon = $cat_icons[ $game['category'] ] ?? '🎮';
+          ?>
+            <div class="mfsd-hw-carousel__slide<?php echo $active; ?>">
+              <div class="mfsd-hw-card__game-header">
+                <span class="mfsd-hw-card__game-icon"><?php echo $cat_icon; ?></span>
+                <span class="mfsd-hw-card__game-name"><?php echo esc_html( $game['title'] ); ?></span>
+              </div>
+              <table class="mfsd-hw-scores-table">
+                <tbody>
+                  <?php foreach ( $game['rows'] as $ri => $row ) :
+                      $is_you = ( (int) $row['student_id'] === $highlight_uid );
+                      $medal  = match( $ri ) { 0 => '🥇', 1 => '🥈', 2 => '🥉', default => ( $ri + 1 ) };
+                      $row_class = trim( ( $ri === 0 ? 'mfsd-hw-scores-table__row--first' : '' ) . ( $is_you ? ' mfsd-hw-scores-table__row--you' : '' ) );
+                  ?>
+                    <tr<?php echo $row_class ? ' class="' . esc_attr( $row_class ) . '"' : ''; ?>>
+                      <td class="mfsd-hw-scores-table__rank"><?php echo $medal; ?></td>
+                      <td>
+                        <?php echo esc_html( $row['display_name'] ?? $row['initials'] ?? 'Unknown' ); ?>
+                        <?php if ( $is_you ) : ?><span class="mfsd-hw-scores-table__you">YOU</span><?php endif; ?>
+                      </td>
+                      <td class="mfsd-hw-scores-table__score"><?php echo esc_html( number_format( (int) $row['score'] ) ); ?></td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php endforeach; ?>
+
+          <?php if ( $is_carousel ) : ?>
+            <div class="mfsd-hw-carousel__dots">
+              <?php for ( $d = 0; $d < $slide_count; $d++ ) : ?>
+                <button class="mfsd-hw-carousel__dot<?php echo $d === 0 ? ' mfsd-hw-carousel__dot--active' : ''; ?>"
+                        aria-label="<?php echo esc_attr( sprintf( __( 'Slide %d', 'mfsd-home-widgets' ), $d + 1 ) ); ?>"></button>
+              <?php endfor; ?>
+            </div>
+            <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--prev" aria-label="<?php esc_attr_e( 'Previous', 'mfsd-home-widgets' ); ?>">‹</button>
+            <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="<?php esc_attr_e( 'Next', 'mfsd-home-widgets' ); ?>">›</button>
+          <?php endif; ?>
+
+        </div>
+      <?php endif; ?>
+
       <a href="<?php echo esc_url( home_url( '/leaderboards/' ) ); ?>" class="mfsd-hw-card__cta">
         <?php esc_html_e( 'Full Leaderboards', 'mfsd-home-widgets' ); ?>
       </a>

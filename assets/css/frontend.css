@@ -532,6 +532,78 @@ body.home:has(.mfsd-home-page) {
   font-family: var(--font-nav);
 }
 
+/* "YOU" badge inline in player name cell */
+.mfsd-hw-scores-table__you {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  background: var(--color-accent-2, #9333EA);
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 5px;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+/* Highlight the current user's row */
+.mfsd-hw-scores-table__row--you td {
+  color: var(--color-accent, #C9A84C);
+  font-weight: 600;
+}
+
+body.mfsd-role-student .mfsd-hw-scores-table__row--you td {
+  color: var(--color-accent, #00D4FF);
+}
+
+/* ── SCORES CAROUSEL ─────────────────────────────────────────────────────── */
+
+.mfsd-hw-card--scores .mfsd-hw-card__body.mfsd-hw-carousel {
+  padding: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.mfsd-hw-card--scores .mfsd-hw-carousel__slide {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  flex: 1;
+}
+
+.mfsd-hw-card--scores .mfsd-hw-carousel__slide--active {
+  display: flex;
+}
+
+/* Game title row inside each slide */
+.mfsd-hw-card__game-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--color-rule);
+  margin-bottom: 2px;
+}
+
+.mfsd-hw-card__game-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.mfsd-hw-card__game-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent, #C9A84C);
+}
+
+body.mfsd-role-student .mfsd-hw-card__game-name {
+  color: var(--color-accent, #00D4FF);
+}
+
 
 /* ── PROGRESS ROWS ───────────────────────────────────────────────────────── */
 
