@@ -786,33 +786,24 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 }
 
 /* ── SMALL CELL FULL-BLEED LAYOUT (6b/6c cells 2, 3, 4) ───────────────── */
-/* Cells 2/3/4 are 1-row-tall and only 2/9 of the page width — too short   */
-/* for the panel layout. Image becomes full-bleed background; header at top */
-/* and CTA button at bottom are the only solid bars.                        */
-/* Direct grid-area selectors are used instead of container queries because  */
-/* container query thresholds can't scale with viewport width.               */
+/* Cells 2/3/4 are 1-row-tall — too short for the panel layout.            */
+/* Technique: switch the slide to CSS grid with hero-panel and hero-content */
+/* both placed in the same cell (grid-area: 1/1), overlapping.             */
+/* hero-panel stretches to fill (default grid stretch), hero-content sits  */
+/* at the bottom via align-self: end. No position:absolute needed on panel. */
 
-.mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
-.mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
-.mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
-.mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
-.mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
-.mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel {
-  position: absolute;
-  inset: 0;
-  min-height: unset;
-  z-index: 0;
+/* Slide: single-cell grid so children can overlap */
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide,
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide,
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide {
+  display: grid;
+  grid-template: 1fr / 1fr;
 }
 
-.mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
-.mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
-.mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
-.mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
-.mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
-.mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img {
-  object-position: center center;
-}
-
+/* Gradient overlay (absolutely positioned within the slide) */
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide::after,
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide::after,
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide::after,
@@ -821,7 +812,7 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide::after {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: linear-gradient(
     to top,
     rgba(0, 0, 0, 0.92) 0%,
@@ -832,14 +823,37 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   pointer-events: none;
 }
 
+/* Hero panel: fills the grid cell (layer 0 — behind content) */
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-panel {
+  grid-area: 1 / 1;
+  min-height: 0;
+  z-index: 0;
+}
+
+/* Hero img: centre crop for short cells */
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
+.mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
+.mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img {
+  object-position: center center;
+}
+
+/* Hero content: overlaps same cell, sits at bottom (layer 3 — above gradient) */
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content,
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content,
 .mfsd-hw-grid--6b .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--2 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--3 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content,
 .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-content {
-  margin-top: auto;
-  position: relative;
+  grid-area: 1 / 1;
+  align-self: end;
   z-index: 3;
   background: transparent;
   border-top: none;
