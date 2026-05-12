@@ -760,11 +760,18 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
           <?php endforeach; ?>
 
           <?php if ( $next_task ) :
-              $nt_slug = $next_task['task_slug'] ?? '';
-              $nt_name = ! empty( $next_task['display_name'] ) ? $next_task['display_name'] : mfsd_hw_task_display_name( $nt_slug );
-              $nt_link = isset( $task_urls[ $nt_slug ] ) ? home_url( $task_urls[ $nt_slug ] ) : '';
+              $nt_slug  = $next_task['task_slug'] ?? '';
+              $nt_name  = ! empty( $next_task['display_name'] ) ? $next_task['display_name'] : mfsd_hw_task_display_name( $nt_slug );
+              $nt_link  = isset( $task_urls[ $nt_slug ] ) ? home_url( $task_urls[ $nt_slug ] ) : '';
+              $nt_bslug = $task_badge_m[ $nt_slug ] ?? '';
+              $nt_bimg  = $nt_bslug ? mfsd_hw_badge_image_url( $nt_bslug, $student_id ) : '';
           ?>
             <div class="mfsd-hw-carousel__slide">
+              <?php if ( $nt_bimg ) : ?>
+                <img class="mfsd-hw-card__achievement-badge-bg mfsd-hw-card__achievement-badge-bg--next"
+                     src="<?php echo esc_url( $nt_bimg ); ?>"
+                     alt="">
+              <?php endif; ?>
               <div class="mfsd-hw-card__achievement-header">
                 <span class="mfsd-hw-card__next-label">Next Up</span>
               </div>

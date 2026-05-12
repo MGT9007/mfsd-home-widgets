@@ -956,12 +956,14 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   min-height: 0;
 }
 
-/* Slide: fills the full body height, column layout, text overlaid on badge */
+/* Slide: fills the full body height, column layout, text centred over badge */
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide {
   display: none;
   position: relative;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
   padding: 14px 16px;
   overflow: hidden;
   flex: 1;
@@ -1047,17 +1049,22 @@ body.mfsd-role-student .mfsd-hw-card__achievement-status {
   color: var(--color-accent-2, #9333EA);
 }
 
-/* Task link at the bottom — plain text, sits above the backdrop */
+/* Task link — plain text, centred over the backdrop */
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide .mfsd-hw-card__task-link {
   position: relative;
   z-index: 1;
   font-size: 13px;
-  align-self: flex-start;
 }
 
 /* Next Up task link — purple */
 .mfsd-hw-card--progress .mfsd-hw-carousel__slide .mfsd-hw-card__task-link--next {
   color: var(--color-accent-2, #9333EA) !important;
+}
+
+/* Next Up badge backdrop — slightly more faded / greyscale (not yet earned) */
+.mfsd-hw-card__achievement-badge-bg--next {
+  opacity: 0.20;
+  filter: grayscale(60%);
 }
 
 /* Centre arrows vertically */
