@@ -593,7 +593,7 @@ function mfsd_hw_card_scores( array $c, string $role ): void {
 function mfsd_hw_task_url_map(): array {
     return [
         // Week 1
-        'solution_lens'          => '/my-future-self-foundation-course/week-1/solution-lens/',
+        'solution_lens'          => '/my-future-self-foundation-course/week-1/the-solution-lens/',
         'word_association'       => '/my-future-self-foundation-course/week-1/word-association/',
         'junk_jobs'              => '/my-future-self-foundation-course/week-1/junk-jobs/',
         'personality_test_week_1'=> '/my-future-self-foundation-course/week-1/week-1-personality-test/',
