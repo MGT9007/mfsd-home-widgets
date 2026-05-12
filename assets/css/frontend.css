@@ -947,6 +947,60 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   mix-blend-mode: lighten;
 }
 
+/* ── PROGRESS CARD CAROUSEL ─────────────────────────────────────────────── */
+
+/* Body acts as the carousel container — remove padding so slides fill edge-to-edge */
+.mfsd-hw-card--progress .mfsd-hw-card__body.mfsd-hw-carousel {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Slides: hidden until active */
+.mfsd-hw-card--progress .mfsd-hw-carousel__slide {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--space-md, 16px);
+  gap: var(--space-sm, 8px);
+  min-height: 80px;
+}
+
+.mfsd-hw-card--progress .mfsd-hw-carousel__slide--active {
+  display: flex;
+}
+
+/* Centre arrows vertically over card content */
+.mfsd-hw-card--progress .mfsd-hw-carousel__arrow {
+  top: 50%;
+}
+
+/* "✓ Completed" status label */
+.mfsd-hw-card__achievement-status {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent, #C9A84C);
+  margin-bottom: 2px;
+}
+
+body.mfsd-role-student .mfsd-hw-card__achievement-status {
+  color: var(--color-accent, #00D4FF);
+}
+
+/* "Next Up" label */
+.mfsd-hw-card__next-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent-2, #9333EA);
+  margin-bottom: 2px;
+}
+
+
 /* ── NEWS CAROUSEL ───────────────────────────────────────────────────────── */
 
 .mfsd-hw-carousel {
