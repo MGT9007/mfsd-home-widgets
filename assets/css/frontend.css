@@ -859,13 +859,13 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 .mfsd-hw-carousel__slide--active {
   opacity: 1;
   pointer-events: auto;
-  position: relative;
   z-index: 2;
 }
 
-/* Single-item (no carousel class): slide is always visible, no stacking */
+/* Single-item (no carousel class): slide fills the card absolutely */
 .mfsd-hw-card--news-hero:not(.mfsd-hw-carousel) .mfsd-hw-carousel__slide {
-  position: relative;
+  position: absolute;
+  inset: 0;
   opacity: 1;
   pointer-events: auto;
 }
@@ -996,13 +996,7 @@ body.mfsd-role-admin .mfsd-hw-carousel__dot--active {
   height: 100%;
 }
 
-/* Single-item: slide must stretch to fill card */
-.mfsd-hw-card--news-hero:not(.mfsd-hw-carousel) .mfsd-hw-carousel__slide {
-  position: relative;
-  opacity: 1;
-  pointer-events: auto;
-  min-height: 100%;
-}
+/* Single-item: slide stretches to fill card via position: absolute; inset: 0 (set above) */
 
 /* Hero bg needs to reference the slide as its container */
 .mfsd-hw-carousel__slide .mfsd-hw-card__hero-bg {
