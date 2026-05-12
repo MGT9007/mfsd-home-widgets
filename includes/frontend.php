@@ -655,7 +655,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     $first_task_link    = '';
     $course_details_url = '';
 
-    if ( $is_student && ! $latest_task && ! $latest_badge && ! $latest_score && $student_id ) {
+    if ( $is_student && ! $latest_task && $student_id ) {
         $enrol_table = $wpdb->prefix . 'mfsd_enrolments';
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$enrol_table}'" ) === $enrol_table ) {
             $enrollment = $wpdb->get_row( $wpdb->prepare(
@@ -818,7 +818,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
             </p>
           <?php endif; ?>
 
-          <?php if ( $student_id && ( $latest_badge || $latest_task ) ) : ?>
+          <?php if ( $student_id && ( $latest_badge || $latest_task ) && ( ! $is_student || $latest_task ) ) : ?>
             <div class="mfsd-hw-card__stat mfsd-hw-card__stat--badge">
               <?php if ( $show_badge && $latest_badge ) : ?>
                 <?php if ( $is_who_am_i_b ) : ?>
