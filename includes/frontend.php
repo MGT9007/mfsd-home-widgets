@@ -652,6 +652,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     $enrol_course_id    = 0;
     $enrol_course_name  = '';
     $first_task_name    = '';
+    $first_task_slug    = '';
     $first_task_link    = '';
     $course_details_url = '';
 
@@ -680,9 +681,10 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
                 ), ARRAY_A );
 
                 if ( $first_task ) {
+                    $first_task_slug = $first_task['task_slug'] ?? '';
                     $first_task_name = $first_task['display_name'];
-                    $first_task_link = isset( $task_urls[ $first_task['task_slug'] ] )
-                        ? home_url( $task_urls[ $first_task['task_slug'] ] )
+                    $first_task_link = isset( $task_urls[ $first_task_slug ] )
+                        ? home_url( $task_urls[ $first_task_slug ] )
                         : '';
                 }
 
@@ -798,6 +800,25 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
             <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="<?php esc_attr_e( 'Next', 'mfsd-home-widgets' ); ?>">›</button>
           <?php endif; ?>
 
+        </div>
+
+      <?php elseif ( $is_student && $is_not_started && $first_task_name ) :
+          // ── STUDENT ENROLLED BUT NOT STARTED: first-task slide ───────────
+          $ns_icons = mfsd_hw_task_icon_map();
+          $ns_icon  = $ns_icons[ $first_task_slug ] ?? '🎯';
+      ?>
+
+        <div class="mfsd-hw-card__body mfsd-hw-carousel">
+          <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--active">
+            <span class="mfsd-hw-card__task-icon-backdrop" aria-hidden="true"><?php echo $ns_icon; ?></span>
+            <div class="mfsd-hw-card__achievement-header">
+              <span class="mfsd-hw-card__next-label"><?php esc_html_e( 'Start Your Course', 'mfsd-home-widgets' ); ?></span>
+            </div>
+            <a href="<?php echo esc_url( $first_task_link ?: $cta_url ); ?>"
+               class="mfsd-hw-card__task-link mfsd-hw-card__task-link--next">
+              <?php echo esc_html( $first_task_name ); ?> →
+            </a>
+          </div>
         </div>
 
       <?php else : ?>
