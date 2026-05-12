@@ -267,7 +267,7 @@ function mfsd_hw_decode_row( array $row ): array {
  * @param string $size
  * @return string
  */
-function mfsd_hw_get_image_url( int $id, string $size = 'large' ): string {
+function mfsd_hw_get_image_url( int $id, string $size = 'full' ): string {
     if ( $id > 0 ) {
         $src = wp_get_attachment_image_url( $id, $size );
         if ( $src ) return $src;
