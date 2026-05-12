@@ -33,10 +33,9 @@
   padding: var(--space-lg, 24px);
   width: 100%;
   box-sizing: border-box;
-  /* 1fr rows — share available height equally between rows */
   grid-auto-rows: 1fr;
-  /* Ensure a sensible minimum even on short viewports */
   min-height: 600px;
+  max-height: 700px;
 }
 
 /* Grid cells fill their row */
