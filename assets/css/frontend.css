@@ -50,6 +50,7 @@ body.home:has(.mfsd-home-page) {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* Cards fill their cell */
@@ -726,14 +727,19 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   background: linear-gradient(135deg, #0d1b2a 0%, #1a2e44 40%, #0d2137 100%);
 }
 
-/* Text + CTA pinned to bottom of slide */
+/* Taller header on news-hero cards so the image sits lower */
+.mfsd-hw-card--news-hero .mfsd-hw-card__header {
+  padding: 14px var(--space-md, 16px);
+}
+
+/* Text + CTA pinned to bottom of slide — compact */
 .mfsd-hw-card__hero-content {
   flex-shrink: 0;
-  padding: 10px 14px 12px;
+  padding: 8px 12px 10px;
   background: var(--color-card-bg);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .mfsd-hw-card__hero-headline {

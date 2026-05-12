@@ -14,15 +14,17 @@
   'use strict';
 
   // ── Grid height: fill from grid top to viewport bottom ─────────────────────
-  // CSS flex chain alone is insufficient when theme ancestors have height:auto.
-  // This measures directly and sets an explicit height on the grid element.
+  // flex:1 on the grid fights an explicit height, so we remove the grid from
+  // flex sizing entirely and set an explicit height directly.
   function fitGrid() {
     var grid = document.querySelector( '.mfsd-hw-grid' );
     if ( ! grid ) return;
+    grid.style.flex   = '';
     grid.style.height = '';
     var top       = grid.getBoundingClientRect().top;
-    var available = window.innerHeight - top;
+    var available = Math.floor( window.innerHeight - top );
     if ( available > 100 ) {
+      grid.style.flex   = 'none';
       grid.style.height = available + 'px';
     }
   }
