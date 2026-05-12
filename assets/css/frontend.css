@@ -664,6 +664,8 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 /* Image lives in a bounded <img> panel — no full-bleed overlay.           */
 
 .mfsd-hw-card--news-hero {
+  container-type: size;
+  container-name: news-hero;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -783,6 +785,69 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 
 @media (max-width: 600px) {
   .mfsd-hw-card__hero-headline { font-size: 14px; }
+}
+
+/* ── SMALL CARD LAYOUT (container query ≤280px tall) ──────────────────── */
+/* Single-row narrow cells (e.g. Gamer News in 6b layout) are too short   */
+/* for the panel layout. Switch to full-bleed image with text overlaid at  */
+/* the bottom — header at top and button at bottom are the only solid bars. */
+
+@container news-hero (max-height: 280px) {
+  /* Image becomes full-bleed background behind everything */
+  .mfsd-hw-card__hero-panel {
+    position: absolute;
+    inset: 0;
+    min-height: unset;
+    z-index: 0;
+  }
+
+  .mfsd-hw-card__hero-img {
+    object-position: center center;
+  }
+
+  /* Dark gradient on the slide for text legibility */
+  .mfsd-hw-card--news-hero .mfsd-hw-carousel__slide::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.92) 0%,
+      rgba(0, 0, 0, 0.45) 55%,
+      transparent 100%
+    );
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Text block floats to the bottom, overlaid on gradient */
+  .mfsd-hw-card__hero-content {
+    margin-top: auto;
+    position: relative;
+    z-index: 3;
+    background: transparent;
+    border-top: none;
+    padding: 8px 10px;
+    gap: 2px;
+  }
+
+  .mfsd-hw-card__hero-headline {
+    color: #fff !important;
+    font-size: 12px;
+  }
+
+  /* No room for summary in a short cell */
+  .mfsd-hw-card__hero-summary {
+    display: none;
+  }
+
+  /* Button: no separator, compact */
+  .mfsd-hw-card__hero-content .mfsd-hw-card__cta {
+    border-top: none;
+    margin-top: 4px;
+    padding: 5px 10px;
+    font-size: 11px;
+  }
 }
 
 /* Task link in Progress widget — append to frontend.css */
