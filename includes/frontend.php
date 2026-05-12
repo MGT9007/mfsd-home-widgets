@@ -710,8 +710,9 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
       <?php if ( $is_student && ! empty( $completed_tasks ) ) :
           // ── STUDENT WITH PROGRESS: achievements carousel ─────────────────
-          $slide_count = count( $completed_tasks ) + ( $next_task ? 1 : 0 );
-          $is_carousel = $slide_count > 1;
+          $slide_count          = count( $completed_tasks ) + ( $next_task ? 1 : 0 );
+          $is_carousel          = $slide_count > 1;
+          $last_completed_idx   = count( $completed_tasks ) - 1;
       ?>
 
         <div class="mfsd-hw-card__body<?php echo $is_carousel ? ' mfsd-hw-carousel' : ''; ?>">
@@ -719,23 +720,27 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
           <?php foreach ( $completed_tasks as $ci => $ct ) :
               $ct_slug      = $ct['task_slug'] ?? '';
               $ct_name      = mfsd_hw_task_display_name( $ct_slug );
-              $ct_link      = isset( $task_urls[ $ct_slug ] ) ? home_url( $task_urls[ $ct_slug ] ) : '';
+              // Always link: task summary page if mapped, portal progress page as fallback.
+              $ct_link      = isset( $task_urls[ $ct_slug ] )
+                  ? home_url( $task_urls[ $ct_slug ] )
+                  : add_query_arg( [ 'course_id' => 1 ], home_url( '/about/parent-portal-home/' ) );
               $ct_date      = ! empty( $ct['completed_date'] ) ? date_i18n( 'j M Y', strtotime( $ct['completed_date'] ) ) : '';
               $ct_bslug     = $task_badge_m[ $ct_slug ] ?? '';
               $ct_bimg      = $ct_bslug ? mfsd_hw_badge_image_url( $ct_bslug, $student_id ) : '';
               $ct_who_am_i  = in_array( $ct_bslug, [ 'badge_who_am_i_1', 'badge_who_am_i_2' ], true );
               $ct_char      = ( $ct_who_am_i && $student_id ) ? mfsd_hw_get_character_avatar( $student_id ) : '';
               $ct_active    = $ci === 0 ? ' mfsd-hw-carousel__slide--active' : '';
+              $ct_status    = ( $ci === $last_completed_idx ) ? '★ Last Completed' : '✓ Completed';
           ?>
             <div class="mfsd-hw-carousel__slide<?php echo $ct_active; ?>">
               <div class="mfsd-hw-card__stat mfsd-hw-card__stat--badge">
                 <?php if ( $ct_bimg ) : ?>
                   <?php if ( $ct_who_am_i ) : ?>
                     <div class="mfsd-hw-card__badge-who-am-i"
-                         style="width:48px;height:48px;flex-shrink:0;position:relative;background:url('<?php echo esc_url( $ct_bimg ); ?>') center/contain no-repeat;">
+                         style="width:72px;height:72px;flex-shrink:0;position:relative;background:url('<?php echo esc_url( $ct_bimg ); ?>') center/contain no-repeat;">
                       <?php if ( $ct_char ) : ?>
-                        <img src="<?php echo esc_url( $ct_char ); ?>" alt="" width="32" height="32"
-                             style="width:32px;height:32px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:contain;">
+                        <img src="<?php echo esc_url( $ct_char ); ?>" alt="" width="48" height="48"
+                             style="width:48px;height:48px;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);object-fit:contain;">
                       <?php endif; ?>
                     </div>
                   <?php else : ?>
@@ -747,14 +752,10 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
                   <span class="mfsd-hw-card__stat-icon">⭐</span>
                 <?php endif; ?>
                 <div>
-                  <span class="mfsd-hw-card__achievement-status">✓ Completed</span>
-                  <?php if ( $ct_link ) : ?>
-                    <a href="<?php echo esc_url( $ct_link ); ?>" class="mfsd-hw-card__task-link">
-                      <?php echo esc_html( $ct_name ); ?> →
-                    </a>
-                  <?php else : ?>
-                    <strong><?php echo esc_html( $ct_name ); ?></strong>
-                  <?php endif; ?>
+                  <span class="mfsd-hw-card__achievement-status"><?php echo esc_html( $ct_status ); ?></span>
+                  <a href="<?php echo esc_url( $ct_link ); ?>" class="mfsd-hw-card__task-link">
+                    <?php echo esc_html( $ct_name ); ?> →
+                  </a>
                   <?php if ( $ct_date ) : ?>
                     <span class="mfsd-hw-card__date"><?php echo esc_html( $ct_date ); ?></span>
                   <?php endif; ?>

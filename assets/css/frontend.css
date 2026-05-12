@@ -939,8 +939,8 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   gap: 12px !important;
 }
 .mfsd-hw-card__badge-img {
-  width: 56px !important;
-  height: 56px !important;
+  width: 72px !important;
+  height: 72px !important;
   object-fit: contain !important;
   flex-shrink: 0 !important;
   border-radius: 6px !important;
