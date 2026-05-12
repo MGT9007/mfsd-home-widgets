@@ -733,29 +733,33 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
               $ct_status    = ( $ci === $last_completed_idx ) ? '★ Last Completed' : '✓ Completed';
           ?>
             <div class="mfsd-hw-carousel__slide<?php echo $ct_active; ?>">
-              <?php if ( $ct_bimg ) : ?>
-                <?php if ( $ct_who_am_i ) : ?>
-                  <div class="mfsd-hw-card__badge-backdrop mfsd-hw-card__badge-backdrop--frame"
-                       style="background-image:url('<?php echo esc_url( $ct_bimg ); ?>');">
-                    <?php if ( $ct_char ) : ?>
-                      <img class="mfsd-hw-card__badge-backdrop__char"
-                           src="<?php echo esc_url( $ct_char ); ?>" alt="">
-                    <?php endif; ?>
-                  </div>
-                <?php else : ?>
-                  <img class="mfsd-hw-card__badge-backdrop"
-                       src="<?php echo esc_url( $ct_bimg ); ?>" alt="">
-                <?php endif; ?>
-              <?php endif; ?>
-              <div class="mfsd-hw-card__achievement-content">
+              <div class="mfsd-hw-card__achievement-header">
                 <span class="mfsd-hw-card__achievement-status"><?php echo esc_html( $ct_status ); ?></span>
-                <a href="<?php echo esc_url( $ct_link ); ?>" class="mfsd-hw-card__task-link">
-                  <?php echo esc_html( $ct_name ); ?> →
-                </a>
                 <?php if ( $ct_date ) : ?>
                   <span class="mfsd-hw-card__date"><?php echo esc_html( $ct_date ); ?></span>
                 <?php endif; ?>
               </div>
+              <div class="mfsd-hw-card__achievement-badge">
+                <?php if ( $ct_bimg ) : ?>
+                  <?php if ( $ct_who_am_i ) : ?>
+                    <div class="mfsd-hw-card__achievement-badge-whoami"
+                         style="background-image:url('<?php echo esc_url( $ct_bimg ); ?>');">
+                      <?php if ( $ct_char ) : ?>
+                        <img src="<?php echo esc_url( $ct_char ); ?>" alt="">
+                      <?php endif; ?>
+                    </div>
+                  <?php else : ?>
+                    <img class="mfsd-hw-card__achievement-badge-img"
+                         src="<?php echo esc_url( $ct_bimg ); ?>"
+                         alt="<?php echo esc_attr( mfsd_hw_badge_display_name( $ct_bslug ) ); ?>">
+                  <?php endif; ?>
+                <?php else : ?>
+                  <span class="mfsd-hw-card__achievement-badge-icon">⭐</span>
+                <?php endif; ?>
+              </div>
+              <a href="<?php echo esc_url( $ct_link ); ?>" class="mfsd-hw-card__achievement-link">
+                <?php echo esc_html( $ct_name ); ?> →
+              </a>
             </div>
           <?php endforeach; ?>
 
@@ -765,19 +769,16 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
               $nt_link = isset( $task_urls[ $nt_slug ] ) ? home_url( $task_urls[ $nt_slug ] ) : '';
           ?>
             <div class="mfsd-hw-carousel__slide">
-              <div class="mfsd-hw-card__stat mfsd-hw-card__stat--next-up">
-                <span class="mfsd-hw-card__stat-icon">🎯</span>
-                <div>
-                  <span class="mfsd-hw-card__next-label">Next Up</span>
-                  <?php if ( $nt_link ) : ?>
-                    <a href="<?php echo esc_url( $nt_link ); ?>" class="mfsd-hw-card__task-link">
-                      <?php echo esc_html( $nt_name ); ?> →
-                    </a>
-                  <?php else : ?>
-                    <strong><?php echo esc_html( $nt_name ); ?></strong>
-                  <?php endif; ?>
-                </div>
+              <div class="mfsd-hw-card__achievement-header">
+                <span class="mfsd-hw-card__next-label">Next Up</span>
               </div>
+              <div class="mfsd-hw-card__achievement-badge">
+                <span class="mfsd-hw-card__achievement-badge-icon">🎯</span>
+              </div>
+              <a href="<?php echo esc_url( $nt_link ?: add_query_arg( [ 'course_id' => 1 ], home_url( '/about/parent-portal-home/' ) ) ); ?>"
+                 class="mfsd-hw-card__achievement-link mfsd-hw-card__achievement-link--next">
+                <?php echo esc_html( $nt_name ); ?> →
+              </a>
             </div>
           <?php endif; ?>
 
