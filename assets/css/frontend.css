@@ -7,14 +7,21 @@
 
 
 /* ── FULL-HEIGHT FLEX CHAIN ──────────────────────────────────────────────── */
-/* Each level must be flex and stretch so the grid fills mfsd-site-main.
-   mfsd-site-main already has flex:1 in base.css — we extend that chain. */
+/* Root height: ensure html+body have 100% height on the home page so the
+   flex chain has a bounded root. WordPress adds body.home on the front page. */
+
+html:has(body.home .mfsd-home-page),
+body.home:has(.mfsd-home-page) {
+  height: 100%;
+  overflow: hidden;
+}
 
 .mfsd-home-page {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 .mfsd-home-widgets-zone {
@@ -651,90 +658,90 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   border-bottom-color: rgba(0,212,255,0.10);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   NEWS HERO CARD — Full-bleed background image style
-   Add this block to the END of your existing frontend.css
-   ══════════════════════════════════════════════════════════════════════════ */
+/* ── NEWS HERO CARD — panel layout ──────────────────────────────────────── */
+/* Structure: header bar → image panel (flex:1) → text + CTA (fixed).     */
+/* Image lives in a bounded <img> panel — no full-bleed overlay.           */
 
 .mfsd-hw-card--news-hero {
-  position: relative;
-  min-height: 280px;
-  border-radius: var(--radius-md, 8px);
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  border: 2px solid var(--color-accent, #C9A84C);
+  overflow: hidden;
+  border: 2px solid var(--color-accent, #C9A84C) !important;
 }
 
-/* Background image — flex item that fills the image area above the text content.
-   cover fills this constrained area without over-zooming. */
-.mfsd-hw-card__hero-bg {
+/* Body area fills remaining height below the header */
+.mfsd-hw-card__news-body {
   flex: 1;
+  position: relative;
   min-height: 0;
-  width: 100%;
-  background-size: cover !important;
-  background-position: top center !important;
-  background-repeat: no-repeat;
-  transition: transform 400ms ease;
+  overflow: hidden;
 }
 
-/* Gradient overlay — dark from bottom for text readability */
-.mfsd-hw-card__hero-overlay {
+/* Slides fill the body area via position:absolute */
+.mfsd-hw-card--news-hero .mfsd-hw-carousel__slide {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.90) 0%,
-    rgba(0, 0, 0, 0.55) 45%,
-    rgba(0, 0, 0, 0.15) 100%
-  );
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.mfsd-hw-card--news-hero .mfsd-hw-carousel__slide--active {
+  opacity: 1;
+  pointer-events: auto;
   z-index: 2;
 }
 
-/* Category badge — top left corner */
-.mfsd-hw-card__hero-badge {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  background: var(--color-card-header-bg, #1d2327);
-  color: var(--color-card-header-text, #C9A84C);
-  font-family: var(--font-heading);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border-radius: 4px;
-  z-index: 3;
+/* Single-item (no carousel class on body): always show the one slide */
+.mfsd-hw-card__news-body:not(.mfsd-hw-carousel) .mfsd-hw-carousel__slide {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 2;
 }
 
-.mfsd-hw-card__hero-badge .mfsd-hw-card__icon {
-  font-size: 12px;
-  line-height: 1;
+/* Image panel fills upper portion of the slide */
+.mfsd-hw-card__hero-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background-color: var(--color-card-header-bg, #1d2327);
 }
 
-/* Text content — anchored to bottom */
+.mfsd-hw-card__hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+  transition: transform 400ms ease;
+}
+
+/* No-image fallback (RSS items without a photo) */
+.mfsd-hw-card__hero-panel--empty {
+  background: linear-gradient(135deg, #0d1b2a 0%, #1a2e44 40%, #0d2137 100%);
+}
+
+/* Text + CTA pinned to bottom of slide */
 .mfsd-hw-card__hero-content {
-  position: relative;
-  z-index: 3;
-  padding: 20px 16px 16px;
+  flex-shrink: 0;
+  padding: 10px 14px 12px;
+  background: var(--color-card-bg);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .mfsd-hw-card__hero-headline {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: clamp(12px, 1.1vw, 15px);
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text);
   line-height: 1.25;
   margin: 0;
-  /* Clamp to 2 lines */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -743,72 +750,23 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 
 .mfsd-hw-card__hero-summary {
   font-family: var(--font-body);
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.45;
+  font-size: clamp(10px, 0.9vw, 12px);
+  color: var(--color-text-muted);
+  line-height: 1.4;
   margin: 0;
-  /* Clamp to 3 lines */
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.mfsd-hw-card__hero-cta {
-  display: inline-block;
-  margin-top: 8px;
-  padding: 6px 16px;
-  background: var(--color-btn-primary-bg, #C9A84C);
-  color: var(--color-btn-primary-text, #1d2327);
-  font-family: var(--font-nav);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-radius: 4px;
-  align-self: flex-start;
-  transition: background-color 150ms ease, transform 150ms ease;
-}
-
-.mfsd-hw-card__hero-cta:hover {
-  background: var(--color-btn-primary-hover, #b8983e);
-  color: var(--color-btn-primary-text, #1d2327);
-  transform: translateY(-1px);
-}
-
-/* Clip hover zoom within the slide so it doesn't bleed into the text area */
-.mfsd-hw-card--news-hero .mfsd-hw-carousel__slide {
-  overflow: hidden;
-}
-
-/* Subtle zoom on the image area on hover */
-.mfsd-hw-card--news-hero:hover .mfsd-hw-card__hero-bg {
+/* Subtle zoom on image panel on card hover */
+.mfsd-hw-card--news-hero:hover .mfsd-hw-card__hero-img {
   transform: scale(1.03);
 }
 
-/* Mobile: reduce minimum height */
 @media (max-width: 600px) {
-  .mfsd-hw-card--news-hero {
-    min-height: 220px;
-  }
-  .mfsd-hw-card__hero-headline {
-    font-size: 16px;
-  }
-}
-
-/* Force white text on news hero cards — theme override */
-.mfsd-hw-card--news-hero .mfsd-hw-card__hero-headline {
-  color: #fff !important;
-}
-.mfsd-hw-card--news-hero .mfsd-hw-card__hero-summary {
-  color: rgba(255, 255, 255, 0.85) !important;
-}
-.mfsd-hw-card--news-hero .mfsd-hw-card__hero-content a {
-  color: #fff !important;
-}
-.mfsd-hw-card--news-hero {
-  border: 2px solid var(--color-accent, #C9A84C) !important;
+  .mfsd-hw-card__hero-headline { font-size: 14px; }
 }
 
 /* Task link in Progress widget — append to frontend.css */
@@ -839,52 +797,16 @@ body.mfsd-role-student .mfsd-hw-progress-row {
 }
 
 /* ── NEWS CAROUSEL ───────────────────────────────────────────────────────── */
-/* Slides stack via position: absolute. Only the active slide is visible.    */
-/* Single-item widgets have no .mfsd-hw-carousel class — no controls shown. */
 
 .mfsd-hw-carousel {
   position: relative;
 }
 
-.mfsd-hw-carousel__slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  pointer-events: none;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.mfsd-hw-carousel__slide--active {
-  opacity: 1;
-  pointer-events: auto;
-  z-index: 2;
-}
-
-/* Single-item (no carousel class): slide fills the card absolutely */
-.mfsd-hw-card--news-hero:not(.mfsd-hw-carousel) .mfsd-hw-carousel__slide {
-  position: absolute;
-  inset: 0;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Badge sits above slides */
-.mfsd-hw-carousel .mfsd-hw-card__hero-badge {
-  position: absolute;
-  top: var(--space-md, 16px);
-  left: var(--space-md, 16px);
-  z-index: 10;
-}
-
-/* hero-bg sizing handled by base rule above */
 /* ── ARROWS ──────────────────────────────────────────────────────────────── */
 
 .mfsd-hw-carousel__arrow {
   position: absolute;
-  top: 50%;
+  top: 35%;
   transform: translateY(-50%);
   z-index: 10;
   width: 36px;
@@ -984,62 +906,4 @@ body.mfsd-role-admin .mfsd-hw-carousel__dot--active {
   }
 }
 
-/* Slides fill the full card */
-.mfsd-hw-carousel__slide {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-}
 
-/* Single-item: slide stretches to fill card via position: absolute; inset: 0 (set above) */
-
-/* Hero bg sizing is handled by the .mfsd-hw-card__hero-bg base rule */
-
-.mfsd-hw-carousel__slide .mfsd-hw-card__hero-overlay {
-  position: absolute;
-  inset: 0;
-}
-
-/* Hero content pinned to bottom of slide */
-.mfsd-hw-carousel__slide {
-  justify-content: flex-end;
-}
-
-.mfsd-hw-carousel__slide .mfsd-hw-card__hero-content {
-  position: relative;
-  z-index: 3;
-  margin-top: auto;
-}
-
-/* Overlay must cover full slide */
-.mfsd-hw-carousel__slide .mfsd-hw-card__hero-overlay {
-  z-index: 2;
-}
-
-/* Badge above everything */
-.mfsd-hw-card--news-hero .mfsd-hw-card__hero-badge {
-  z-index: 10;
-}
-
-/* ── RSS FEED CARD ───────────────────────────────────────────────────────── */
-
-/* Dark gradient background for RSS slides (no image available from feed) */
-.mfsd-hw-card__hero-bg--rss {
-  background: linear-gradient( 135deg, #0d1b2a 0%, #1a2e44 40%, #0d2137 100% );
-}
-
-/* Slightly different overlay tint for RSS to give it its own feel */
-.mfsd-hw-card__hero-overlay--rss {
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.85) 0%,
-    rgba(0, 20, 40, 0.50) 55%,
-    rgba(0, 20, 40, 0.15) 100%
-  );
-}
-
-/* Slide counter indicator in top-right of RSS cards */
-.mfsd-hw-card--rss .mfsd-hw-carousel__dots {
-  bottom: 12px;
-}

@@ -134,7 +134,6 @@ function mfsd_hw_card_news( string $variant, array $c ): void {
     if ( isset( $c['items'] ) && is_array( $c['items'] ) ) {
         $items = $c['items'];
     } else {
-        // Old single-item config — wrap in array.
         $items = [ [
             'headline' => $c['headline'] ?? '',
             'summary'  => $c['summary']  ?? '',
@@ -144,7 +143,6 @@ function mfsd_hw_card_news( string $variant, array $c ): void {
         ] ];
     }
 
-    // Filter out empty items (no headline and no image).
     $items = array_values( array_filter( $items, function( $item ) {
         return ! empty( $item['headline'] ) || ! empty( $item['image_id'] );
     } ) );
@@ -153,63 +151,54 @@ function mfsd_hw_card_news( string $variant, array $c ): void {
 
     $count       = count( $items );
     $is_carousel = $count > 1;
-    $wrapper_cls = 'mfsd-hw-card mfsd-hw-card--news-hero';
-    if ( $is_carousel ) $wrapper_cls .= ' mfsd-hw-carousel';
     ?>
-    <div class="<?php echo esc_attr( $wrapper_cls ); ?>">
+    <div class="mfsd-hw-card mfsd-hw-card--news-hero">
 
-      <?php // ── Slides ── ?>
-      <?php foreach ( $items as $i => $item ) :
-          $img      = mfsd_hw_get_image_url( (int) ( $item['image_id'] ?? 0 ) );
-          $link     = $item['link'] ?? '';
-          $cta_text = $item['cta_text'] ?? 'Read More';
-          $active   = $i === 0 ? ' mfsd-hw-carousel__slide--active' : '';
-      ?>
-        <div class="mfsd-hw-carousel__slide<?php echo $active; ?>">
-
-          <div class="mfsd-hw-card__hero-bg"
-               style="background-image: url('<?php echo esc_url( $img ); ?>');">
-          </div>
-          <div class="mfsd-hw-card__hero-overlay"></div>
-
-          <div class="mfsd-hw-card__hero-content">
-            <h3 class="mfsd-hw-card__hero-headline">
-              <?php echo esc_html( $item['headline'] ?? '' ); ?>
-            </h3>
-            <?php if ( ! empty( $item['summary'] ) ) : ?>
-              <p class="mfsd-hw-card__hero-summary">
-                <?php echo esc_html( $item['summary'] ); ?>
-              </p>
-            <?php endif; ?>
-            <?php if ( ! empty( $link ) ) : ?>
-              <a href="<?php echo esc_url( $link ); ?>"
-                 class="mfsd-hw-card__hero-cta"
-                 <?php echo $external ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
-                <?php echo esc_html( $cta_text ); ?> →
-              </a>
-            <?php endif; ?>
-          </div>
-
-        </div>
-      <?php endforeach; ?>
-
-      <?php // ── Badge — always visible on top ── ?>
-      <div class="mfsd-hw-card__hero-badge">
+      <div class="mfsd-hw-card__header">
         <span class="mfsd-hw-card__icon"><?php echo $icon; ?></span>
         <?php echo esc_html( $title ); ?>
       </div>
 
-      <?php // ── Carousel controls (only for 2+ items) ── ?>
-      <?php if ( $is_carousel ) : ?>
-        <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--prev" aria-label="Previous">‹</button>
-        <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="Next">›</button>
-        <div class="mfsd-hw-carousel__dots">
-          <?php for ( $d = 0; $d < $count; $d++ ) : ?>
-            <button class="mfsd-hw-carousel__dot<?php echo $d === 0 ? ' mfsd-hw-carousel__dot--active' : ''; ?>"
-                    aria-label="Slide <?php echo $d + 1; ?>"></button>
-          <?php endfor; ?>
-        </div>
-      <?php endif; ?>
+      <div class="mfsd-hw-card__news-body<?php echo $is_carousel ? ' mfsd-hw-carousel' : ''; ?>">
+
+        <?php foreach ( $items as $i => $item ) :
+            $img      = mfsd_hw_get_image_url( (int) ( $item['image_id'] ?? 0 ) );
+            $link     = $item['link'] ?? '';
+            $cta_text = $item['cta_text'] ?? 'Read More';
+            $active   = $i === 0 ? ' mfsd-hw-carousel__slide--active' : '';
+        ?>
+          <div class="mfsd-hw-carousel__slide<?php echo $active; ?>">
+            <div class="mfsd-hw-card__hero-panel">
+              <img class="mfsd-hw-card__hero-img"
+                   src="<?php echo esc_url( $img ); ?>"
+                   alt="<?php echo esc_attr( $item['headline'] ?? '' ); ?>">
+            </div>
+            <div class="mfsd-hw-card__hero-content">
+              <h3 class="mfsd-hw-card__hero-headline">
+                <?php echo esc_html( $item['headline'] ?? '' ); ?>
+              </h3>
+              <?php if ( ! empty( $item['summary'] ) ) : ?>
+                <p class="mfsd-hw-card__hero-summary">
+                  <?php echo esc_html( $item['summary'] ); ?>
+                </p>
+              <?php endif; ?>
+              <?php if ( ! empty( $link ) ) : ?>
+                <a href="<?php echo esc_url( $link ); ?>"
+                   class="mfsd-hw-card__cta"
+                   <?php echo $external ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
+                  <?php echo esc_html( $cta_text ); ?> →
+                </a>
+              <?php endif; ?>
+            </div>
+          </div>
+        <?php endforeach; ?>
+
+        <?php if ( $is_carousel ) : ?>
+          <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--prev" aria-label="Previous">‹</button>
+          <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="Next">›</button>
+        <?php endif; ?>
+
+      </div>
 
     </div>
     <?php
@@ -980,21 +969,21 @@ function mfsd_hw_card_rss( array $c ): void {
     $items = mfsd_hw_fetch_rss( $feed_url, $feed_limit, $feed_prefix );
 
     if ( empty( $items ) ) {
-        // Show a placeholder card if feed is empty or unreachable.
         ?>
-        <div class="mfsd-hw-card mfsd-hw-card--news-hero">
-          <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--active">
-            <div class="mfsd-hw-card__hero-bg" style="background-image:none;background-color:#1a1a1a;"></div>
-            <div class="mfsd-hw-card__hero-overlay"></div>
-            <div class="mfsd-hw-card__hero-content">
-              <h3 class="mfsd-hw-card__hero-headline">
-                <?php esc_html_e( 'Feed unavailable — check back soon.', 'mfsd-home-widgets' ); ?>
-              </h3>
-            </div>
-          </div>
-          <div class="mfsd-hw-card__hero-badge">
+        <div class="mfsd-hw-card mfsd-hw-card--news-hero mfsd-hw-card--rss">
+          <div class="mfsd-hw-card__header">
             <span class="mfsd-hw-card__icon">📡</span>
             <?php echo esc_html( $badge_label ); ?>
+          </div>
+          <div class="mfsd-hw-card__news-body">
+            <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--active">
+              <div class="mfsd-hw-card__hero-panel mfsd-hw-card__hero-panel--empty"></div>
+              <div class="mfsd-hw-card__hero-content">
+                <h3 class="mfsd-hw-card__hero-headline">
+                  <?php esc_html_e( 'Feed unavailable — check back soon.', 'mfsd-home-widgets' ); ?>
+                </h3>
+              </div>
+            </div>
           </div>
         </div>
         <?php
@@ -1003,60 +992,55 @@ function mfsd_hw_card_rss( array $c ): void {
 
     $count       = count( $items );
     $is_carousel = $count > 1;
-    $wrapper_cls = 'mfsd-hw-card mfsd-hw-card--news-hero mfsd-hw-card--rss';
-    if ( $is_carousel ) $wrapper_cls .= ' mfsd-hw-carousel';
     ?>
-    <div class="<?php echo esc_attr( $wrapper_cls ); ?>">
+    <div class="mfsd-hw-card mfsd-hw-card--news-hero mfsd-hw-card--rss">
 
-      <?php foreach ( $items as $i => $item ) :
-          $active    = $i === 0 ? ' mfsd-hw-carousel__slide--active' : '';
-          $img_url   = ! empty( $item['image_url'] ) ? $item['image_url'] : '';
-          $has_image = ! empty( $img_url );
-      ?>
-        <div class="mfsd-hw-carousel__slide<?php echo $active; ?>">
-
-          <div class="mfsd-hw-card__hero-bg<?php echo $has_image ? '' : ' mfsd-hw-card__hero-bg--rss'; ?>"
-               style="<?php echo $has_image ? 'background-image:url(' . esc_url( $img_url ) . ');' : 'background-image:none;'; ?>">
-          </div>
-          <div class="mfsd-hw-card__hero-overlay<?php echo $has_image ? '' : ' mfsd-hw-card__hero-overlay--rss'; ?>"></div>
-
-          <div class="mfsd-hw-card__hero-content">
-            <h3 class="mfsd-hw-card__hero-headline">
-              <?php echo esc_html( $item['title'] ); ?>
-            </h3>
-            <?php if ( ! empty( $item['summary'] ) ) : ?>
-              <p class="mfsd-hw-card__hero-summary">
-                <?php echo esc_html( $item['summary'] ); ?>
-              </p>
-            <?php endif; ?>
-            <?php if ( ! empty( $item['link'] ) ) : ?>
-              <a href="<?php echo esc_url( $item['link'] ); ?>"
-                 class="mfsd-hw-card__hero-cta"
-                 <?php echo $link_out ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
-                <?php echo esc_html( $cta_text ); ?> →
-              </a>
-            <?php endif; ?>
-          </div>
-
-        </div>
-      <?php endforeach; ?>
-
-      <?php // Badge — always visible ?>
-      <div class="mfsd-hw-card__hero-badge">
+      <div class="mfsd-hw-card__header">
         <span class="mfsd-hw-card__icon">📡</span>
         <?php echo esc_html( $badge_label ); ?>
       </div>
 
-      <?php if ( $is_carousel ) : ?>
-        <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--prev" aria-label="Previous">‹</button>
-        <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="Next">›</button>
-        <div class="mfsd-hw-carousel__dots">
-          <?php for ( $d = 0; $d < $count; $d++ ) : ?>
-            <button class="mfsd-hw-carousel__dot<?php echo $d === 0 ? ' mfsd-hw-carousel__dot--active' : ''; ?>"
-                    aria-label="Slide <?php echo $d + 1; ?>"></button>
-          <?php endfor; ?>
-        </div>
-      <?php endif; ?>
+      <div class="mfsd-hw-card__news-body<?php echo $is_carousel ? ' mfsd-hw-carousel' : ''; ?>">
+
+        <?php foreach ( $items as $i => $item ) :
+            $active    = $i === 0 ? ' mfsd-hw-carousel__slide--active' : '';
+            $img_url   = ! empty( $item['image_url'] ) ? $item['image_url'] : '';
+            $has_image = ! empty( $img_url );
+        ?>
+          <div class="mfsd-hw-carousel__slide<?php echo $active; ?>">
+            <div class="mfsd-hw-card__hero-panel<?php echo $has_image ? '' : ' mfsd-hw-card__hero-panel--empty'; ?>">
+              <?php if ( $has_image ) : ?>
+                <img class="mfsd-hw-card__hero-img"
+                     src="<?php echo esc_url( $img_url ); ?>"
+                     alt="<?php echo esc_attr( $item['title'] ); ?>">
+              <?php endif; ?>
+            </div>
+            <div class="mfsd-hw-card__hero-content">
+              <h3 class="mfsd-hw-card__hero-headline">
+                <?php echo esc_html( $item['title'] ); ?>
+              </h3>
+              <?php if ( ! empty( $item['summary'] ) ) : ?>
+                <p class="mfsd-hw-card__hero-summary">
+                  <?php echo esc_html( $item['summary'] ); ?>
+                </p>
+              <?php endif; ?>
+              <?php if ( ! empty( $item['link'] ) ) : ?>
+                <a href="<?php echo esc_url( $item['link'] ); ?>"
+                   class="mfsd-hw-card__cta"
+                   <?php echo $link_out ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
+                  <?php echo esc_html( $cta_text ); ?> →
+                </a>
+              <?php endif; ?>
+            </div>
+          </div>
+        <?php endforeach; ?>
+
+        <?php if ( $is_carousel ) : ?>
+          <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--prev" aria-label="Previous">‹</button>
+          <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="Next">›</button>
+        <?php endif; ?>
+
+      </div>
 
     </div>
     <?php
