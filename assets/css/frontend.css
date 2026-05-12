@@ -704,11 +704,11 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   z-index: 2;
 }
 
-/* Image panel: capped at 55% of slide height so text area always has room */
+/* Image panel: fills all space above the text — no cap, so no blank gap.
+   min-height keeps the image visible even in the smallest cells.           */
 .mfsd-hw-card__hero-panel {
   flex: 1;
-  min-height: 0;
-  max-height: 55%;
+  min-height: 80px;
   overflow: hidden;
   background-color: var(--color-card-header-bg, #1d2327);
 }
@@ -727,24 +727,26 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   background: linear-gradient(135deg, #0d1b2a 0%, #1a2e44 40%, #0d2137 100%);
 }
 
-/* Taller header on news-hero cards so the image sits lower */
+/* Taller, slightly larger header on news-hero cards — pushes image lower */
 .mfsd-hw-card--news-hero .mfsd-hw-card__header {
-  padding: 14px var(--space-md, 16px);
+  padding: 18px var(--space-md, 16px);
+  font-size: 15px;
 }
 
-/* Text + CTA pinned to bottom of slide — compact */
+/* Text + CTA: separator line above, larger headline, gap before button */
 .mfsd-hw-card__hero-content {
   flex-shrink: 0;
-  padding: 8px 12px 10px;
+  padding: 10px 14px 12px;
   background: var(--color-card-bg);
+  border-top: 1px solid var(--color-rule, rgba(201,168,76,0.25));
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .mfsd-hw-card__hero-headline {
   font-family: var(--font-heading);
-  font-size: clamp(12px, 1.1vw, 15px);
+  font-size: clamp(13px, 1.2vw, 17px);
   font-weight: 700;
   color: var(--color-text);
   line-height: 1.25;
@@ -765,6 +767,13 @@ body.mfsd-role-student .mfsd-hw-progress-row {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Line space + separator between text and CTA button */
+.mfsd-hw-card__hero-content .mfsd-hw-card__cta {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-rule, rgba(201,168,76,0.25));
 }
 
 /* Subtle zoom on image panel on card hover */
