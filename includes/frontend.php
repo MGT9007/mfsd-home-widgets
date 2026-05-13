@@ -1300,7 +1300,7 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
     if ( empty( $feed_url ) ) return [];
 
     $limit         = max( 1, min( 20, $limit ) );
-    $transient_key = 'mfsd_hw_rss_v4_' . md5( $feed_url . $limit );
+    $transient_key = 'mfsd_hw_rss_v5_' . md5( $feed_url . $limit );
 
     $cached = get_transient( $transient_key );
     if ( is_array( $cached ) && ! empty( $cached ) ) return $cached;
@@ -1410,8 +1410,7 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
         }
 
         // 2. <media:thumbnail> or <media:content> — used by BBC and others.
-        // Prefer media:thumbnail: it is reliably a landscape photo crop.
-        // media:content can be portrait or video — worse for cover backgrounds.
+        // Also handles <media:group> wrapping (YouTube/TED feeds).
         if ( empty( $image_url ) && isset( $namespaces['media'] ) ) {
             $media = $item->children( $namespaces['media'] );
             if ( isset( $media->thumbnail ) ) {
@@ -1421,13 +1420,34 @@ function mfsd_hw_fetch_rss( string $feed_url, int $limit = 10, string $prefix = 
             if ( empty( $image_url ) && isset( $media->content ) ) {
                 $mc = $media->content->attributes();
                 $mc_type = (string) ( $mc['type'] ?? '' );
-                if ( strpos( $mc_type, 'image' ) !== false ) {
+                if ( empty( $mc_type ) || strpos( $mc_type, 'image' ) !== false ) {
                     $image_url = (string) ( $mc['url'] ?? '' );
+                }
+            }
+            // YouTube/TED: thumbnail nested inside <media:group>
+            if ( empty( $image_url ) && isset( $media->group ) ) {
+                $group = $media->group->children( $namespaces['media'] );
+                if ( isset( $group->thumbnail ) ) {
+                    $gt = $group->thumbnail->attributes();
+                    $image_url = (string) ( $gt['url'] ?? '' );
+                }
+                if ( empty( $image_url ) && isset( $group->content ) ) {
+                    $gc = $group->content->attributes();
+                    $gc_type = (string) ( $gc['type'] ?? '' );
+                    if ( empty( $gc_type ) || strpos( $gc_type, 'image' ) !== false ) {
+                        $image_url = (string) ( $gc['url'] ?? '' );
+                    }
                 }
             }
         }
 
-        // 3. <image> channel-level fallback (not per-item, skip for now).
+        // 3. <image><url> at item level (some podcast/edu feeds).
+        if ( empty( $image_url ) && isset( $item->image->url ) ) {
+            $candidate = (string) $item->image->url;
+            if ( strpos( $candidate, 'http' ) === 0 ) {
+                $image_url = $candidate;
+            }
+        }
 
         // 4. <img> embedded in <description> HTML — used by IGN, Kotaku,
         //    and most WordPress-based gaming/news feeds. The HTML is entity-
