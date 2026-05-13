@@ -892,7 +892,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     $first_task_link    = '';
     $course_details_url = '';
 
-    if ( $is_student && ! $latest_task && $student_id ) {
+    if ( ( $is_student || $is_parent ) && ! $latest_task && $student_id ) {
         $enrol_table = $wpdb->prefix . 'mfsd_enrolments';
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$enrol_table}'" ) === $enrol_table ) {
             $enrollment = $wpdb->get_row( $wpdb->prepare(
@@ -1126,6 +1126,44 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
             <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="<?php esc_attr_e( 'Next', 'mfsd-home-widgets' ); ?>">›</button>
           <?php endif; ?>
 
+        </div>
+
+      <?php elseif ( $is_parent && $is_not_started && $first_task_name ) :
+          // ── PARENT: linked student enrolled but not started ───────────────
+          $ns_icons     = mfsd_hw_task_icon_map();
+          $ns_icon      = $ns_icons[ $first_task_slug ] ?? '🎯';
+          $ns_is_family = mfsd_hw_is_family_task( $first_task_slug );
+          $ns_link      = ( $ns_is_family && isset( $task_urls[ $first_task_slug ] ) )
+              ? add_query_arg( 'student_id', $student_id, home_url( $task_urls[ $first_task_slug ] ) )
+              : '';
+      ?>
+
+        <?php if ( $student_name ) : ?>
+          <p class="mfsd-hw-card__subtitle">
+            <?php printf(
+                esc_html__( "Showing %s's progress", 'mfsd-home-widgets' ),
+                '<strong>' . esc_html( $student_name ) . '</strong>'
+            ); ?>
+          </p>
+        <?php endif; ?>
+
+        <div class="mfsd-hw-card__body mfsd-hw-carousel">
+          <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--active mfsd-hw-carousel__slide--not-started">
+            <span class="mfsd-hw-card__task-icon-backdrop" aria-hidden="true"><?php echo $ns_icon; ?></span>
+            <div class="mfsd-hw-card__achievement-header">
+              <span class="mfsd-hw-card__next-label"><?php esc_html_e( 'Course Not Started', 'mfsd-home-widgets' ); ?></span>
+            </div>
+            <?php if ( $ns_link ) : ?>
+              <a href="<?php echo esc_url( $ns_link ); ?>"
+                 class="mfsd-hw-card__task-link mfsd-hw-card__task-link--next">
+                <?php echo esc_html( $first_task_name ); ?> →
+              </a>
+            <?php else : ?>
+              <span class="mfsd-hw-card__task-name">
+                <?php echo esc_html( $first_task_name ); ?>
+              </span>
+            <?php endif; ?>
+          </div>
         </div>
 
       <?php elseif ( $is_student && $is_not_started && $first_task_name ) :
