@@ -249,16 +249,9 @@ function mfsd_hw_card_courses( array $c ): void {
         <span class="mfsd-hw-card__icon">🎓</span>
         NEW COURSE
       </div>
-      <div class="mfsd-hw-card__body">
-        <div class="mfsd-hw-card__media-row">
-          <img class="mfsd-hw-card__thumb"
-               src="<?php echo esc_url( $img ); ?>"
-               alt="<?php echo esc_attr( $c['headline'] ?? '' ); ?>">
-          <div class="mfsd-hw-card__text">
-            <h3 class="mfsd-hw-card__headline"><?php echo esc_html( $c['headline'] ?? '' ); ?></h3>
-            <p class="mfsd-hw-card__summary"><?php echo esc_html( $c['summary'] ?? '' ); ?></p>
-          </div>
-        </div>
+      <div class="mfsd-hw-card__body"<?php if ( $img ) : ?> style="--hw-badge-bg: url('<?php echo esc_url( $img ); ?>')"<?php endif; ?>>
+        <h3 class="mfsd-hw-card__headline"><?php echo esc_html( $c['headline'] ?? '' ); ?></h3>
+        <p class="mfsd-hw-card__summary"><?php echo esc_html( $c['summary'] ?? '' ); ?></p>
       </div>
       <?php if ( ! empty( $c['link'] ) ) : ?>
         <a href="<?php echo esc_url( $c['link'] ); ?>" class="mfsd-hw-card__cta">

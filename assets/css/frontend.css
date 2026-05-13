@@ -392,6 +392,27 @@ body.home:has(.mfsd-home-page) {
   min-width: 0;
 }
 
+/* New Course: image as faded backdrop behind text */
+.mfsd-hw-card--courses .mfsd-hw-card__body {
+  position: relative;
+}
+
+.mfsd-hw-card--courses .mfsd-hw-card__body::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 92%;
+  height: 92%;
+  background-image: var(--hw-badge-bg, none);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.30;
+  pointer-events: none;
+}
+
 .mfsd-hw-card__headline {
   font-family: var(--font-heading);
   font-size: var(--text-base, 16px);
