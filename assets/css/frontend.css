@@ -1203,11 +1203,14 @@ body.mfsd-role-student .mfsd-hw-grid--6c .mfsd-hw-grid__cell--4 .mfsd-hw-card--n
   z-index: 0;
 }
 
-/* Image: centre-crop works better for full-bleed in varied cell sizes */
+/* Image: contain so the full image is visible with no cropping.             */
+/* The cell is wide (up to 50% viewport), so cover would zoom in and lose    */
+/* the bottom — contain fits the whole image and lets the dark card bg show. */
 .mfsd-hw-grid--7 .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
 .mfsd-hw-grid--7b .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img,
 .mfsd-hw-grid--7c .mfsd-hw-card--news-hero .mfsd-hw-card__hero-img {
-  object-position: center center;
+  object-fit: contain;
+  object-position: center top;
 }
 
 /* Hero content: same grid cell, pinned to bottom, above gradient (z-index 3) */
