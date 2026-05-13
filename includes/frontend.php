@@ -772,15 +772,15 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     $task_badge_m = mfsd_hw_task_badge_map();
 
     // ── Completed tasks ───────────────────────────────────────────────────────
-    // Students: fetch all, oldest first — carousel cycles through them.
-    // Parents / teachers: just the most recent (no carousel).
+    // Students + parents: fetch all, oldest first — carousel cycles through them.
+    // Other roles (teacher etc): just the most recent.
     $latest_task     = null;
     $completed_tasks = [];
 
     if ( $show_task && $student_id ) {
         $task_table = $wpdb->prefix . 'mfsd_task_progress';
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$task_table}'" ) === $task_table ) {
-            if ( $is_student ) {
+            if ( $is_student || $is_parent ) {
                 $completed_tasks = $wpdb->get_results( $wpdb->prepare(
                     "SELECT * FROM {$task_table}
                      WHERE student_id = %d AND status = 'completed'
@@ -1007,6 +1007,63 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
               </a>
             </div>
           <?php endif; ?>
+
+          <?php if ( $is_carousel ) : ?>
+            <div class="mfsd-hw-carousel__dots">
+              <?php for ( $d = 0; $d < $slide_count; $d++ ) : ?>
+                <button class="mfsd-hw-carousel__dot<?php echo $d === 0 ? ' mfsd-hw-carousel__dot--active' : ''; ?>"
+                        aria-label="<?php echo esc_attr( sprintf( __( 'Slide %d', 'mfsd-home-widgets' ), $d + 1 ) ); ?>"></button>
+              <?php endfor; ?>
+            </div>
+            <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--prev" aria-label="<?php esc_attr_e( 'Previous', 'mfsd-home-widgets' ); ?>">‹</button>
+            <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="<?php esc_attr_e( 'Next', 'mfsd-home-widgets' ); ?>">›</button>
+          <?php endif; ?>
+
+        </div>
+
+      <?php elseif ( $is_parent && ! empty( $completed_tasks ) ) :
+          // ── PARENT VIEW: all completed tasks carousel ─────────────────────
+          $slide_count        = count( $completed_tasks );
+          $is_carousel        = $slide_count > 1;
+          $last_completed_idx = $slide_count - 1;
+      ?>
+
+        <?php if ( $student_name ) : ?>
+          <p class="mfsd-hw-card__subtitle">
+            <?php printf(
+                esc_html__( "Showing %s's progress", 'mfsd-home-widgets' ),
+                '<strong>' . esc_html( $student_name ) . '</strong>'
+            ); ?>
+          </p>
+        <?php endif; ?>
+
+        <div class="mfsd-hw-card__body<?php echo $is_carousel ? ' mfsd-hw-carousel' : ''; ?>">
+
+          <?php foreach ( $completed_tasks as $ci => $ct ) :
+              $ct_slug   = $ct['task_slug'] ?? '';
+              $ct_name   = mfsd_hw_task_display_name( $ct_slug );
+              $ct_link   = isset( $task_urls[ $ct_slug ] )
+                  ? add_query_arg( 'student_id', $student_id, home_url( $task_urls[ $ct_slug ] ) )
+                  : add_query_arg( [ 'course_id' => 1, 'student_id' => $student_id ], home_url( '/about/parent-portal-home/' ) );
+              $ct_date   = ! empty( $ct['completed_date'] ) ? date_i18n( 'j M Y', strtotime( $ct['completed_date'] ) ) : '';
+              $ct_bslug  = $task_badge_m[ $ct_slug ] ?? '';
+              $ct_bimg   = $ct_bslug ? mfsd_hw_badge_image_url( $ct_bslug, $student_id ) : '';
+              $ct_active = $ci === 0 ? ' mfsd-hw-carousel__slide--active' : '';
+              $ct_status = ( $ci === $last_completed_idx ) ? '★ Last Completed' : '✓ Completed';
+          ?>
+            <div class="mfsd-hw-carousel__slide<?php echo $ct_active; ?>"
+                 <?php if ( $ct_bimg ) : ?>style="--hw-badge-bg: url('<?php echo esc_url( $ct_bimg ); ?>')"<?php endif; ?>>
+              <div class="mfsd-hw-card__achievement-header">
+                <span class="mfsd-hw-card__achievement-status"><?php echo esc_html( $ct_status ); ?></span>
+                <?php if ( $ct_date ) : ?>
+                  <span class="mfsd-hw-card__date"><?php echo esc_html( $ct_date ); ?></span>
+                <?php endif; ?>
+              </div>
+              <a href="<?php echo esc_url( $ct_link ); ?>" class="mfsd-hw-card__task-link">
+                <?php echo esc_html( $ct_name ); ?> →
+              </a>
+            </div>
+          <?php endforeach; ?>
 
           <?php if ( $is_carousel ) : ?>
             <div class="mfsd-hw-carousel__dots">
