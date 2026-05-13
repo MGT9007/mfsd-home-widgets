@@ -1431,6 +1431,16 @@ body.mfsd-role-student .mfsd-hw-card__achievement-status {
   color: var(--color-accent-2, #9333EA) !important;
 }
 
+/* Next-Up task name (non-family, no link) — same visual weight as task-link */
+.mfsd-hw-card--progress .mfsd-hw-carousel__slide .mfsd-hw-card__task-name {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm, 13px);
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: 0.04em;
+  padding: 0 var(--space-md, 16px);
+}
+
 /* Not-started slide: larger icon and text to fill the available space */
 .mfsd-hw-carousel__slide--not-started .mfsd-hw-card__task-icon-backdrop {
   font-size: 150px;

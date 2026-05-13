@@ -649,6 +649,23 @@ function mfsd_hw_task_icon_map(): array {
 }
 
 /**
+ * Returns true if a task is configured as a family/multiplayer task.
+ * Used by the parent "Next Up" slide to decide whether to show a join link.
+ */
+function mfsd_hw_is_family_task( string $slug ): bool {
+    switch ( $slug ) {
+        case 'solution_lens':
+            // Family when player mode is 'multi' (the default)
+            return get_option( 'mfsd_lens_player_mode', 'multi' ) === 'multi';
+        case 'super_strengths':
+            // Family when mode is 'full' (Extended) or 'short' (Family Short); snap is solo
+            return get_option( 'mfsd_ss_mode', 'full' ) !== 'snap';
+        default:
+            return false;
+    }
+}
+
+/**
  * Human-friendly display name for a badge slug.
  */
 function mfsd_hw_badge_display_name( string $slug ): string {
@@ -801,9 +818,9 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         }
     }
 
-    // ── Next uncompleted task (students with progress only) ──────────────────
+    // ── Next uncompleted task (students and parents with progress) ──────────
     $next_task = null;
-    if ( $is_student && ! empty( $completed_tasks ) && $student_id ) {
+    if ( ( $is_student || $is_parent ) && ! empty( $completed_tasks ) && $student_id ) {
         $task_order_table = $wpdb->prefix . 'mfsd_task_order';
         $enrol_table      = $wpdb->prefix . 'mfsd_enrolments';
         if (
@@ -1022,10 +1039,10 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         </div>
 
       <?php elseif ( $is_parent && ! empty( $completed_tasks ) ) :
-          // ── PARENT VIEW: all completed tasks carousel ─────────────────────
-          $slide_count        = count( $completed_tasks );
+          // ── PARENT VIEW: completed tasks + optional Next Up slide ─────────
+          $slide_count        = count( $completed_tasks ) + ( $next_task ? 1 : 0 );
           $is_carousel        = $slide_count > 1;
-          $last_completed_idx = $slide_count - 1;
+          $last_completed_idx = count( $completed_tasks ) - 1;
       ?>
 
         <?php if ( $student_name ) : ?>
@@ -1064,6 +1081,39 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
               </a>
             </div>
           <?php endforeach; ?>
+
+          <?php if ( $next_task ) :
+              $task_icons    = mfsd_hw_task_icon_map();
+              $nt_slug       = $next_task['task_slug'] ?? '';
+              $nt_name       = ! empty( $next_task['display_name'] ) ? $next_task['display_name'] : mfsd_hw_task_display_name( $nt_slug );
+              $nt_icon       = $task_icons[ $nt_slug ] ?? '🎯';
+              $nt_is_family  = mfsd_hw_is_family_task( $nt_slug );
+              // Only link if it's a family/multiplayer task the parent can join
+              $nt_link       = ( $nt_is_family && isset( $task_urls[ $nt_slug ] ) )
+                  ? add_query_arg( 'student_id', $student_id, home_url( $task_urls[ $nt_slug ] ) )
+                  : '';
+          ?>
+            <div class="mfsd-hw-carousel__slide">
+              <span class="mfsd-hw-card__task-icon-backdrop" aria-hidden="true"><?php echo $nt_icon; ?></span>
+              <div class="mfsd-hw-card__achievement-header">
+                <span class="mfsd-hw-card__next-label">
+                  <?php echo $nt_is_family
+                      ? esc_html__( 'Next Up — Family Task', 'mfsd-home-widgets' )
+                      : esc_html__( 'Next Up', 'mfsd-home-widgets' ); ?>
+                </span>
+              </div>
+              <?php if ( $nt_link ) : ?>
+                <a href="<?php echo esc_url( $nt_link ); ?>"
+                   class="mfsd-hw-card__task-link mfsd-hw-card__task-link--next">
+                  <?php echo esc_html( $nt_name ); ?> →
+                </a>
+              <?php else : ?>
+                <span class="mfsd-hw-card__task-name">
+                  <?php echo esc_html( $nt_name ); ?>
+                </span>
+              <?php endif; ?>
+            </div>
+          <?php endif; ?>
 
           <?php if ( $is_carousel ) : ?>
             <div class="mfsd-hw-carousel__dots">
