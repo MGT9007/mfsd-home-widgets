@@ -1130,6 +1130,8 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
       <?php elseif ( $is_parent && $is_not_started ) :
           // ── PARENT: linked student enrolled but not started ───────────────
+          $ns_icons = mfsd_hw_task_icon_map();
+          $ns_icon  = $ns_icons[ $first_task_slug ] ?? '🎯';
       ?>
 
         <?php if ( $student_name ) : ?>
@@ -1143,7 +1145,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
         <div class="mfsd-hw-card__body mfsd-hw-carousel">
           <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--active mfsd-hw-carousel__slide--not-started">
-            <span class="mfsd-hw-card__task-icon-backdrop" aria-hidden="true">📚</span>
+            <span class="mfsd-hw-card__task-icon-backdrop" aria-hidden="true"><?php echo $ns_icon; ?></span>
             <div class="mfsd-hw-card__achievement-header">
               <span class="mfsd-hw-card__next-label"><?php esc_html_e( 'Course Not Started', 'mfsd-home-widgets' ); ?></span>
             </div>
@@ -1275,7 +1277,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
       <?php endif; // end student vs static view ?>
 
       <a href="<?php echo $cta_url; ?>" class="mfsd-hw-card__cta">
-        <?php if ( $is_not_started ) :
+        <?php if ( $is_not_started && $is_student ) :
             esc_html_e( 'Start My Course', 'mfsd-home-widgets' );
         elseif ( $is_parent ) :
             esc_html_e( 'View Full Progress', 'mfsd-home-widgets' );
