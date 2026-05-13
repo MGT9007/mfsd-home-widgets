@@ -1128,14 +1128,8 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
         </div>
 
-      <?php elseif ( $is_parent && $is_not_started && $first_task_name ) :
+      <?php elseif ( $is_parent && $is_not_started ) :
           // ── PARENT: linked student enrolled but not started ───────────────
-          $ns_icons     = mfsd_hw_task_icon_map();
-          $ns_icon      = $ns_icons[ $first_task_slug ] ?? '🎯';
-          $ns_is_family = mfsd_hw_is_family_task( $first_task_slug );
-          $ns_link      = ( $ns_is_family && isset( $task_urls[ $first_task_slug ] ) )
-              ? add_query_arg( 'student_id', $student_id, home_url( $task_urls[ $first_task_slug ] ) )
-              : '';
       ?>
 
         <?php if ( $student_name ) : ?>
@@ -1149,19 +1143,15 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
         <div class="mfsd-hw-card__body mfsd-hw-carousel">
           <div class="mfsd-hw-carousel__slide mfsd-hw-carousel__slide--active mfsd-hw-carousel__slide--not-started">
-            <span class="mfsd-hw-card__task-icon-backdrop" aria-hidden="true"><?php echo $ns_icon; ?></span>
+            <span class="mfsd-hw-card__task-icon-backdrop" aria-hidden="true">📚</span>
             <div class="mfsd-hw-card__achievement-header">
               <span class="mfsd-hw-card__next-label"><?php esc_html_e( 'Course Not Started', 'mfsd-home-widgets' ); ?></span>
             </div>
-            <?php if ( $ns_link ) : ?>
-              <a href="<?php echo esc_url( $ns_link ); ?>"
+            <?php if ( $course_details_url ) : ?>
+              <a href="<?php echo esc_url( $course_details_url ); ?>"
                  class="mfsd-hw-card__task-link mfsd-hw-card__task-link--next">
-                <?php echo esc_html( $first_task_name ); ?> →
+                <?php esc_html_e( 'View Course Details', 'mfsd-home-widgets' ); ?> →
               </a>
-            <?php else : ?>
-              <span class="mfsd-hw-card__task-name">
-                <?php echo esc_html( $first_task_name ); ?>
-              </span>
             <?php endif; ?>
           </div>
         </div>
