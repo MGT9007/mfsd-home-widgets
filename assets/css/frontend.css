@@ -395,6 +395,7 @@ body.home:has(.mfsd-home-page) {
 /* New Course: image as faded backdrop behind text */
 .mfsd-hw-card--courses .mfsd-hw-card__body {
   position: relative;
+  min-height: 120px;
 }
 
 .mfsd-hw-card--courses .mfsd-hw-card__body::before {
