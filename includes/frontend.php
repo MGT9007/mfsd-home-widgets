@@ -925,7 +925,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
                 }
 
                 $course_details_url = add_query_arg(
-                    [ 'course_id' => $enrol_course_id ],
+                    [ 'course_id' => $enrol_course_id, 'student_id' => $student_id ],
                     home_url( '/about/parent-portal-home/' )
                 );
             }
