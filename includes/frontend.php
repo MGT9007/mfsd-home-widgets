@@ -1701,6 +1701,9 @@ function mfsd_hw_card_stevegpt_unconfigured(): void {
  * Falls back gracefully when SteveGPT is deactivated or no chatbot is assigned.
  */
 function mfsd_hw_card_stevegpt( array $c, string $role ): void {
+    // MYF-248 debug — remove once confirmed.
+    error_log( 'HW Steve role: ' . $role . ' | user: ' . get_current_user_id() );
+
     // Guard: SteveGPT must be active.
     if ( ! shortcode_exists( 'stevegpt_chatbot' ) ) {
         mfsd_hw_card_stevegpt_unconfigured();
