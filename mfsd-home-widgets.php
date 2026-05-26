@@ -8,7 +8,7 @@
  *               visible to any role combination. Six widget types available:
  *               MFS News (Internal), External News, Shorts Video, New Courses,
  *               Top Scores, and Progress & Achievements.
- * Version:      5.67.2
+ * Version:      5.67.3
  * Author:       MisterT9007
  * Author URI:   https://s47d.co.uk
  * Text Domain:  mfsd-home-widgets
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-define( 'MFSD_HW_VERSION', '5.67.2' );
+define( 'MFSD_HW_VERSION', '5.67.3' );
 define( 'MFSD_HW_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'MFSD_HW_URI',     plugin_dir_url( __FILE__ ) );
 define( 'MFSD_HW_TABLE',   'mfsd_hw_widgets' );
@@ -104,13 +104,17 @@ add_filter( 'stevegpt_plugin_integration_slots', function( array $slots ): array
         'plugin' => 'Home Widgets',
         'role'   => 'Student help bot',
         'option' => 'mfsd_stevegpt_map_hw_student_help',
-        'tokens' => [],
+        // These values are appended to the chatbot system prompt automatically.
+        // content_aware must be OFF on this chatbot — context is provided here.
+        'tokens' => [ 'student_name', 'student_age', 'latest_task' ],
     ];
     $slots[] = [
         'plugin' => 'Home Widgets',
         'role'   => 'Parent help bot',
         'option' => 'mfsd_stevegpt_map_hw_parent_help',
-        'tokens' => [],
+        // These values are appended to the chatbot system prompt automatically.
+        // content_aware must be OFF on this chatbot — context is provided here.
+        'tokens' => [ 'parent_name', 'linked_student_name' ],
     ];
     return $slots;
 } );
