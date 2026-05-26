@@ -847,12 +847,33 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         }
     }
 
+    // ── Actual Super Strengths character badge for this student ─────────────
+    // The static task-badge map can only store one slug per task, but SS awards
+    // design-specific badges (badge_ss_complete_supersteve etc). Look up the
+    // most recently earned one so it overrides the generic fallback.
+    $ss_char_badge = '';
+    if ( $student_id ) {
+        $b_tbl = $wpdb->prefix . 'mfsd_badges';
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$b_tbl}'" ) === $b_tbl ) {
+            $ss_char_badge = (string) $wpdb->get_var( $wpdb->prepare(
+                "SELECT badge_slug FROM {$b_tbl}
+                 WHERE student_id = %d
+                   AND ( badge_slug LIKE 'badge_ss_complete_%' OR badge_slug LIKE 'badge_ss_winner_%' )
+                 ORDER BY earned_at DESC LIMIT 1",
+                $student_id
+            ) );
+        }
+    }
+
     // ── Badge (latest task drives badge selection) ───────────────────────────
     $latest_badge = null;
     if ( $show_badge && $student_id ) {
         $badges_table = $wpdb->prefix . 'mfsd_badges';
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$badges_table}'" ) === $badges_table ) {
-            $derived_slug = $task_badge_m[ $latest_task['task_slug'] ?? '' ] ?? '';
+            $lt_slug      = $latest_task['task_slug'] ?? '';
+            $derived_slug = ( $lt_slug === 'super_strengths' && $ss_char_badge )
+                ? $ss_char_badge
+                : ( $task_badge_m[ $lt_slug ] ?? '' );
             if ( $derived_slug ) {
                 $latest_badge = $wpdb->get_row( $wpdb->prepare(
                     "SELECT * FROM {$badges_table}
@@ -977,7 +998,9 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
                   ? home_url( $task_urls[ $ct_slug ] )
                   : add_query_arg( [ 'course_id' => 1 ], home_url( '/about/parent-portal-home/' ) );
               $ct_date      = ! empty( $ct['completed_date'] ) ? date_i18n( 'j M Y', strtotime( $ct['completed_date'] ) ) : '';
-              $ct_bslug     = $task_badge_m[ $ct_slug ] ?? '';
+              $ct_bslug     = ( $ct_slug === 'super_strengths' && $ss_char_badge )
+                  ? $ss_char_badge
+                  : ( $task_badge_m[ $ct_slug ] ?? '' );
               $ct_bimg      = $ct_bslug ? mfsd_hw_badge_image_url( $ct_bslug, $student_id ) : '';
               $ct_who_am_i  = in_array( $ct_bslug, [ 'badge_who_am_i_1', 'badge_who_am_i_2' ], true );
               $ct_char      = ( $ct_who_am_i && $student_id ) ? mfsd_hw_get_character_avatar( $student_id ) : '';
@@ -1063,7 +1086,9 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
                   ? add_query_arg( 'student_id', $student_id, home_url( $task_urls[ $ct_slug ] ) )
                   : add_query_arg( [ 'course_id' => 1, 'student_id' => $student_id ], home_url( '/about/parent-portal-home/' ) );
               $ct_date   = ! empty( $ct['completed_date'] ) ? date_i18n( 'j M Y', strtotime( $ct['completed_date'] ) ) : '';
-              $ct_bslug  = $task_badge_m[ $ct_slug ] ?? '';
+              $ct_bslug  = ( $ct_slug === 'super_strengths' && $ss_char_badge )
+                  ? $ss_char_badge
+                  : ( $task_badge_m[ $ct_slug ] ?? '' );
               $ct_bimg   = $ct_bslug ? mfsd_hw_badge_image_url( $ct_bslug, $student_id ) : '';
               $ct_active = $ci === 0 ? ' mfsd-hw-carousel__slide--active' : '';
               $ct_status = ( $ci === $last_completed_idx ) ? '★ Last Completed' : '✓ Completed';

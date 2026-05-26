@@ -8,7 +8,7 @@
  *               visible to any role combination. Six widget types available:
  *               MFS News (Internal), External News, Shorts Video, New Courses,
  *               Top Scores, and Progress & Achievements.
- * Version:      5.66.4
+ * Version:      5.66.5
  * Author:       MisterT9007
  * Author URI:   https://s47d.co.uk
  * Text Domain:  mfsd-home-widgets
