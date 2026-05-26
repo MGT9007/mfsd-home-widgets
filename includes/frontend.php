@@ -1727,6 +1727,8 @@ function mfsd_hw_card_stevegpt( array $c, string $role ): void {
     if ( $is_parent ) {
         $linked_id    = mfsd_hw_get_linked_student_id( $user_id );
         $student_name = 'your child';
+        $student_age  = '';
+        $student_task = '';
         if ( $linked_id ) {
             $student_data = get_userdata( $linked_id );
             if ( $student_data ) {
@@ -1734,11 +1736,17 @@ function mfsd_hw_card_stevegpt( array $c, string $role ): void {
                 $first = $student_data->first_name ?: explode( ' ', $student_data->display_name )[0];
                 if ( $first ) $student_name = $first;
             }
+            // Fetch the linked student's age and latest task — same functions used for the student view.
+            $student_age  = mfsd_hw_get_user_age( $linked_id );
+            $student_task = mfsd_hw_get_latest_task_slug( $linked_id );
         }
+        $student_task_label = $student_task ? mfsd_hw_task_display_name( $student_task ) : 'none yet';
         $context_raw = 'User type: parent. Parent name: ' . $display_name
-            . '. Linked student name: ' . $student_name
+            . '. Child\'s name: ' . $student_name
+            . '. Child\'s age: ' . ( $student_age ?: 'not recorded' )
+            . '. Child\'s latest completed task: ' . $student_task_label
             . '. Context: home page dashboard of My Future Self Digital.'
-            . ' Steve is helping this parent support their child\'s learning journey.';
+            . ' Steve is helping this parent understand and support their child\'s learning journey.';
     } else {
         $age          = mfsd_hw_get_user_age( $user_id );
         $latest_task  = mfsd_hw_get_latest_task_slug( $user_id );
