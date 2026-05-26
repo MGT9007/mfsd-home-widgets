@@ -102,4 +102,19 @@
     startAuto();
   });
 
+  // ── SteveGPT Help Bot — collapsible toggle ─────────────────────────────────
+  // No-op on any page that has no .mfsd-hw-card__steve-toggle elements.
+
+  document.querySelectorAll( '.mfsd-hw-card__steve-toggle' ).forEach( function( btn ) {
+    btn.addEventListener( 'click', function() {
+      var targetId = btn.getAttribute( 'aria-controls' );
+      var panel    = document.getElementById( targetId );
+      if ( ! panel ) return;
+      var isHidden = panel.classList.contains( 'mfsd-hw-card__steve-body--hidden' );
+      panel.classList.toggle( 'mfsd-hw-card__steve-body--hidden', ! isHidden );
+      btn.setAttribute( 'aria-expanded', isHidden ? 'true' : 'false' );
+      btn.textContent = isHidden ? 'Close Steve ✕' : 'Ask Steve →';
+    } );
+  } );
+
 } )();

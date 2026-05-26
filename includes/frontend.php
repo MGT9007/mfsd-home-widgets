@@ -83,13 +83,14 @@ endif; // mfsd_hw_get_layout_for_role
 
 function mfsd_hw_render_widget( string $type, array $config, string $role ): void {
     switch ( $type ) {
-        case 'news_internal': mfsd_hw_card_news( 'internal', $config ); break;
-        case 'news_external': mfsd_hw_card_news( 'external', $config ); break;
-        case 'shorts':        mfsd_hw_card_shorts( $config );            break;
-        case 'new_courses':   mfsd_hw_card_courses( $config );           break;
-        case 'top_scores':    mfsd_hw_card_scores( $config, $role );     break;
-        case 'progress':      mfsd_hw_card_progress( $config, $role );   break;
-        case 'rss_feed':      mfsd_hw_card_rss( $config );               break;
+        case 'news_internal':  mfsd_hw_card_news( 'internal', $config ); break;
+        case 'news_external':  mfsd_hw_card_news( 'external', $config ); break;
+        case 'shorts':         mfsd_hw_card_shorts( $config );            break;
+        case 'new_courses':    mfsd_hw_card_courses( $config );           break;
+        case 'top_scores':     mfsd_hw_card_scores( $config, $role );     break;
+        case 'progress':       mfsd_hw_card_progress( $config, $role );   break;
+        case 'rss_feed':       mfsd_hw_card_rss( $config );               break;
+        case 'stevegpt_help':  mfsd_hw_card_stevegpt( $config, $role );   break;
     }
 }
 
@@ -1617,6 +1618,176 @@ function mfsd_hw_card_rss( array $c ): void {
           <button class="mfsd-hw-carousel__arrow mfsd-hw-carousel__arrow--next" aria-label="Next">›</button>
         <?php endif; ?>
 
+      </div>
+
+    </div>
+    <?php
+}
+
+
+// ─── HELPERS: SteveGPT Help Bot ──────────────────────────────────────────────
+
+/**
+ * Returns the most recently completed task slug for a user.
+ * Returns '' if the table doesn't exist or no tasks are completed.
+ */
+function mfsd_hw_get_latest_task_slug( int $user_id ): string {
+    global $wpdb;
+    $table = $wpdb->prefix . 'mfsd_task_progress';
+    if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) !== $table ) return '';
+    return (string) $wpdb->get_var( $wpdb->prepare(
+        "SELECT task_slug FROM {$table}
+         WHERE student_id = %d AND status = 'completed'
+         ORDER BY completed_date DESC LIMIT 1",
+        $user_id
+    ) );
+}
+
+/**
+ * Returns the user's age as a string calculated from DOB user meta.
+ * Tries 'dob' (ProfilePress default) then 'pp_dob'. Returns '' if unknown.
+ */
+function mfsd_hw_get_user_age( int $user_id ): string {
+    $dob = get_user_meta( $user_id, 'dob', true );
+    if ( empty( $dob ) ) {
+        $dob = get_user_meta( $user_id, 'pp_dob', true );
+    }
+    if ( empty( $dob ) ) return '';
+
+    $formats = [ 'd-M-y', 'd-M-Y', 'Y-m-d', 'd/m/Y', 'm/d/Y' ];
+    $dob_date = null;
+    foreach ( $formats as $fmt ) {
+        $parsed = DateTime::createFromFormat( $fmt, $dob );
+        if ( $parsed && $parsed->format( $fmt ) === $dob ) {
+            $dob_date = $parsed;
+            break;
+        }
+    }
+    if ( ! $dob_date ) return '';
+
+    $age = (int) $dob_date->diff( new DateTime() )->y;
+    return $age > 0 ? (string) $age : '';
+}
+
+/**
+ * Renders a placeholder card when SteveGPT is inactive or no chatbot is assigned.
+ * Safe — no PHP errors regardless of plugin state.
+ */
+function mfsd_hw_card_stevegpt_unconfigured(): void {
+    ?>
+    <div class="mfsd-hw-card mfsd-hw-card--stevegpt mfsd-hw-card--stevegpt-empty">
+      <div class="mfsd-hw-card__header">
+        <span class="mfsd-hw-card__icon">💬</span>
+        <?php esc_html_e( 'ASK STEVE', 'mfsd-home-widgets' ); ?>
+      </div>
+      <div class="mfsd-hw-card__body">
+        <p class="mfsd-hw-card__empty">
+          <?php esc_html_e( 'Steve chat is not yet configured.', 'mfsd-home-widgets' ); ?>
+          <?php if ( current_user_can( 'manage_options' ) ) : ?>
+            <br><a href="<?php echo esc_url( admin_url( 'admin.php?page=stevegpt-chatbots' ) ); ?>">
+              <?php esc_html_e( 'Assign chatbots in SteveGPT → Chatbots → Home Widgets', 'mfsd-home-widgets' ); ?>
+            </a>
+          <?php endif; ?>
+        </p>
+      </div>
+    </div>
+    <?php
+}
+
+/**
+ * Render the SteveGPT Help Bot card.
+ * Students get a personalised chat with name, age and latest task in context.
+ * Parents/teachers get a chat with their name and their linked student's first name.
+ * Falls back gracefully when SteveGPT is deactivated or no chatbot is assigned.
+ */
+function mfsd_hw_card_stevegpt( array $c, string $role ): void {
+    // Guard: SteveGPT must be active.
+    if ( ! shortcode_exists( 'stevegpt_chatbot' ) ) {
+        mfsd_hw_card_stevegpt_unconfigured();
+        return;
+    }
+
+    $is_parent = in_array( $role, [ 'parent', 'teacher' ], true );
+
+    // Resolve which chatbot slot to use.
+    $chatbot_id = $is_parent
+        ? get_option( 'mfsd_stevegpt_map_hw_parent_help', '' )
+        : get_option( 'mfsd_stevegpt_map_hw_student_help', '' );
+
+    if ( empty( $chatbot_id ) ) {
+        mfsd_hw_card_stevegpt_unconfigured();
+        return;
+    }
+
+    $user_id      = get_current_user_id();
+    $user         = get_userdata( $user_id );
+    $display_name = $user ? $user->display_name : '';
+
+    // Build role-aware context string.
+    if ( $is_parent ) {
+        $linked_id    = mfsd_hw_get_linked_student_id( $user_id );
+        $student_name = 'your child';
+        if ( $linked_id ) {
+            $student_data = get_userdata( $linked_id );
+            if ( $student_data ) {
+                // Use first name only.
+                $first = $student_data->first_name ?: explode( ' ', $student_data->display_name )[0];
+                if ( $first ) $student_name = $first;
+            }
+        }
+        $context_raw = 'User type: parent. Parent name: ' . $display_name
+            . '. Linked student name: ' . $student_name
+            . '. Context: home page dashboard of My Future Self Digital.'
+            . ' Steve is helping this parent support their child\'s learning journey.';
+    } else {
+        $age          = mfsd_hw_get_user_age( $user_id );
+        $latest_task  = mfsd_hw_get_latest_task_slug( $user_id );
+        $task_label   = $latest_task ? mfsd_hw_task_display_name( $latest_task ) : 'none yet';
+        $context_raw  = 'Student name: ' . $display_name
+            . '. Student age: ' . ( $age ?: 'unknown' )
+            . '. Context: home page dashboard of My Future Self Digital.'
+            . ' Latest completed task: ' . $task_label
+            . '. Steve is here to help this student with their course, goals, and any questions.';
+    }
+
+    // Sanitise context — strip characters that could break the shortcode attribute.
+    $context = str_replace(
+        [ '"',  '[',  ']',  "\n", "\r" ],
+        [ '',   '',   '',   '  ', ''   ],
+        $context_raw
+    );
+
+    // Pre-render the shortcode.
+    $shortcode    = '[stevegpt_chatbot id="' . esc_attr( $chatbot_id ) . '" context="' . esc_attr( $context ) . '"]';
+    $chat_html    = do_shortcode( $shortcode );
+
+    // Config values.
+    $intro_text      = sanitize_text_field( $c['intro_text']          ?? '' );
+    $collapse        = ! empty( $c['collapse_by_default'] );
+    $panel_id        = 'mfsd-hw-steve-panel-' . substr( md5( $user_id . $role ), 0, 8 );
+    ?>
+    <div class="mfsd-hw-card mfsd-hw-card--stevegpt">
+
+      <div class="mfsd-hw-card__header">
+        <span class="mfsd-hw-card__icon">💬</span>
+        <?php esc_html_e( 'ASK STEVE', 'mfsd-home-widgets' ); ?>
+      </div>
+
+      <?php if ( $intro_text ) : ?>
+        <p class="mfsd-hw-card__steve-intro"><?php echo esc_html( $intro_text ); ?></p>
+      <?php endif; ?>
+
+      <?php if ( $collapse ) : ?>
+        <button class="mfsd-hw-card__steve-toggle"
+                aria-controls="<?php echo esc_attr( $panel_id ); ?>"
+                aria-expanded="false">
+          <?php esc_html_e( 'Ask Steve →', 'mfsd-home-widgets' ); ?>
+        </button>
+      <?php endif; ?>
+
+      <div class="mfsd-hw-card__steve-body<?php echo $collapse ? ' mfsd-hw-card__steve-body--hidden' : ''; ?>"
+           id="<?php echo esc_attr( $panel_id ); ?>">
+        <?php echo $chat_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- already escaped by do_shortcode ?>
       </div>
 
     </div>

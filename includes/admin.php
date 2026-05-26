@@ -221,6 +221,12 @@ function mfsd_hw_sanitize_config( string $type, array $raw ): array {
                 'link_out'    => ! empty( $raw['link_out'] ),
             ];
 
+        case 'stevegpt_help':
+            return [
+                'intro_text'          => sanitize_text_field( substr( $raw['intro_text'] ?? '', 0, 200 ) ),
+                'collapse_by_default' => ! empty( $raw['collapse_by_default'] ),
+            ];
+
         default:
             return [];
     }
@@ -1049,6 +1055,37 @@ function mfsd_hw_render_config_fields( string $type, array $config ): void {
               <label class="mfsd-hw-admin__check"><input type="checkbox" name="config[show_badge]" value="1" <?php checked( ! empty( $config['show_badge'] ) ); ?>> <?php esc_html_e( 'Latest badge earned', 'mfsd-home-widgets' ); ?></label>
               <label class="mfsd-hw-admin__check"><input type="checkbox" name="config[show_score]" value="1" <?php checked( ! empty( $config['show_score'] ) ); ?>> <?php esc_html_e( 'Top arcade score', 'mfsd-home-widgets' ); ?></label>
               <label class="mfsd-hw-admin__check"><input type="checkbox" name="config[show_task]"  value="1" <?php checked( ! empty( $config['show_task'] ) ); ?>>  <?php esc_html_e( 'Latest task summary', 'mfsd-home-widgets' ); ?></label>
+            </div>
+            <?php
+            break;
+
+        case 'stevegpt_help':
+            ?>
+            <div class="mfsd-hw-admin__info-box" style="margin-bottom:20px;">
+              <strong><?php esc_html_e( 'Chatbot assignment:', 'mfsd-home-widgets' ); ?></strong>
+              <?php esc_html_e( 'The chatbot used in this widget is assigned in SteveGPT → Chatbots → Home Widgets tab.', 'mfsd-home-widgets' ); ?>
+              <ul style="margin:8px 0 0 18px;padding:0;font-size:12px;">
+                <li><strong><?php esc_html_e( 'Student help bot', 'mfsd-home-widgets' ); ?></strong> — <?php esc_html_e( 'shown to students; includes their name, age and latest task as context.', 'mfsd-home-widgets' ); ?></li>
+                <li><strong><?php esc_html_e( 'Parent help bot', 'mfsd-home-widgets' ); ?></strong> — <?php esc_html_e( 'shown to parents and teachers; includes the linked student\'s first name as context.', 'mfsd-home-widgets' ); ?></li>
+              </ul>
+            </div>
+
+            <?php mfsd_hw_text_field(
+                'config[intro_text]',
+                __( 'Intro Text', 'mfsd-home-widgets' ),
+                $config['intro_text'] ?? ''
+            ); ?>
+            <p class="description" style="margin-top:-10px;margin-bottom:16px;">
+              <?php esc_html_e( 'Short prompt shown above the chat widget. Leave blank to show the chat only. (Max 200 chars)', 'mfsd-home-widgets' ); ?>
+            </p>
+
+            <div class="mfsd-hw-admin__field">
+              <label class="mfsd-hw-admin__check">
+                <input type="checkbox" name="config[collapse_by_default]" value="1"
+                       <?php checked( ! empty( $config['collapse_by_default'] ) ); ?>>
+                <?php esc_html_e( "Start collapsed (show 'Ask Steve' button first)", 'mfsd-home-widgets' ); ?>
+              </label>
+              <p class="description"><?php esc_html_e( 'Useful for dense 6–7 widget grids to save space until needed.', 'mfsd-home-widgets' ); ?></p>
             </div>
             <?php
             break;
