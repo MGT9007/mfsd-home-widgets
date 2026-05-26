@@ -662,6 +662,7 @@ function mfsd_hw_is_family_task( string $slug ): bool {
  * Human-friendly display name for a badge slug.
  */
 function mfsd_hw_badge_display_name( string $slug ): string {
+    if ( str_starts_with( $slug, 'badge_ss_complete_' ) ) return 'Super Strengths';
     $names = [
         'badge_solution_lens'   => 'The Lens',
         'badge_word_assoc'      => 'Word Association',
@@ -685,6 +686,13 @@ function mfsd_hw_badge_image_url( string $slug, int $student_id = 0 ): string {
     // ── Solution Lens badge lives in its own plugin ───────────────────────────
     if ( $slug === 'badge_solution_lens' ) {
         return plugins_url( 'mfsd-solution-lens/images/badge_solution_lens.png' );
+    }
+
+    // ── Super Strengths completion badges — character design PNGs ────────────
+    if ( str_starts_with( $slug, 'badge_ss_complete_' ) ) {
+        $parts  = explode( '_', $slug );
+        $design = end( $parts ); // steverman | supersteve | wondersteve | harleysteve
+        return plugins_url( 'mfsd-super-strengths-v2/assets/badges/' . $design . '1.png' );
     }
 
     // ── Standard badges: use Quest Log badge artwork ─────────────────────────
