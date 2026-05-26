@@ -8,7 +8,7 @@
  *               visible to any role combination. Six widget types available:
  *               MFS News (Internal), External News, Shorts Video, New Courses,
  *               Top Scores, and Progress & Achievements.
- * Version:      5.66.5
+ * Version:      5.67.0
  * Author:       MisterT9007
  * Author URI:   https://s47d.co.uk
  * Text Domain:  mfsd-home-widgets
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-define( 'MFSD_HW_VERSION', '5.63.0' );
+define( 'MFSD_HW_VERSION', '5.67.0' );
 define( 'MFSD_HW_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'MFSD_HW_URI',     plugin_dir_url( __FILE__ ) );
 define( 'MFSD_HW_TABLE',   'mfsd_hw_widgets' );
@@ -68,6 +68,11 @@ function mfsd_hw_widget_types(): array {
             'icon'        => 'dashicons-rss',
             'description' => __( 'Live headlines from any RSS or Atom feed, displayed as a rotating carousel. Role-targeted.', 'mfsd-home-widgets' ),
         ],
+        'stevegpt_help' => [
+            'label'       => __( 'SteveGPT Help Bot', 'mfsd-home-widgets' ),
+            'icon'        => 'dashicons-format-chat',
+            'description' => __( 'Embeds a live Steve chat session. Students ask about their course; parents ask about supporting their child. Chatbot assigned in SteveGPT → Chatbots.', 'mfsd-home-widgets' ),
+        ],
     ];
 }
 
@@ -89,6 +94,26 @@ function mfsd_hw_roles(): array {
 require_once MFSD_HW_DIR . 'includes/db.php';
 require_once MFSD_HW_DIR . 'includes/admin.php';
 require_once MFSD_HW_DIR . 'includes/frontend.php';
+
+// ─── STEVEGPT INTEGRATION SLOTS ──────────────────────────────────────────────
+// Register the two Home Widgets chatbot slots with SteveGPT so they appear
+// as a "Home Widgets" tab in WP Admin → SteveGPT → Chatbots.
+
+add_filter( 'stevegpt_plugin_integration_slots', function( array $slots ): array {
+    $slots[] = [
+        'plugin' => 'Home Widgets',
+        'role'   => 'Student help bot',
+        'option' => 'mfsd_stevegpt_map_hw_student_help',
+        'tokens' => [],
+    ];
+    $slots[] = [
+        'plugin' => 'Home Widgets',
+        'role'   => 'Parent help bot',
+        'option' => 'mfsd_stevegpt_map_hw_parent_help',
+        'tokens' => [],
+    ];
+    return $slots;
+} );
 
 // ─── ACTIVATION / DEACTIVATION ────────────────────────────────────────────────
 
