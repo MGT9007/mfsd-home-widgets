@@ -1666,3 +1666,112 @@ body.mfsd-role-admin .mfsd-hw-carousel__dot--active {
 .mfsd-hw-card--stevegpt-empty .mfsd-hw-card__body {
   padding: 20px;
 }
+
+/* ── Corporate theme overrides for Steve card (Parent / Teacher / Admin) ── */
+/*    Same pattern as mfsd-super-strengths-v2: body.mfsd-role-* selectors    */
+/*    override the SteveGPT default dark/gamer colours to the gold palette.  */
+
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-chatbot-container,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-chatbot-container,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-chatbot-container {
+  background: var(--color-bg-card, #1A1A1A);
+}
+
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-chat-header,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-chat-header,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-chat-header {
+  background: linear-gradient(135deg, #B8923E 0%, #C9A84C 100%);
+  color: #111111;
+}
+
+/* All text inside the header (name, status) should be dark on gold */
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-chat-header *,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-chat-header *,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-chat-header * {
+  color: #111111;
+}
+
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-chat-messages,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-chat-messages,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-chat-messages {
+  background: var(--color-bg-page, #111111);
+}
+
+/* Assistant bubbles — dark card with gold border */
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-message-assistant .stevegpt-message-content,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-message-assistant .stevegpt-message-content,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-message-assistant .stevegpt-message-content {
+  background: var(--color-bg-card, #1A1A1A);
+  border: 1px solid rgba(201, 168, 76, 0.30);
+  color: var(--color-text, #F5F5F5);
+}
+
+/* User bubbles — gold gradient */
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-message-user .stevegpt-message-content,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-message-user .stevegpt-message-content,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-message-user .stevegpt-message-content {
+  background: linear-gradient(135deg, #B8923E 0%, #C9A84C 100%);
+  color: #111111;
+}
+
+/* Input area */
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-chat-input,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-chat-input,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-chat-input {
+  background: var(--color-bg-card, #1A1A1A);
+  border-top-color: rgba(201, 168, 76, 0.20);
+}
+
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-input-field,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-input-field,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-input-field {
+  background: #222222;
+  border-color: rgba(201, 168, 76, 0.20);
+  color: var(--color-text, #F5F5F5);
+}
+
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-input-field:focus,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-input-field:focus,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-input-field:focus {
+  border-color: var(--color-accent, #C9A84C);
+  box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.15);
+  outline: none;
+}
+
+/* Send button — gold */
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-send-button,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-send-button,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-send-button {
+  background: linear-gradient(135deg, #B8923E 0%, #C9A84C 100%);
+  color: #111111;
+}
+
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-send-button:hover,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-send-button:hover,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-send-button:hover {
+  background: linear-gradient(135deg, #C9A84C 0%, #E2C06A 100%);
+}
+
+/* New Chat button inside SteveGPT header */
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-new-chat-btn,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-new-chat-btn,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-new-chat-btn {
+  background: rgba(0, 0, 0, 0.20);
+  border-color: rgba(0, 0, 0, 0.30);
+  color: #111111;
+}
+
+/* Collapse toggle button — gold for corporate roles */
+body.mfsd-role-parent  .mfsd-hw-card__steve-toggle,
+body.mfsd-role-teacher .mfsd-hw-card__steve-toggle,
+body.mfsd-role-admin   .mfsd-hw-card__steve-toggle {
+  background: var(--color-accent, #C9A84C);
+  color: #111111;
+}
+
+body.mfsd-role-parent  .mfsd-hw-card__steve-toggle:hover,
+body.mfsd-role-teacher .mfsd-hw-card__steve-toggle:hover,
+body.mfsd-role-admin   .mfsd-hw-card__steve-toggle:hover {
+  background: var(--color-accent-hover, #E2C06A);
+  color: #111111;
+}
