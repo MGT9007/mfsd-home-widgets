@@ -8,7 +8,7 @@
  *               visible to any role combination. Six widget types available:
  *               MFS News (Internal), External News, Shorts Video, New Courses,
  *               Top Scores, and Progress & Achievements.
- * Version:      5.67.6
+ * Version:      6.0.0
  * Author:       MisterT9007
  * Author URI:   https://s47d.co.uk
  * Text Domain:  mfsd-home-widgets
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-define( 'MFSD_HW_VERSION', '5.67.6' );
+define( 'MFSD_HW_VERSION', '6.0.0' );
 define( 'MFSD_HW_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'MFSD_HW_URI',     plugin_dir_url( __FILE__ ) );
 define( 'MFSD_HW_TABLE',   'mfsd_hw_widgets' );
@@ -73,6 +73,11 @@ function mfsd_hw_widget_types(): array {
             'icon'        => 'dashicons-format-chat',
             'description' => __( 'Embeds a live Steve chat session. Students ask about their course; parents ask about supporting their child. Chatbot assigned in SteveGPT → Chatbots.', 'mfsd-home-widgets' ),
         ],
+        'registration_completion' => [
+            'label'       => __( 'Registration Completion', 'mfsd-home-widgets' ),
+            'icon'        => 'dashicons-clipboard',
+            'description' => __( 'Multi-step form collecting occupation, address, child details, and optional second carer. Shown to prepurchaseparent role only. On completion, upgrades role to registeredparent.', 'mfsd-home-widgets' ),
+        ],
     ];
 }
 
@@ -81,11 +86,13 @@ function mfsd_hw_widget_types(): array {
  */
 function mfsd_hw_roles(): array {
     return [
-        'all'           => __( 'Everyone (all roles)', 'mfsd-home-widgets' ),
-        'student'       => __( 'Student',              'mfsd-home-widgets' ),
-        'parent'        => __( 'Parent',               'mfsd-home-widgets' ),
-        'teacher'       => __( 'Teacher',              'mfsd-home-widgets' ),
-        'administrator' => __( 'Administrator',        'mfsd-home-widgets' ),
+        'all'               => __( 'Everyone (all roles)',  'mfsd-home-widgets' ),
+        'student'           => __( 'Student',               'mfsd-home-widgets' ),
+        'prepurchaseparent' => __( 'Pre-purchase Parent',   'mfsd-home-widgets' ),
+        'registeredparent'  => __( 'Registered Parent',     'mfsd-home-widgets' ),
+        'parent'            => __( 'Parent',                'mfsd-home-widgets' ),
+        'teacher'           => __( 'Teacher',               'mfsd-home-widgets' ),
+        'administrator'     => __( 'Administrator',         'mfsd-home-widgets' ),
     ];
 }
 

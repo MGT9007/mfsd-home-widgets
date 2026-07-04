@@ -227,6 +227,15 @@ function mfsd_hw_sanitize_config( string $type, array $raw ): array {
                 'collapse_by_default' => ! empty( $raw['collapse_by_default'] ),
             ];
 
+        case 'registration_completion':
+            return [
+                'intro_heading'   => sanitize_text_field( $raw['intro_heading'] ?? '' ),
+                'intro_text'      => sanitize_textarea_field( $raw['intro_text'] ?? '' ),
+                'success_heading' => sanitize_text_field( $raw['success_heading'] ?? '' ),
+                'success_text'    => sanitize_textarea_field( $raw['success_text'] ?? '' ),
+                'skip_allowed'    => ! empty( $raw['skip_allowed'] ),
+            ];
+
         default:
             return [];
     }
@@ -1115,6 +1124,27 @@ function mfsd_hw_render_config_fields( string $type, array $config ): void {
                 <input type="checkbox" name="config[link_out]" value="1"
                        <?php checked( ! empty( $config['link_out'] ) ); ?>>
                 <?php esc_html_e( 'Open story links in a new tab', 'mfsd-home-widgets' ); ?>
+              </label>
+            </div>
+            <?php
+            break;
+
+        case 'registration_completion':
+            ?>
+            <div class="mfsd-hw-admin__info-box" style="margin-bottom:20px;">
+              <?php esc_html_e( 'This widget only renders for users with the Pre-purchase Parent role — set the roles on the right to Pre-purchase Parent. Rendering is also enforced in code even if roles are misconfigured here.', 'mfsd-home-widgets' ); ?>
+            </div>
+
+            <?php mfsd_hw_text_field( 'config[intro_heading]', __( 'Intro Heading', 'mfsd-home-widgets' ), $config['intro_heading'] ?? 'Complete your registration' ); ?>
+            <?php mfsd_hw_textarea_field( 'config[intro_text]', __( 'Intro Text', 'mfsd-home-widgets' ), $config['intro_text'] ?? '' ); ?>
+            <?php mfsd_hw_text_field( 'config[success_heading]', __( 'Success Heading', 'mfsd-home-widgets' ), $config['success_heading'] ?? "You're all set!" ); ?>
+            <?php mfsd_hw_textarea_field( 'config[success_text]', __( 'Success Text', 'mfsd-home-widgets' ), $config['success_text'] ?? 'Your registration is complete. Explore My Future Self below.' ); ?>
+
+            <div class="mfsd-hw-admin__field">
+              <label class="mfsd-hw-admin__check">
+                <input type="checkbox" name="config[skip_allowed]" value="1"
+                       <?php checked( ! empty( $config['skip_allowed'] ) ); ?>>
+                <?php esc_html_e( "Allow skip — shows a 'Skip for now' option", 'mfsd-home-widgets' ); ?>
               </label>
             </div>
             <?php

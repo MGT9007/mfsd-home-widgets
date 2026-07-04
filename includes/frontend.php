@@ -59,10 +59,12 @@ if ( ! function_exists( 'mfsd_hw_role_fallback' ) ) :
 function mfsd_hw_role_fallback(): string {
     $user  = wp_get_current_user();
     $roles = (array) $user->roles;
-    if ( in_array( 'administrator', $roles, true ) ) return 'admin';
-    if ( in_array( 'teacher',       $roles, true ) ) return 'teacher';
-    if ( in_array( 'parent',        $roles, true ) ) return 'parent';
-    if ( in_array( 'student',       $roles, true ) ) return 'student';
+    if ( in_array( 'administrator',      $roles, true ) ) return 'admin';
+    if ( in_array( 'teacher',            $roles, true ) ) return 'teacher';
+    if ( in_array( 'registeredparent',   $roles, true ) ) return 'registeredparent';
+    if ( in_array( 'prepurchaseparent',  $roles, true ) ) return 'prepurchaseparent';
+    if ( in_array( 'parent',             $roles, true ) ) return 'parent';
+    if ( in_array( 'student',            $roles, true ) ) return 'student';
     return 'parent';
 }
 endif; // mfsd_hw_role_fallback
@@ -91,6 +93,7 @@ function mfsd_hw_render_widget( string $type, array $config, string $role ): voi
         case 'progress':       mfsd_hw_card_progress( $config, $role );   break;
         case 'rss_feed':       mfsd_hw_card_rss( $config );               break;
         case 'stevegpt_help':  mfsd_hw_card_stevegpt( $config, $role );   break;
+        case 'registration_completion': mfsd_hw_card_registration_completion( $config, $role ); break;
     }
 }
 
@@ -1803,6 +1806,223 @@ function mfsd_hw_card_stevegpt( array $c, string $role ): void {
 }
 
 
+// ─── CARD: Registration Completion ───────────────────────────────────────────
+// Multi-step form (occupation, address, children, second carer) shown only to
+// prepurchaseparent users. Step navigation, validation and AJAX submission are
+// handled by assets/js/registration-completion.js. On success the widget's own
+// JS reloads the page — the user is now registeredparent so this card no
+// longer renders. Enforced programmatically here regardless of admin-configured
+// widget roles (see HomeWidgets_TechSpec_v6_0.md).
+
+function mfsd_hw_regc_occupations(): array {
+    return [
+        'Parent', 'Carer', 'Teacher', 'School Leader / Head Teacher',
+        'Education Professional', 'Healthcare Professional',
+        'Business / Professional', 'Student',
+    ];
+}
+
+function mfsd_hw_card_registration_completion( array $c, string $role ): void {
+    if ( $role !== 'prepurchaseparent' ) return;
+
+    $intro_heading   = $c['intro_heading']   ?? 'Complete your registration';
+    $intro_text      = $c['intro_text']      ?? '';
+    $success_heading = $c['success_heading'] ?? "You're all set!";
+    $success_text    = $c['success_text']    ?? 'Your registration is complete.';
+    ?>
+    <div class="mfsd-hw-card mfsd-hw-card--regcomplete" id="mfsd-hw-regc">
+      <div class="mfsd-hw-card__header">
+        <span class="mfsd-hw-card__icon">📋</span>
+        <?php esc_html_e( 'REGISTRATION', 'mfsd-home-widgets' ); ?>
+      </div>
+
+      <div class="mfsd-hw-regc-body">
+
+        <div class="mfsd-hw-regc-step is-active" id="mfsd-hw-regc-step-1">
+          <h3 class="mfsd-hw-regc-heading"><?php echo esc_html( $intro_heading ); ?></h3>
+          <?php if ( $intro_text ) : ?>
+            <p class="mfsd-hw-regc-subtitle"><?php echo esc_html( $intro_text ); ?></p>
+          <?php endif; ?>
+          <p class="mfsd-hw-regc-step-label">Step 1 of 4 — Your Occupation</p>
+
+          <div class="mfsd-hw-regc-field">
+            <label for="mfsd-hw-regc-occupation">What best describes your occupation?</label>
+            <select id="mfsd-hw-regc-occupation" class="mfsd-hw-regc-select">
+              <option value="">Please select&hellip;</option>
+              <?php foreach ( mfsd_hw_regc_occupations() as $occ ) : ?>
+                <option value="<?php echo esc_attr( $occ ); ?>"><?php echo esc_html( $occ ); ?></option>
+              <?php endforeach; ?>
+              <option value="Other">Other</option>
+            </select>
+            <div class="mfsd-hw-regc-field-error" id="mfsd-hw-regc-err-occupation"></div>
+          </div>
+
+          <div class="mfsd-hw-regc-field" id="mfsd-hw-regc-occupation-other-wrap" style="display:none;">
+            <label for="mfsd-hw-regc-occupation-other">Please specify <span class="mfsd-hw-regc-optional">(optional)</span></label>
+            <input type="text" id="mfsd-hw-regc-occupation-other" class="mfsd-hw-regc-input" placeholder="Please describe your occupation">
+          </div>
+
+          <div class="mfsd-hw-regc-btn-row mfsd-hw-regc-btn-row--right">
+            <button type="button" id="mfsd-hw-regc-btn-next-1" class="mfsd-hw-regc-btn mfsd-hw-regc-btn--primary">Next &rarr;</button>
+          </div>
+        </div>
+
+        <div class="mfsd-hw-regc-step" id="mfsd-hw-regc-step-2">
+          <p class="mfsd-hw-regc-step-label">Step 2 of 4 — Your Location</p>
+
+          <div class="mfsd-hw-regc-field">
+            <label for="mfsd-hw-regc-address-line1">Address line 1</label>
+            <input type="text" id="mfsd-hw-regc-address-line1" class="mfsd-hw-regc-input" autocomplete="address-line1" placeholder="123 Example Street">
+            <div class="mfsd-hw-regc-field-error" id="mfsd-hw-regc-err-address-line1"></div>
+          </div>
+
+          <div class="mfsd-hw-regc-field">
+            <label for="mfsd-hw-regc-address-line2">Address line 2 <span class="mfsd-hw-regc-optional">(optional)</span></label>
+            <input type="text" id="mfsd-hw-regc-address-line2" class="mfsd-hw-regc-input" autocomplete="address-line2" placeholder="Apartment, suite, etc.">
+          </div>
+
+          <div class="mfsd-hw-regc-row">
+            <div class="mfsd-hw-regc-field">
+              <label for="mfsd-hw-regc-city">Town / City</label>
+              <input type="text" id="mfsd-hw-regc-city" class="mfsd-hw-regc-input" autocomplete="address-level2" placeholder="London">
+              <div class="mfsd-hw-regc-field-error" id="mfsd-hw-regc-err-city"></div>
+            </div>
+            <div class="mfsd-hw-regc-field">
+              <label for="mfsd-hw-regc-county">County <span class="mfsd-hw-regc-optional">(optional)</span></label>
+              <input type="text" id="mfsd-hw-regc-county" class="mfsd-hw-regc-input" autocomplete="address-level1" placeholder="Surrey">
+            </div>
+          </div>
+
+          <div class="mfsd-hw-regc-row">
+            <div class="mfsd-hw-regc-field">
+              <label for="mfsd-hw-regc-postcode">Postcode</label>
+              <input type="text" id="mfsd-hw-regc-postcode" class="mfsd-hw-regc-input" autocomplete="postal-code" placeholder="SW1A 1AA">
+              <div class="mfsd-hw-regc-field-error" id="mfsd-hw-regc-err-postcode"></div>
+            </div>
+            <div class="mfsd-hw-regc-field">
+              <label for="mfsd-hw-regc-country">Country</label>
+              <select id="mfsd-hw-regc-country" class="mfsd-hw-regc-select">
+                <option value="GB" selected>United Kingdom</option>
+                <option value="IE">Republic of Ireland</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mfsd-hw-regc-btn-row mfsd-hw-regc-btn-row--space">
+            <button type="button" id="mfsd-hw-regc-btn-back-2" class="mfsd-hw-regc-btn mfsd-hw-regc-btn--ghost">&larr; Back</button>
+            <button type="button" id="mfsd-hw-regc-btn-next-2" class="mfsd-hw-regc-btn mfsd-hw-regc-btn--primary">Next &rarr;</button>
+          </div>
+        </div>
+
+        <div class="mfsd-hw-regc-step" id="mfsd-hw-regc-step-3">
+          <p class="mfsd-hw-regc-step-label">Step 3 of 4 — Your Children</p>
+
+          <div class="mfsd-hw-regc-child-count-wrap">
+            <span class="mfsd-hw-regc-child-count-label">Number of children</span>
+            <div class="mfsd-hw-regc-count-control">
+              <button type="button" id="mfsd-hw-regc-btn-child-minus" class="mfsd-hw-regc-count-btn" aria-label="Decrease">&#8722;</button>
+              <div class="mfsd-hw-regc-count-display" id="mfsd-hw-regc-child-count-display">1</div>
+              <button type="button" id="mfsd-hw-regc-btn-child-plus" class="mfsd-hw-regc-count-btn" aria-label="Increase">&#43;</button>
+            </div>
+          </div>
+
+          <?php for ( $i = 1; $i <= 4; $i++ ) : ?>
+          <div class="mfsd-hw-regc-child-row<?php echo $i > 1 ? ' mfsd-hw-regc-child-row--hidden' : ''; ?>" id="mfsd-hw-regc-child-row-<?php echo $i; ?>">
+            <div class="mfsd-hw-regc-child-row-title">Child <?php echo $i; ?></div>
+            <div class="mfsd-hw-regc-row">
+              <div class="mfsd-hw-regc-field">
+                <label for="mfsd-hw-regc-child-<?php echo $i; ?>-name">First name</label>
+                <input type="text" id="mfsd-hw-regc-child-<?php echo $i; ?>-name" class="mfsd-hw-regc-input" placeholder="First name">
+                <div class="mfsd-hw-regc-field-error" id="mfsd-hw-regc-err-child-<?php echo $i; ?>-name"></div>
+              </div>
+              <div class="mfsd-hw-regc-field">
+                <label for="mfsd-hw-regc-child-<?php echo $i; ?>-age">Age</label>
+                <select id="mfsd-hw-regc-child-<?php echo $i; ?>-age" class="mfsd-hw-regc-select">
+                  <option value="">Age</option>
+                  <?php for ( $age = 10; $age <= 18; $age++ ) : ?>
+                    <option value="<?php echo $age; ?>"><?php echo $age; ?></option>
+                  <?php endfor; ?>
+                </select>
+                <div class="mfsd-hw-regc-field-error" id="mfsd-hw-regc-err-child-<?php echo $i; ?>-age"></div>
+              </div>
+            </div>
+          </div>
+          <?php endfor; ?>
+
+          <div class="mfsd-hw-regc-btn-row mfsd-hw-regc-btn-row--space">
+            <button type="button" id="mfsd-hw-regc-btn-back-3" class="mfsd-hw-regc-btn mfsd-hw-regc-btn--ghost">&larr; Back</button>
+            <button type="button" id="mfsd-hw-regc-btn-next-3" class="mfsd-hw-regc-btn mfsd-hw-regc-btn--primary">Next &rarr;</button>
+          </div>
+        </div>
+
+        <div class="mfsd-hw-regc-step" id="mfsd-hw-regc-step-4">
+          <p class="mfsd-hw-regc-step-label">Step 4 of 4 — Second Parent / Carer <span class="mfsd-hw-regc-optional">(optional)</span></p>
+          <p class="mfsd-hw-regc-subtitle">They'll receive an invitation to create their own My Future Self account &mdash; completely optional.</p>
+
+          <div id="mfsd-hw-regc-alert-4" class="mfsd-hw-regc-alert"></div>
+
+          <div class="mfsd-hw-regc-row">
+            <div class="mfsd-hw-regc-field">
+              <label for="mfsd-hw-regc-carer2-title">Title <span class="mfsd-hw-regc-optional">(optional)</span></label>
+              <select id="mfsd-hw-regc-carer2-title" class="mfsd-hw-regc-select">
+                <option value="">Select</option>
+                <option value="Mr">Mr</option>
+                <option value="Mrs">Mrs</option>
+                <option value="Miss">Miss</option>
+                <option value="Ms">Ms</option>
+                <option value="Dr">Dr</option>
+                <option value="Prof">Prof</option>
+                <option value="Rev">Rev</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mfsd-hw-regc-field">
+              <label for="mfsd-hw-regc-carer2-first-name">First name <span class="mfsd-hw-regc-optional">(optional)</span></label>
+              <input type="text" id="mfsd-hw-regc-carer2-first-name" class="mfsd-hw-regc-input" placeholder="First name">
+            </div>
+          </div>
+
+          <div class="mfsd-hw-regc-field">
+            <label for="mfsd-hw-regc-carer2-surname">Surname <span class="mfsd-hw-regc-optional">(optional)</span></label>
+            <input type="text" id="mfsd-hw-regc-carer2-surname" class="mfsd-hw-regc-input" placeholder="Surname">
+          </div>
+
+          <div class="mfsd-hw-regc-field">
+            <label for="mfsd-hw-regc-carer2-email">Email address <span class="mfsd-hw-regc-optional">(required to send invite)</span></label>
+            <input type="email" id="mfsd-hw-regc-carer2-email" class="mfsd-hw-regc-input" autocomplete="off" placeholder="partner@example.com">
+            <div class="mfsd-hw-regc-field-error" id="mfsd-hw-regc-err-carer2-email"></div>
+          </div>
+
+          <div class="mfsd-hw-regc-btn-row mfsd-hw-regc-btn-row--space">
+            <div style="display:flex;gap:12px;align-items:center;">
+              <button type="button" id="mfsd-hw-regc-btn-back-4" class="mfsd-hw-regc-btn mfsd-hw-regc-btn--ghost">&larr; Back</button>
+              <button type="button" id="mfsd-hw-regc-btn-skip" class="mfsd-hw-regc-btn mfsd-hw-regc-btn--secondary">Skip</button>
+            </div>
+            <button type="button" id="mfsd-hw-regc-btn-complete" class="mfsd-hw-regc-btn mfsd-hw-regc-btn--primary" disabled>
+              Complete Registration &rarr;
+            </button>
+          </div>
+        </div>
+
+        <div class="mfsd-hw-regc-step" id="mfsd-hw-regc-step-success">
+          <div class="mfsd-hw-regc-success">
+            <div class="mfsd-hw-regc-success-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <h3><?php echo esc_html( $success_heading ); ?></h3>
+            <p><?php echo esc_html( $success_text ); ?></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <?php
+}
+
+
 // ─── FRONTEND ASSETS ─────────────────────────────────────────────────────────
 
 add_action( 'wp_enqueue_scripts', 'mfsd_hw_frontend_assets' );
@@ -1823,4 +2043,19 @@ function mfsd_hw_frontend_assets(): void {
         MFSD_HW_VERSION,
         true
     );
+
+    $user = wp_get_current_user();
+    if ( in_array( 'prepurchaseparent', (array) $user->roles, true ) ) {
+        wp_enqueue_script(
+            'mfsd-hw-reg-completion',
+            MFSD_HW_URI . 'assets/js/registration-completion.js',
+            [],
+            MFSD_HW_VERSION,
+            true
+        );
+        wp_localize_script( 'mfsd-hw-reg-completion', 'mfsdRegCompletion', [
+            'apiUrl' => esc_url( rest_url( 'mfsd/v1/registration/complete-profile' ) ),
+            'nonce'  => wp_create_nonce( 'wp_rest' ),
+        ] );
+    }
 }
