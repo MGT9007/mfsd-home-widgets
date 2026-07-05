@@ -193,7 +193,7 @@ function mfsd_hw_admin_assets(): void {
         'roleAssignNonce' => wp_create_nonce( 'mfsd_hw_role_assign' ),
     ] );
 
-    // Inline JS: layout card highlight toggle on the By Role tab.
+    // Inline JS: layout card highlight toggle + Row 2 preview sync on the By Role tab.
     wp_add_inline_script( 'mfsd-hw-admin', "
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.mfsd-hw-layout-radio').forEach(function(radio) {
@@ -211,6 +211,13 @@ function mfsd_hw_admin_assets(): void {
                     if (sel) {
                         sel.style.borderColor = '#C9A84C';
                         sel.classList.add('mfsd-hw-layout-card--active');
+                    }
+                    // Mirror the selected card's thumbnail into the Row 2 Layout Preview panel.
+                    var previewTarget = document.getElementById('mfsd-hw-layout-preview-target');
+                    var thumb = sel ? sel.querySelector('.mfsd-hw-layout-thumb') : null;
+                    if (previewTarget && thumb) {
+                        previewTarget.innerHTML = '';
+                        previewTarget.appendChild(thumb.cloneNode(true));
                     }
                 });
             });
@@ -645,74 +652,53 @@ function mfsd_hw_render_by_role_tab(): void {
     </nav>
 
     <?php
-    // 2-column, 2-row grid. DOM order determines the quadrant with a plain
-    // 2-col grid (row-major auto-placement) — no explicit grid-column/row
-    // needed: top-left=Widgets for Role, top-right=Live Preview,
-    // bottom-left=Layout selector, bottom-right=Available to add.
-    // Top row panels stay compact; bottom row panels expand downward with
-    // their content. No fixed heights, no overflow:hidden, no third column.
+    // Three rows. Rows 1 and 2 are full width (plain block divs). Row 3 is a
+    // 2-column grid holding the Layout selector and Available to add side by
+    // side, expanding downward independently of rows 1-2.
     ?>
+
+    <?php // ── Row 1: Section A — ordered widget list for this role (full width) ── ?>
+    <div style="background:#fff;border:1px solid #ccd0d4;border-radius:4px;padding:20px 24px;margin-bottom:24px;">
+      <h3 style="margin:0 0 12px;font-size:14px;border-bottom:2px solid #C9A84C;padding-bottom:10px;">
+        <?php printf( esc_html__( 'Widgets for %s', 'mfsd-home-widgets' ), esc_html( $all_roles[ $active_role ] ) ); ?>
+        <span style="font-size:11px;font-weight:400;background:#f0f0f1;color:#50575e;padding:2px 8px;border-radius:10px;margin-left:6px;">
+          <?php printf( esc_html__( '%d widget(s)', 'mfsd-home-widgets' ), $widget_count ); ?>
+        </span>
+      </h3>
+
+      <ul class="mfsd-hw-role-widget-list" data-role="<?php echo esc_attr( $active_role ); ?>" style="list-style:none;margin:0;padding:0;min-height:40px;">
+        <?php foreach ( $role_widgets as $pos => $w ) : ?>
+          <?php mfsd_hw_render_role_widget_row( $w, $active_role, $pos, $widget_count ); ?>
+        <?php endforeach; ?>
+      </ul>
+      <p class="mfsd-hw-role-empty-message" style="color:#888;font-size:13px;font-style:italic;margin:0;<?php echo empty( $role_widgets ) ? '' : 'display:none;'; ?>">
+        <?php esc_html_e( 'No active widgets for this role. Drag one in from Available to add.', 'mfsd-home-widgets' ); ?>
+      </p>
+    </div>
+
+    <?php
+    $preview_linfo = $catalog[ $current_layout ] ?? mfsd_hw_get_auto_layout_preview( $widget_count );
+    ?>
+
+    <?php // ── Row 2: Layout Preview — thumbnail only, full width ── ?>
+    <div style="background:#fff;border:1px solid #ccd0d4;border-radius:4px;padding:16px 24px;margin-bottom:24px;">
+      <h3 style="margin:0 0 12px;font-size:14px;border-bottom:2px solid #C9A84C;padding-bottom:8px;">
+        <?php esc_html_e( 'Layout Preview', 'mfsd-home-widgets' ); ?>
+      </h3>
+
+      <?php if ( empty( $role_widgets ) ) : ?>
+        <p style="color:#888;font-size:13px;margin:0;"><?php esc_html_e( 'No active widgets for this role.', 'mfsd-home-widgets' ); ?></p>
+      <?php elseif ( $preview_linfo ) : ?>
+        <div id="mfsd-hw-layout-preview-target">
+          <?php mfsd_hw_render_layout_thumbnail( $preview_linfo['areas'], $preview_linfo['cols'], $role_widgets, $widget_types ); ?>
+        </div>
+      <?php endif; ?>
+    </div>
+
+    <?php // ── Row 3: Layout selector (left) + Available to add (right), 2 columns ── ?>
     <div class="mfsd-hw-role-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
 
-      <?php // ── Top-left: Section A — ordered widget list for this role ── ?>
-      <div style="background:#fff;border:1px solid #ccd0d4;border-radius:4px;padding:20px 24px;">
-        <h3 style="margin:0 0 12px;font-size:14px;border-bottom:2px solid #C9A84C;padding-bottom:10px;">
-          <?php printf( esc_html__( 'Widgets for %s', 'mfsd-home-widgets' ), esc_html( $all_roles[ $active_role ] ) ); ?>
-          <span style="font-size:11px;font-weight:400;background:#f0f0f1;color:#50575e;padding:2px 8px;border-radius:10px;margin-left:6px;">
-            <?php printf( esc_html__( '%d widget(s)', 'mfsd-home-widgets' ), $widget_count ); ?>
-          </span>
-        </h3>
-
-        <ul class="mfsd-hw-role-widget-list" data-role="<?php echo esc_attr( $active_role ); ?>" style="list-style:none;margin:0;padding:0;min-height:40px;">
-          <?php foreach ( $role_widgets as $pos => $w ) : ?>
-            <?php mfsd_hw_render_role_widget_row( $w, $active_role, $pos, $widget_count ); ?>
-          <?php endforeach; ?>
-        </ul>
-        <p class="mfsd-hw-role-empty-message" style="color:#888;font-size:13px;font-style:italic;margin:0;<?php echo empty( $role_widgets ) ? '' : 'display:none;'; ?>">
-          <?php esc_html_e( 'No active widgets for this role. Drag one in from Available to add.', 'mfsd-home-widgets' ); ?>
-        </p>
-      </div>
-
-      <?php // ── Top-right: Section C — live preview ── ?>
-      <div style="background:#fff;border:1px solid #ccd0d4;border-radius:4px;padding:16px;">
-        <h3 style="margin:0 0 12px;font-size:14px;border-bottom:2px solid #C9A84C;padding-bottom:8px;">
-          <?php esc_html_e( 'Live Preview', 'mfsd-home-widgets' ); ?>
-        </h3>
-
-        <?php if ( empty( $role_widgets ) ) : ?>
-          <p style="color:#888;font-size:13px;"><?php esc_html_e( 'No active widgets for this role.', 'mfsd-home-widgets' ); ?></p>
-        <?php else : ?>
-          <ol style="margin:0 0 16px;padding:0 0 0 18px;">
-            <?php foreach ( $role_widgets as $pos => $w ) :
-                $tinfo = $widget_types[ $w['type'] ] ?? [ 'label' => $w['type'], 'icon' => 'dashicons-admin-generic' ];
-            ?>
-              <li style="font-size:12px;padding:5px 0;border-bottom:1px solid #f0f0f1;display:flex;align-items:center;gap:6px;">
-                <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#1d2327;color:#C9A84C;border-radius:3px;font-weight:700;font-size:11px;flex-shrink:0;">
-                  <?php echo $pos + 1; ?>
-                </span>
-                <span class="dashicons <?php echo esc_attr( $tinfo['icon'] ); ?>" style="font-size:14px;width:14px;height:14px;color:#888;"></span>
-                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                  <?php echo esc_html( $w['label'] ?: $tinfo['label'] ); ?>
-                </span>
-              </li>
-            <?php endforeach; ?>
-          </ol>
-
-          <?php
-          $preview_linfo = $catalog[ $current_layout ] ?? mfsd_hw_get_auto_layout_preview( $widget_count );
-          ?>
-          <?php if ( $preview_linfo ) : ?>
-            <div style="border-top:1px solid #f0f0f1;padding-top:12px;">
-              <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#50575e;margin:0 0 8px;">
-                <?php esc_html_e( 'Current layout preview', 'mfsd-home-widgets' ); ?>
-              </p>
-              <?php mfsd_hw_render_layout_thumbnail( $preview_linfo['areas'], $preview_linfo['cols'], $role_widgets, $widget_types ); ?>
-            </div>
-          <?php endif; ?>
-        <?php endif; ?>
-      </div>
-
-      <?php // ── Bottom-left: Section B — layout selector for the current widget count ── ?>
+      <?php // ── Row 3 left: Section B — layout selector for the current widget count ── ?>
       <div style="background:#fff;border:1px solid #ccd0d4;border-radius:4px;padding:20px 24px;">
         <h3 style="margin:0 0 12px;font-size:14px;border-bottom:2px solid #C9A84C;padding-bottom:10px;">
           <?php esc_html_e( 'Layout', 'mfsd-home-widgets' ); ?>
@@ -761,7 +747,7 @@ function mfsd_hw_render_by_role_tab(): void {
         <?php endif; ?>
       </div>
 
-      <?php // ── Bottom-right: Available Widgets panel — active widgets not assigned to this role ── ?>
+      <?php // ── Row 3 right: Available Widgets panel — active widgets not assigned to this role ── ?>
       <div style="background:#f6f7f7;border:1px dashed #ccd0d4;border-radius:4px;padding:20px 24px;">
         <h3 style="margin:0 0 6px;font-size:14px;color:#50575e;padding-bottom:10px;border-bottom:2px solid #ddd;">
           <?php esc_html_e( 'Available to add', 'mfsd-home-widgets' ); ?>
@@ -853,7 +839,7 @@ function mfsd_hw_render_layout_thumbnail( array $areas, int $cols, array $widget
 
     $colours = [ '#2271b1', '#2e7d32', '#b5460f', '#7b1fa2', '#c0392b', '#0277bd', '#e65100' ];
     ?>
-    <div style="position:relative;width:<?php echo $total_w; ?>px;height:<?php echo $total_h; ?>px;flex-shrink:0;">
+    <div class="mfsd-hw-layout-thumb" style="position:relative;width:<?php echo $total_w; ?>px;height:<?php echo $total_h; ?>px;flex-shrink:0;">
       <?php foreach ( $cells as $cell ) :
           $x = $cell['col'] * ( $cell_size + $gap );
           $y = $cell['row'] * ( $cell_size + $gap );
