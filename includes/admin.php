@@ -89,6 +89,80 @@ function mfsd_hw_ajax_reorder(): void {
 }
 
 
+// ─── AJAX: ASSIGN / REMOVE A ROLE ON A WIDGET ────────────────────────────────
+// Used by the By Role tab's Available Widgets panel (drag-to-assign) and the
+// Remove button on the active widget list. Neither of these ever deletes the
+// widget row — only its `roles` assignment changes.
+
+add_action( 'wp_ajax_mfsd_hw_ajax_assign_role', 'mfsd_hw_ajax_assign_role' );
+function mfsd_hw_ajax_assign_role(): void {
+    check_ajax_referer( 'mfsd_hw_role_assign', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( [ 'error' => 'forbidden' ], 403 );
+    }
+
+    $role      = sanitize_key( $_POST['role'] ?? '' );
+    $widget_id = (int) ( $_POST['widget_id'] ?? 0 );
+
+    if ( ! isset( mfsd_hw_roles()[ $role ] ) || ! $widget_id ) {
+        wp_send_json_error( [ 'error' => 'invalid_request' ], 400 );
+    }
+
+    $widget = mfsd_hw_get( $widget_id );
+    if ( ! $widget ) {
+        wp_send_json_error( [ 'error' => 'not_found' ], 404 );
+    }
+
+    $roles = (array) $widget['roles'];
+    if ( ! in_array( 'all', $roles, true ) && ! in_array( $role, $roles, true ) ) {
+        $roles[] = $role;
+    }
+
+    // New position: end of this role's current active list.
+    $rso          = (array) ( $widget['role_sort_orders'] ?? [] );
+    $rso[ $role ] = count( mfsd_hw_get_for_role( $role ) ) + 1;
+
+    mfsd_hw_update( $widget_id, array_merge( $widget, [
+        'roles'            => $roles,
+        'role_sort_orders' => $rso,
+    ] ) );
+
+    wp_send_json_success( [ 'ok' => true ] );
+}
+
+add_action( 'wp_ajax_mfsd_hw_ajax_remove_role', 'mfsd_hw_ajax_remove_role' );
+function mfsd_hw_ajax_remove_role(): void {
+    check_ajax_referer( 'mfsd_hw_role_assign', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( [ 'error' => 'forbidden' ], 403 );
+    }
+
+    $role      = sanitize_key( $_POST['role'] ?? '' );
+    $widget_id = (int) ( $_POST['widget_id'] ?? 0 );
+
+    if ( ! isset( mfsd_hw_roles()[ $role ] ) || ! $widget_id ) {
+        wp_send_json_error( [ 'error' => 'invalid_request' ], 400 );
+    }
+
+    $widget = mfsd_hw_get( $widget_id );
+    if ( ! $widget ) {
+        wp_send_json_error( [ 'error' => 'not_found' ], 404 );
+    }
+
+    $roles = mfsd_hw_compute_roles_without( (array) $widget['roles'], $role );
+
+    $rso = (array) ( $widget['role_sort_orders'] ?? [] );
+    unset( $rso[ $role ] );
+
+    mfsd_hw_update( $widget_id, array_merge( $widget, [
+        'roles'            => $roles, // may be [] — deliberately left unassigned, never deleted
+        'role_sort_orders' => $rso,
+    ] ) );
+
+    wp_send_json_success( [ 'ok' => true ] );
+}
+
+
 // ─── MENU ────────────────────────────────────────────────────────────────────
 
 add_action( 'admin_menu', 'mfsd_hw_register_menu' );
@@ -114,8 +188,9 @@ function mfsd_hw_admin_assets(): void {
     wp_enqueue_script( 'mfsd-hw-admin', MFSD_HW_URI . 'assets/js/admin.js', [ 'jquery' ], MFSD_HW_VERSION, true );
 
     wp_localize_script( 'mfsd-hw-admin', 'mfsdHwAdmin', [
-        'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
-        'reorderNonce'  => wp_create_nonce( 'mfsd_hw_reorder' ),
+        'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+        'reorderNonce'    => wp_create_nonce( 'mfsd_hw_reorder' ),
+        'roleAssignNonce' => wp_create_nonce( 'mfsd_hw_role_assign' ),
     ] );
 
     // Inline JS: layout card highlight toggle on the By Role tab.
@@ -435,6 +510,103 @@ function mfsd_hw_layout_slugs_for_count( int $count ): array {
 }
 
 
+// ─── BY ROLE TAB — ROW RENDERERS ──────────────────────────────────────────────
+// Both renderers embed a hidden <template class="mfsd-hw-alt-state"> holding
+// the OTHER renderer's markup (with $with_alt_template=false to stop mutual
+// nesting at one level deep). JS uses this to move a widget between the
+// active list and the Available Widgets panel without a page reload — see
+// assets/js/admin.js. Every subsequent toggle re-captures live DOM markup
+// instead of relying on stale nested templates, so one level is all that's
+// ever needed.
+
+/**
+ * What a widget's roles array would become if $role_to_remove were removed.
+ * A widget visible via 'all' expands to every other concrete role (still
+ * visible to everyone else, just not this one) rather than losing 'all'
+ * outright with no replacement.
+ */
+function mfsd_hw_compute_roles_without( array $roles, string $role_to_remove ): array {
+    if ( in_array( 'all', $roles, true ) ) {
+        return array_values( array_diff( array_keys( mfsd_hw_roles() ), [ 'all', $role_to_remove ] ) );
+    }
+    return array_values( array_diff( $roles, [ $role_to_remove ] ) );
+}
+
+/**
+ * All active widgets NOT currently visible to $role — candidates for the
+ * Available Widgets panel.
+ */
+function mfsd_hw_get_available_for_role( string $role ): array {
+    $assigned_ids = array_column( mfsd_hw_get_for_role( $role ), 'id' );
+    $available    = [];
+    foreach ( mfsd_hw_get_all() as $w ) {
+        if ( (int) $w['active'] !== 1 ) continue;
+        if ( in_array( $w['id'], $assigned_ids, true ) ) continue;
+        $available[] = $w;
+    }
+    return $available;
+}
+
+function mfsd_hw_render_role_widget_row( array $w, string $role, int $pos, int $total, bool $with_alt_template = true ): void {
+    $widget_types = mfsd_hw_widget_types();
+    $tinfo        = $widget_types[ $w['type'] ] ?? [ 'label' => $w['type'], 'icon' => 'dashicons-admin-generic' ];
+    $is_active    = (int) $w['active'] === 1;
+    ?>
+    <li class="mfsd-hw-role-widget-row" data-widget-id="<?php echo (int) $w['id']; ?>">
+      <span class="mfsd-hw-role-widget-row__pos"><?php echo $pos + 1; ?></span>
+      <span class="dashicons <?php echo esc_attr( $tinfo['icon'] ); ?>" style="color:#888;"></span>
+      <span class="mfsd-hw-role-widget-row__label">
+        <?php echo esc_html( $w['label'] ?: $tinfo['label'] ); ?>
+        <span style="display:block;font-size:11px;color:#888;font-weight:400;"><?php echo esc_html( $tinfo['label'] ); ?></span>
+      </span>
+      <span class="mfsd-hw-admin__status mfsd-hw-admin__status--<?php echo $is_active ? 'live' : 'off'; ?>">
+        <?php echo $is_active ? 'Live' : 'Off'; ?>
+      </span>
+      <span class="mfsd-hw-role-widget-row__reorder">
+        <button type="button" class="button mfsd-hw-role-reorder-btn" data-direction="up"
+                <?php disabled( $pos === 0 ); ?> aria-label="<?php esc_attr_e( 'Move up', 'mfsd-home-widgets' ); ?>">&uarr;</button>
+        <button type="button" class="button mfsd-hw-role-reorder-btn" data-direction="down"
+                <?php disabled( $pos === $total - 1 ); ?> aria-label="<?php esc_attr_e( 'Move down', 'mfsd-home-widgets' ); ?>">&darr;</button>
+      </span>
+      <span class="mfsd-hw-role-widget-row__actions">
+        <a href="<?php echo esc_url( add_query_arg( [ 'page' => 'mfsd-home-widgets', 'view' => 'edit', 'id' => $w['id'] ], admin_url( 'admin.php' ) ) ); ?>"
+           class="button button-small"><?php esc_html_e( 'Edit', 'mfsd-home-widgets' ); ?></a>
+        <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( [ 'action' => 'mfsd_hw_toggle', 'id' => $w['id'] ], admin_url( 'admin-post.php' ) ), 'mfsd_hw_toggle' ) ); ?>"
+           class="button button-small"><?php echo $is_active ? esc_html__( 'Pause', 'mfsd-home-widgets' ) : esc_html__( 'Activate', 'mfsd-home-widgets' ); ?></a>
+        <button type="button" class="button mfsd-hw-role-remove-btn"><?php esc_html_e( 'Remove', 'mfsd-home-widgets' ); ?></button>
+      </span>
+      <?php if ( $with_alt_template ) : ?>
+        <template class="mfsd-hw-alt-state"><?php mfsd_hw_render_available_item( $w, $role, mfsd_hw_compute_roles_without( (array) $w['roles'], $role ), false ); ?></template>
+      <?php endif; ?>
+    </li>
+    <?php
+}
+
+function mfsd_hw_render_available_item( array $w, string $role, array $display_roles, bool $with_alt_template = true ): void {
+    $widget_types = mfsd_hw_widget_types();
+    $all_roles    = mfsd_hw_roles();
+    $tinfo        = $widget_types[ $w['type'] ] ?? [ 'label' => $w['type'], 'icon' => 'dashicons-admin-generic' ];
+    ?>
+    <li class="mfsd-hw-available-item" draggable="true" data-widget-id="<?php echo (int) $w['id']; ?>">
+      <span class="dashicons <?php echo esc_attr( $tinfo['icon'] ); ?>" style="color:#888;"></span>
+      <span class="mfsd-hw-available-item__label"><?php echo esc_html( $w['label'] ?: $tinfo['label'] ); ?></span>
+      <span class="mfsd-hw-available-item__roles">
+        <?php if ( empty( $display_roles ) ) : ?>
+          <em style="color:#aaa;font-size:11px;"><?php esc_html_e( 'Unassigned', 'mfsd-home-widgets' ); ?></em>
+        <?php else : ?>
+          <?php foreach ( $display_roles as $rslug ) : ?>
+            <span class="mfsd-hw-admin__role-pill"><?php echo esc_html( $all_roles[ $rslug ] ?? $rslug ); ?></span>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </span>
+      <?php if ( $with_alt_template ) : ?>
+        <template class="mfsd-hw-alt-state"><?php mfsd_hw_render_role_widget_row( $w, $role, 0, 1, false ); ?></template>
+      <?php endif; ?>
+    </li>
+    <?php
+}
+
+
 // ─── BY ROLE TAB ──────────────────────────────────────────────────────────────
 
 function mfsd_hw_render_by_role_tab(): void {
@@ -448,9 +620,10 @@ function mfsd_hw_render_by_role_tab(): void {
     $active_role = sanitize_key( $_GET['role'] ?? array_key_first( $all_roles ) );
     if ( ! isset( $all_roles[ $active_role ] ) ) $active_role = array_key_first( $all_roles );
 
-    $role_widgets = mfsd_hw_get_for_role( $active_role );
-    $widget_count = count( $role_widgets );
-    $layout_slugs = mfsd_hw_layout_slugs_for_count( $widget_count );
+    $role_widgets      = mfsd_hw_get_for_role( $active_role );
+    $widget_count      = count( $role_widgets );
+    $available_widgets = mfsd_hw_get_available_for_role( $active_role );
+    $layout_slugs      = mfsd_hw_layout_slugs_for_count( $widget_count );
 
     $current_layout = mfsd_hw_get_layout_for_role( $active_role );
     if ( ! in_array( $current_layout, $layout_slugs, true ) ) {
@@ -473,55 +646,49 @@ function mfsd_hw_render_by_role_tab(): void {
 
     <div style="display:flex;gap:24px;align-items:flex-start;">
 
-      <?php /* ── Left column: Section A (widget list) + Section B (layout selector) ── */ ?>
+      <?php /* ── Left column: Sections A+D (widget lists) + Section B (layout selector) ── */ ?>
       <div style="flex:1;min-width:0;">
 
-        <?php // ── Section A: ordered widget list for this role ── ?>
-        <div style="background:#fff;border:1px solid #ccd0d4;border-radius:4px;padding:20px 24px;margin-bottom:20px;">
-          <h3 style="margin:0 0 12px;font-size:14px;border-bottom:2px solid #C9A84C;padding-bottom:10px;">
-            <?php printf( esc_html__( 'Widgets for %s', 'mfsd-home-widgets' ), esc_html( $all_roles[ $active_role ] ) ); ?>
-            <span style="font-size:11px;font-weight:400;background:#f0f0f1;color:#50575e;padding:2px 8px;border-radius:10px;margin-left:6px;">
-              <?php printf( esc_html__( '%d widget(s)', 'mfsd-home-widgets' ), $widget_count ); ?>
-            </span>
-          </h3>
+        <div style="display:flex;gap:20px;align-items:flex-start;margin-bottom:20px;">
 
-          <?php if ( empty( $role_widgets ) ) : ?>
-            <p style="color:#888;font-size:13px;font-style:italic;"><?php esc_html_e( 'No active widgets for this role.', 'mfsd-home-widgets' ); ?></p>
-          <?php else : ?>
-            <ul class="mfsd-hw-role-widget-list" data-role="<?php echo esc_attr( $active_role ); ?>" style="list-style:none;margin:0;padding:0;">
-              <?php foreach ( $role_widgets as $pos => $w ) :
-                  $tinfo     = $widget_types[ $w['type'] ] ?? [ 'label' => $w['type'], 'icon' => 'dashicons-admin-generic' ];
-                  $is_active = (int) $w['active'] === 1;
-              ?>
-                <li class="mfsd-hw-role-widget-row" data-widget-id="<?php echo (int) $w['id']; ?>">
-                  <span class="mfsd-hw-role-widget-row__pos"><?php echo $pos + 1; ?></span>
-                  <span class="dashicons <?php echo esc_attr( $tinfo['icon'] ); ?>" style="color:#888;"></span>
-                  <span class="mfsd-hw-role-widget-row__label">
-                    <?php echo esc_html( $w['label'] ?: $tinfo['label'] ); ?>
-                    <span style="display:block;font-size:11px;color:#888;font-weight:400;"><?php echo esc_html( $tinfo['label'] ); ?></span>
-                  </span>
-                  <span class="mfsd-hw-admin__status mfsd-hw-admin__status--<?php echo $is_active ? 'live' : 'off'; ?>">
-                    <?php echo $is_active ? 'Live' : 'Off'; ?>
-                  </span>
-                  <span class="mfsd-hw-role-widget-row__reorder">
-                    <button type="button" class="button mfsd-hw-role-reorder-btn" data-direction="up"
-                            <?php disabled( $pos === 0 ); ?> aria-label="<?php esc_attr_e( 'Move up', 'mfsd-home-widgets' ); ?>">&uarr;</button>
-                    <button type="button" class="button mfsd-hw-role-reorder-btn" data-direction="down"
-                            <?php disabled( $pos === $widget_count - 1 ); ?> aria-label="<?php esc_attr_e( 'Move down', 'mfsd-home-widgets' ); ?>">&darr;</button>
-                  </span>
-                  <span class="mfsd-hw-role-widget-row__actions">
-                    <a href="<?php echo esc_url( add_query_arg( [ 'page' => 'mfsd-home-widgets', 'view' => 'edit', 'id' => $w['id'] ], admin_url( 'admin.php' ) ) ); ?>"
-                       class="button button-small"><?php esc_html_e( 'Edit', 'mfsd-home-widgets' ); ?></a>
-                    <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( [ 'action' => 'mfsd_hw_toggle', 'id' => $w['id'] ], admin_url( 'admin-post.php' ) ), 'mfsd_hw_toggle' ) ); ?>"
-                       class="button button-small"><?php echo $is_active ? esc_html__( 'Pause', 'mfsd-home-widgets' ) : esc_html__( 'Activate', 'mfsd-home-widgets' ); ?></a>
-                    <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( [ 'action' => 'mfsd_hw_delete', 'id' => $w['id'] ], admin_url( 'admin-post.php' ) ), 'mfsd_hw_delete' ) ); ?>"
-                       class="button button-small mfsd-hw-admin__btn-delete"
-                       onclick="return confirm('<?php esc_attr_e( 'Delete this widget? This cannot be undone.', 'mfsd-home-widgets' ); ?>')"><?php esc_html_e( 'Delete', 'mfsd-home-widgets' ); ?></a>
-                  </span>
-                </li>
+          <?php // ── Section A: ordered widget list for this role ── ?>
+          <div style="flex:1;min-width:0;background:#fff;border:1px solid #ccd0d4;border-radius:4px;padding:20px 24px;">
+            <h3 style="margin:0 0 12px;font-size:14px;border-bottom:2px solid #C9A84C;padding-bottom:10px;">
+              <?php printf( esc_html__( 'Widgets for %s', 'mfsd-home-widgets' ), esc_html( $all_roles[ $active_role ] ) ); ?>
+              <span style="font-size:11px;font-weight:400;background:#f0f0f1;color:#50575e;padding:2px 8px;border-radius:10px;margin-left:6px;">
+                <?php printf( esc_html__( '%d widget(s)', 'mfsd-home-widgets' ), $widget_count ); ?>
+              </span>
+            </h3>
+
+            <ul class="mfsd-hw-role-widget-list" data-role="<?php echo esc_attr( $active_role ); ?>" style="list-style:none;margin:0;padding:0;min-height:40px;">
+              <?php foreach ( $role_widgets as $pos => $w ) : ?>
+                <?php mfsd_hw_render_role_widget_row( $w, $active_role, $pos, $widget_count ); ?>
               <?php endforeach; ?>
             </ul>
-          <?php endif; ?>
+            <p class="mfsd-hw-role-empty-message" style="color:#888;font-size:13px;font-style:italic;margin:0;<?php echo empty( $role_widgets ) ? '' : 'display:none;'; ?>">
+              <?php esc_html_e( 'No active widgets for this role. Drag one in from Available to add.', 'mfsd-home-widgets' ); ?>
+            </p>
+          </div>
+
+          <?php // ── Available Widgets panel: active widgets not assigned to this role ── ?>
+          <div style="flex:1;min-width:0;background:#f6f7f7;border:1px dashed #ccd0d4;border-radius:4px;padding:20px 24px;">
+            <h3 style="margin:0 0 6px;font-size:14px;color:#50575e;padding-bottom:10px;border-bottom:2px solid #ddd;">
+              <?php esc_html_e( 'Available to add', 'mfsd-home-widgets' ); ?>
+            </h3>
+            <p class="description" style="margin:8px 0 12px;font-size:12px;">
+              <?php esc_html_e( 'Drag a widget into the list on the left to assign it to this role.', 'mfsd-home-widgets' ); ?>
+            </p>
+
+            <ul class="mfsd-hw-available-list" style="list-style:none;margin:0;padding:0;min-height:40px;">
+              <?php foreach ( $available_widgets as $w ) : ?>
+                <?php mfsd_hw_render_available_item( $w, $active_role, (array) $w['roles'] ); ?>
+              <?php endforeach; ?>
+            </ul>
+            <p class="mfsd-hw-available-empty-message" style="color:#aaa;font-size:13px;font-style:italic;margin:0;<?php echo empty( $available_widgets ) ? '' : 'display:none;'; ?>">
+              <?php esc_html_e( 'Every active widget is already assigned to this role.', 'mfsd-home-widgets' ); ?>
+            </p>
+          </div>
+
         </div>
 
         <?php // ── Section B: layout selector for the current widget count ── ?>

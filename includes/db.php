@@ -169,7 +169,10 @@ function mfsd_hw_get_for_role( string $role ): array {
 
     $visible = [];
     foreach ( $rows as $row ) {
-        $roles = json_decode( $row['roles'], true ) ?: [ 'all' ];
+        // ?? (not ?:) — a stored '[]' means deliberately unassigned (see
+        // mfsd_hw_ajax_remove_role()) and must stay invisible everywhere,
+        // not fall back to ['all'].
+        $roles = json_decode( $row['roles'], true ) ?? [ 'all' ];
         if ( in_array( 'all', $roles, true ) || in_array( $role, $roles, true ) ) {
             $decoded = mfsd_hw_decode_row( $row );
 
@@ -254,7 +257,10 @@ function mfsd_hw_delete( int $id ): bool {
  * @return array
  */
 function mfsd_hw_decode_row( array $row ): array {
-    $row['roles']            = json_decode( $row['roles'],            true ) ?: [ 'all' ];
+    // ?? (not ?:) is deliberate — a stored '[]' (deliberately no roles assigned,
+    // see mfsd_hw_ajax_remove_role()) must decode to [] and stay unassigned,
+    // not fall back to ['all']. Only truly missing/invalid JSON should default.
+    $row['roles']            = json_decode( $row['roles'],            true ) ?? [ 'all' ];
     $row['config']           = json_decode( $row['config'],           true ) ?: [];
     $row['role_sort_orders'] = json_decode( $row['role_sort_orders'] ?? '{}', true ) ?: [];
     return $row;

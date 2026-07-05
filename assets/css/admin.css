@@ -304,3 +304,49 @@
 .mfsd-hw-role-widget-row__actions .button {
   margin-right: 4px;
 }
+
+.mfsd-hw-role-widget-list.is-drop-target {
+  outline: 2px dashed #C9A84C;
+  outline-offset: 4px;
+  background: #fdf9ef;
+  border-radius: 4px;
+}
+
+
+/* ── AVAILABLE WIDGETS PANEL ─────────────────────────────────────────────── */
+
+.mfsd-hw-available-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-bottom: 1px solid #e2e4e7;
+  cursor: grab;
+  background: #fff;
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
+
+.mfsd-hw-available-item:last-child {
+  margin-bottom: 0;
+}
+
+.mfsd-hw-available-item.is-dragging {
+  opacity: 0.4;
+}
+
+.mfsd-hw-available-item__label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mfsd-hw-available-item__roles {
+  flex-shrink: 0;
+  max-width: 45%;
+  text-align: right;
+}

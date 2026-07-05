@@ -55,6 +55,123 @@
     }
 
 
+    // ── By Role tab: Available Widgets drag-to-assign + Remove (AJAX, no reload) ──
+    //
+    // Each row/item carries a hidden <template class="mfsd-hw-alt-state"> with
+    // the markup for its OTHER state (active row <-> available item). Moving a
+    // widget just extracts that template, drops it in the destination list, and
+    // gives the newly-inserted element its own fresh alt-state template captured
+    // from the element that's leaving — so the swap stays reversible indefinitely
+    // without the server ever needing to re-render anything.
+
+    function getAltStateClone( $el ) {
+        var tpl = $el.children( 'template.mfsd-hw-alt-state' )[ 0 ];
+        if ( ! tpl ) return null;
+        var frag = document.importNode( tpl.content, true );
+        return $( frag ).children().first();
+    }
+
+    function setAltStateFromElement( $target, $sourceEl ) {
+        var $clone = $sourceEl.clone( false );
+        $clone.children( 'template.mfsd-hw-alt-state' ).remove();
+        var tpl = document.createElement( 'template' );
+        tpl.className = 'mfsd-hw-alt-state';
+        tpl.content.appendChild( $clone.get( 0 ) );
+        $target.append( tpl );
+    }
+
+    function refreshEmptyMessage( $list, itemSelector, messageSelector ) {
+        var isEmpty = $list.children( itemSelector ).length === 0;
+        $list.siblings( messageSelector ).toggle( isEmpty );
+    }
+
+    // Drag start/end on Available Widgets items.
+    $( document ).on( 'dragstart', '.mfsd-hw-available-item', function( e ) {
+        e.originalEvent.dataTransfer.setData( 'text/plain', String( $( this ).data( 'widget-id' ) ) );
+        e.originalEvent.dataTransfer.effectAllowed = 'move';
+        $( this ).addClass( 'is-dragging' );
+    } );
+
+    $( document ).on( 'dragend', '.mfsd-hw-available-item', function() {
+        $( this ).removeClass( 'is-dragging' );
+    } );
+
+    // Drop target: the active widget list for the role being viewed.
+    $( document ).on( 'dragover', '.mfsd-hw-role-widget-list', function( e ) {
+        e.preventDefault();
+        if ( e.originalEvent.dataTransfer ) e.originalEvent.dataTransfer.dropEffect = 'move';
+        $( this ).addClass( 'is-drop-target' );
+    } );
+
+    $( document ).on( 'dragleave', '.mfsd-hw-role-widget-list', function() {
+        $( this ).removeClass( 'is-drop-target' );
+    } );
+
+    $( document ).on( 'drop', '.mfsd-hw-role-widget-list', function( e ) {
+        e.preventDefault();
+        var $list = $( this ).removeClass( 'is-drop-target' );
+        if ( ! window.mfsdHwAdmin ) return;
+
+        var widgetId = e.originalEvent.dataTransfer.getData( 'text/plain' );
+        var role     = $list.data( 'role' );
+        var $item    = $( '.mfsd-hw-available-item[data-widget-id="' + widgetId + '"]' );
+        if ( ! $item.length ) return;
+
+        var $newRow = getAltStateClone( $item );
+        if ( ! $newRow ) return;
+        setAltStateFromElement( $newRow, $item );
+
+        $list.append( $newRow );
+        renumberRoleWidgetList( $list );
+        refreshEmptyMessage( $list, '.mfsd-hw-role-widget-row', '.mfsd-hw-role-empty-message' );
+
+        var $availableList = $item.closest( '.mfsd-hw-available-list' );
+        $item.remove();
+        refreshEmptyMessage( $availableList, '.mfsd-hw-available-item', '.mfsd-hw-available-empty-message' );
+
+        $.post( mfsdHwAdmin.ajaxUrl, {
+            action:    'mfsd_hw_ajax_assign_role',
+            nonce:     mfsdHwAdmin.roleAssignNonce,
+            role:      role,
+            widget_id: widgetId
+        } ).fail( function() {
+            window.location.reload();
+        } );
+    } );
+
+    // Remove button: moves a widget out of the active list back into Available.
+    $( document ).on( 'click', '.mfsd-hw-role-remove-btn', function( e ) {
+        e.preventDefault();
+        if ( ! window.mfsdHwAdmin ) return;
+
+        var $row  = $( this ).closest( '.mfsd-hw-role-widget-row' );
+        var $list = $( this ).closest( '.mfsd-hw-role-widget-list' );
+        var widgetId = $row.data( 'widget-id' );
+        var role     = $list.data( 'role' );
+
+        var $newItem = getAltStateClone( $row );
+        if ( ! $newItem ) return;
+        setAltStateFromElement( $newItem, $row );
+
+        var $availableList = $( '.mfsd-hw-available-list' );
+        $availableList.append( $newItem );
+        refreshEmptyMessage( $availableList, '.mfsd-hw-available-item', '.mfsd-hw-available-empty-message' );
+
+        $row.remove();
+        renumberRoleWidgetList( $list );
+        refreshEmptyMessage( $list, '.mfsd-hw-role-widget-row', '.mfsd-hw-role-empty-message' );
+
+        $.post( mfsdHwAdmin.ajaxUrl, {
+            action:    'mfsd_hw_ajax_remove_role',
+            nonce:     mfsdHwAdmin.roleAssignNonce,
+            role:      role,
+            widget_id: widgetId
+        } ).fail( function() {
+            window.location.reload();
+        } );
+    } );
+
+
     // ── Media Library picker (existing) ──────────────────────────────────────
 
     var mediaFrame;
