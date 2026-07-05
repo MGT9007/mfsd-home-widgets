@@ -65,8 +65,11 @@ function mfsd_hw_ajax_reorder(): void {
     }
 
     $ordered = mfsd_hw_get_for_role( $role );
-    $ids     = array_column( $ordered, 'id' );
-    $pos     = array_search( $widget_id, $ids, true );
+    // $wpdb returns every column (including id) as a string — array_column()
+    // below inherits that. Cast before the strict array_search() so a real
+    // match (e.g. "7" vs (int) 7) isn't rejected by the type check.
+    $ids = array_map( 'intval', array_column( $ordered, 'id' ) );
+    $pos = array_search( $widget_id, $ids, true );
 
     if ( $pos === false ) {
         wp_send_json_error( [ 'error' => 'not_found' ], 404 );
