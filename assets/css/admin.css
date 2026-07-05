@@ -247,6 +247,12 @@
   cursor: pointer;
 }
 
+@media (max-width: 900px) {
+  .mfsd-hw-role-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 .mfsd-hw-role-widget-row {
   display: flex;
   align-items: center;
