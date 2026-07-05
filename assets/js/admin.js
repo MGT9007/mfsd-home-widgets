@@ -1,5 +1,59 @@
+/* global mfsdHwAdmin */
 ( function( $ ) {
     'use strict';
+
+    // ── By Role tab: up/down reorder (AJAX, no page reload) ──────────────────
+
+    $( document ).on( 'click', '.mfsd-hw-role-reorder-btn', function( e ) {
+        e.preventDefault();
+        if ( ! window.mfsdHwAdmin ) return;
+
+        var $btn = $( this );
+        if ( $btn.prop( 'disabled' ) ) return;
+
+        var $row      = $btn.closest( '.mfsd-hw-role-widget-row' );
+        var $list     = $btn.closest( '.mfsd-hw-role-widget-list' );
+        var direction = $btn.data( 'direction' );
+        var widgetId  = $row.data( 'widget-id' );
+        var role      = $list.data( 'role' );
+        var $sibling  = direction === 'up' ? $row.prev( '.mfsd-hw-role-widget-row' ) : $row.next( '.mfsd-hw-role-widget-row' );
+
+        if ( ! $sibling.length ) return;
+
+        $list.find( '.mfsd-hw-role-reorder-btn' ).prop( 'disabled', true );
+
+        // Optimistic UI: swap the two rows immediately.
+        if ( direction === 'up' ) {
+            $row.insertBefore( $sibling );
+        } else {
+            $row.insertAfter( $sibling );
+        }
+        renumberRoleWidgetList( $list );
+
+        $.post( mfsdHwAdmin.ajaxUrl, {
+            action:    'mfsd_hw_ajax_reorder',
+            nonce:     mfsdHwAdmin.reorderNonce,
+            role:      role,
+            widget_id: widgetId,
+            direction: direction
+        } ).fail( function() {
+            // Revert on failure — simplest safe recovery is a fresh render.
+            window.location.reload();
+        } ).always( function() {
+            renumberRoleWidgetList( $list ); // re-enables and re-applies first/last disabled state
+        } );
+    } );
+
+    function renumberRoleWidgetList( $list ) {
+        var $rows = $list.find( '.mfsd-hw-role-widget-row' );
+        $rows.each( function( i ) {
+            var $row = $( this );
+            $row.find( '.mfsd-hw-role-widget-row__pos' ).text( i + 1 );
+            $row.find( '.mfsd-hw-role-reorder-btn[data-direction="up"]' ).prop( 'disabled', i === 0 );
+            $row.find( '.mfsd-hw-role-reorder-btn[data-direction="down"]' ).prop( 'disabled', i === $rows.length - 1 );
+        } );
+    }
+
 
     // ── Media Library picker (existing) ──────────────────────────────────────
 

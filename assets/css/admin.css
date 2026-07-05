@@ -239,3 +239,68 @@
 .mfsd-hw-admin__item-block:first-child {
   border-left: 3px solid #C9A84C;
 }
+
+
+/* ── BY ROLE TAB ─────────────────────────────────────────────────────────── */
+
+.mfsd-hw-role-tabs .nav-tab {
+  cursor: pointer;
+}
+
+.mfsd-hw-role-widget-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+.mfsd-hw-role-widget-row:last-child {
+  border-bottom: none;
+}
+
+.mfsd-hw-role-widget-row__pos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  background: #1d2327;
+  color: #C9A84C;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.mfsd-hw-role-widget-row__label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mfsd-hw-role-widget-row__reorder {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.mfsd-hw-role-reorder-btn {
+  padding: 0 6px !important;
+  min-width: 26px;
+  line-height: 26px !important;
+  height: 28px !important;
+}
+
+.mfsd-hw-role-widget-row__actions {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.mfsd-hw-role-widget-row__actions .button {
+  margin-right: 4px;
+}

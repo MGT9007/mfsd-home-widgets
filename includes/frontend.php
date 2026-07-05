@@ -80,19 +80,20 @@ endif; // mfsd_hw_role_fallback
 
 if ( ! function_exists( 'mfsd_hw_get_layout_for_role' ) ) :
 /**
- * Return the chosen layout slug for a role.
+ * Return the chosen layout slug for a role, or '' if none has been set.
  * Stored as an array in wp_options 'mfsd_hw_role_layouts': { "student": "7b", "parent": "7", ... }
  * Valid values: '7'|'7b'|'7c' (7 widgets), '6'|'6b'|'6c' (6 widgets),
  * '4a'|'4b' (4 widgets), '3a'|'3b'|'3c' (3 widgets), '2a'|'2b'|'2c' (2 widgets).
  * Only meaningful when it matches the role's current widget count — see
- * mfsd_hw_render_grid(). Defaults to '7' if unset/invalid.
+ * mfsd_hw_render_grid(), which falls back to that count's Layout A when this
+ * returns '' or a slug that doesn't match the current widget count.
  */
 function mfsd_hw_get_layout_for_role( string $role ): string {
     $layouts = get_option( 'mfsd_hw_role_layouts', [] );
     if ( ! is_array( $layouts ) ) $layouts = [];
-    $val = $layouts[ $role ] ?? '7';
+    $val = $layouts[ $role ] ?? '';
     $valid = [ '7', '7b', '7c', '6', '6b', '6c', '4a', '4b', '3a', '3b', '3c', '2a', '2b', '2c' ];
-    return in_array( $val, $valid, true ) ? $val : '7';
+    return in_array( $val, $valid, true ) ? $val : '';
 }
 endif; // mfsd_hw_get_layout_for_role
 
