@@ -2,10 +2,177 @@
 
 **Plugin directory:** `mfsd-home-widgets/`
 **Shortcode(s):** None (rendered via action hook `mfsd_home_widgets`)
-**Version:** 6.0.0
-**Status:** Current — Supersedes v5.67
+**Version:** 6.1.0
+**Status:** Current — Supersedes v6.0.0
 **Author:** MisterT9007
-**Purpose:** Manages and displays a role-aware widget grid on the MFSD home page. Administrators create widget instances of nine types (news cards, short videos, new courses, top scores, progress/achievements, RSS feeds, SteveGPT help bot, registration completion) and assign each instance a visibility role and sort order. The grid layout adapts automatically to widget count, with administrator-selectable named layouts for 6- and 7-widget configurations. Students see a gamer-themed view; parents, teachers, and admins see a corporate theme.
+**Purpose:** Manages and displays a role-aware widget grid on the MFSD home page. Administrators create widget instances of nine types (news cards, short videos, new courses, top scores, progress/achievements, RSS feeds, SteveGPT help bot, registration completion) and assign each instance a visibility role and sort order. The grid layout adapts automatically to widget count, with administrator-selectable named layouts for 2-, 3-, 4-, 6-, and 7-widget configurations. Students see a gamer-themed view; parents, teachers, and admins see a corporate theme.
+
+---
+
+## What Changed in v6.1
+
+**v6.1.0 — New 2-, 3-, and 4-widget layout options**
+
+Eight new named layouts added covering 2-, 3-, and 4-widget configurations. All layouts are selectable per role in the admin, consistent with the existing 6- and 7-widget layout selector pattern.
+
+---
+
+## Grid Layouts — Full Specification
+
+### How layouts work
+
+When a role has a specific number of active widgets, the admin can select a named layout for that widget count. The layout is stored per role. If no layout is selected, the grid falls back to the default auto-flow behaviour.
+
+Layouts are implemented as CSS Grid template definitions applied via a `data-layout` attribute on the `.mfsd-hw-grid` container. Each layout name maps to a CSS class.
+
+---
+
+### 2-Widget Layouts
+
+#### 2A — Wide/Narrow (75/25)
+Widget 1 takes 75% of the row width, widget 2 takes 25%.
+
+```
+┌───────────────────┬─────┐
+│         1         │  2  │
+└───────────────────┴─────┘
+```
+CSS: `grid-template-columns: 3fr 1fr;`
+
+#### 2B — Narrow/Wide (25/75)
+Widget 1 takes 25% of the row width, widget 2 takes 75%.
+
+```
+┌─────┬───────────────────┐
+│  1  │         2         │
+└─────┴───────────────────┘
+```
+CSS: `grid-template-columns: 1fr 3fr;`
+
+#### 2C — Stacked (full width, two rows)
+Widget 1 full width top row, widget 2 full width bottom row.
+
+```
+┌─────────────────────────┐
+│            1            │
+├─────────────────────────┤
+│            2            │
+└─────────────────────────┘
+```
+CSS: `grid-template-columns: 1fr; grid-template-rows: 1fr 1fr;`
+
+---
+
+### 3-Widget Layouts
+
+#### 3A — Left Hero + Right Stack
+Widget 1 is full height on the left (50% width). Widgets 2 and 3 stack vertically on the right (50% width, each half height).
+
+```
+┌────────────┬────────────┐
+│            │     2      │
+│     1      ├────────────┤
+│            │     3      │
+└────────────┴────────────┘
+```
+CSS: `grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;`
+Widget 1: `grid-row: 1 / 3;`
+
+#### 3B — Side by Side + Full Width Bottom
+Widgets 1 and 2 side by side (equal width) in the top row, widget 3 full width in the bottom row.
+
+```
+┌────────────┬────────────┐
+│     1      │     2      │
+├────────────┴────────────┤
+│            3            │
+└─────────────────────────┘
+```
+CSS: `grid-template-columns: 1fr 1fr;`
+Widget 3: `grid-column: 1 / 3;`
+
+#### 3C — Full Width Top + Side by Side Bottom
+Widget 1 full width in the top row, widgets 2 and 3 side by side (equal width) in the bottom row.
+
+```
+┌─────────────────────────┐
+│            1            │
+├────────────┬────────────┤
+│     2      │     3      │
+└────────────┴────────────┘
+```
+CSS: `grid-template-columns: 1fr 1fr;`
+Widget 1: `grid-column: 1 / 3;`
+
+---
+
+### 4-Widget Layouts
+
+#### 4A — Left Hero + Right Trio
+Widget 1 is full height on the left (50% width). On the right (50% width): widgets 2 and 3 side by side in the top half (each 25% of total width), widget 4 full right-column width in the bottom half.
+
+```
+┌────────────┬──────┬──────┐
+│            │  2   │  3   │
+│     1      ├──────┴──────┤
+│            │      4      │
+└────────────┴─────────────┘
+```
+CSS: `grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 1fr 1fr;`
+- Widget 1: `grid-column: 1; grid-row: 1 / 3;`
+- Widget 2: `grid-column: 2; grid-row: 1;`
+- Widget 3: `grid-column: 3; grid-row: 1;`
+- Widget 4: `grid-column: 2 / 4; grid-row: 2;`
+
+#### 4B — Z Pattern (diagonal)
+Two equal-height rows. Row 1: widget 1 (25% width) + widget 2 (75% width). Row 2: widget 3 (75% width) + widget 4 (25% width). Creates a visual Z/diagonal pattern.
+
+```
+┌──────┬───────────────────┐
+│  1   │         2         │
+├──────┴──────┬────────────┤
+│      3      │     4      │  ← wait, corrected below
+└─────────────┴────────────┘
+```
+
+Corrected: Row 2 widget 3 is 75% width, widget 4 is 25% width:
+
+```
+┌──────┬───────────────────┐
+│  1   │         2         │
+├──────────────────┬───────┤
+│        3         │   4   │
+└──────────────────┴───────┘
+```
+CSS: `grid-template-columns: 1fr 3fr; grid-template-rows: 1fr 1fr;`
+- Widget 1: `grid-column: 1; grid-row: 1;`
+- Widget 2: `grid-column: 2; grid-row: 1;`
+- Widget 3: `grid-column: 1 / 2; grid-row: 2;` — needs a 3-column grid to achieve this cleanly, see implementation note below
+
+**Implementation note for 4B:** Use a 4-column grid to achieve the 25/75 split cleanly:
+```css
+grid-template-columns: 1fr 1fr 1fr 1fr;
+```
+- Widget 1: `grid-column: 1; grid-row: 1;`
+- Widget 2: `grid-column: 2 / 5; grid-row: 1;`
+- Widget 3: `grid-column: 1 / 4; grid-row: 2;`
+- Widget 4: `grid-column: 4; grid-row: 2;`
+
+---
+
+### Admin — Layout Selector
+
+The layout selector in the admin currently exists for 6- and 7-widget counts. Extend the same selector UI to cover 2-, 3-, and 4-widget counts.
+
+Each layout option should be presented as a small visual thumbnail (simple CSS box diagram, as per existing pattern) with a radio button. The selected layout name is stored in `wp_options` as part of the role's layout preferences.
+
+Layout option names to use in storage and CSS data attributes:
+
+| Widget count | Layout slug |
+|---|---|
+| 2 | `2a`, `2b`, `2c` |
+| 3 | `3a`, `3b`, `3c` |
+| 4 | `4a`, `4b` |
 
 ---
 
@@ -287,6 +454,7 @@ Once v6.0 is deployed, Mark should:
 
 | Version | Changes |
 |---------|---------|
+| 6.1.0 | New 2-, 3-, and 4-widget layout options (8 layouts total). Layout selector extended in admin to cover these widget counts. (MYF-301) |
 | 6.0.0 | New widget type: `registration_completion`. New roles: `prepurchaseparent`, `registeredparent`. Corporate theme extended to both new roles. New `registration-completion.js`. New `complete-profile` REST endpoint integration. (MYF-297) |
 | 5.67.6 | Fix white-on-white / black-on-black rendering: CSS overrides use hardcoded hex values with `!important`. (MYF-248) |
 | 5.67.5 | Corporate gold theme CSS for `stevegpt_help` card. |

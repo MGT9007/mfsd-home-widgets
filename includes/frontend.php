@@ -30,21 +30,30 @@ function mfsd_hw_render_grid(): void {
     $count   = count( $widgets );
     $layout  = mfsd_hw_get_layout_for_role( $role );
 
-    // Determine the CSS modifier class.
-    // For 7 widgets, honour the chosen layout (7 = Layout A, 7b = Layout B).
-    // For 6 widgets, honour the chosen layout (6 = Layout A, 6b = Layout B).
-    // For other counts use automatic sizing classes.
+    // Determine the layout slug and CSS modifier class.
+    // For 7/6/4/3/2 widgets, honour the chosen layout, falling back to that
+    // count's Layout A when nothing (valid) has been selected for it.
+    // Other counts use automatic sizing (count 1) or no modifier at all.
     if ( $count === 7 ) {
-        $mod_class = ' mfsd-hw-grid--' . ( in_array( $layout, [ '7b', '7c' ], true ) ? $layout : '7' );
+        $layout_slug = in_array( $layout, [ '7b', '7c' ], true ) ? $layout : '7';
     } elseif ( $count === 6 ) {
-        $mod_class = ' mfsd-hw-grid--' . ( in_array( $layout, [ '6b', '6c' ], true ) ? $layout : '6' );
-    } elseif ( in_array( $count, [ 1, 2, 4 ], true ) ) {
-        $mod_class = ' mfsd-hw-grid--' . $count;
+        $layout_slug = in_array( $layout, [ '6b', '6c' ], true ) ? $layout : '6';
+    } elseif ( $count === 4 ) {
+        $layout_slug = in_array( $layout, [ '4a', '4b' ], true ) ? $layout : '4a';
+    } elseif ( $count === 3 ) {
+        $layout_slug = in_array( $layout, [ '3a', '3b', '3c' ], true ) ? $layout : '3a';
+    } elseif ( $count === 2 ) {
+        $layout_slug = in_array( $layout, [ '2a', '2b', '2c' ], true ) ? $layout : '2a';
+    } elseif ( $count === 1 ) {
+        $layout_slug = '1';
     } else {
-        $mod_class = '';
+        $layout_slug = '';
     }
 
-    echo '<div class="mfsd-hw-grid' . esc_attr( $mod_class ) . '">';
+    $mod_class = $layout_slug !== '' ? ' mfsd-hw-grid--' . $layout_slug : '';
+    $data_attr = $layout_slug !== '' ? ' data-layout="' . esc_attr( $layout_slug ) . '"' : '';
+
+    echo '<div class="mfsd-hw-grid' . esc_attr( $mod_class ) . '"' . $data_attr . '>';
     foreach ( $widgets as $idx => $w ) {
         $cell_mod = $mod_class ? ' mfsd-hw-grid__cell--' . ( $idx + 1 ) : '';
         echo '<div class="mfsd-hw-grid__cell' . esc_attr( $cell_mod ) . '">';
@@ -72,14 +81,18 @@ endif; // mfsd_hw_role_fallback
 if ( ! function_exists( 'mfsd_hw_get_layout_for_role' ) ) :
 /**
  * Return the chosen layout slug for a role.
- * Stored as a JSON object in wp_options: { "student": "7b", "parent": "7", ... }
- * Valid values: '7' (Layout A) or '7b' (Layout B). Defaults to '7'.
+ * Stored as an array in wp_options 'mfsd_hw_role_layouts': { "student": "7b", "parent": "7", ... }
+ * Valid values: '7'|'7b'|'7c' (7 widgets), '6'|'6b'|'6c' (6 widgets),
+ * '4a'|'4b' (4 widgets), '3a'|'3b'|'3c' (3 widgets), '2a'|'2b'|'2c' (2 widgets).
+ * Only meaningful when it matches the role's current widget count — see
+ * mfsd_hw_render_grid(). Defaults to '7' if unset/invalid.
  */
 function mfsd_hw_get_layout_for_role( string $role ): string {
     $layouts = get_option( 'mfsd_hw_role_layouts', [] );
     if ( ! is_array( $layouts ) ) $layouts = [];
     $val = $layouts[ $role ] ?? '7';
-    return in_array( $val, [ '7', '7b', '7c', '6', '6b', '6c' ], true ) ? $val : '7';
+    $valid = [ '7', '7b', '7c', '6', '6b', '6c', '4a', '4b', '3a', '3b', '3c', '2a', '2b', '2c' ];
+    return in_array( $val, $valid, true ) ? $val : '7';
 }
 endif; // mfsd_hw_get_layout_for_role
 

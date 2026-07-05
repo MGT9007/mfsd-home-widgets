@@ -75,15 +75,109 @@ body.home:has(.mfsd-home-page) {
   max-width: 500px;
 }
 
-/* 2 widgets — side by side */
-.mfsd-hw-grid--2 {
-  grid-template-columns: repeat(2, 1fr);
+/* 2 widgets — Layout A: Wide/Narrow (75/25) */
+.mfsd-hw-grid--2a {
+  grid-template-columns: 3fr 1fr;
 }
 
-/* 4 widgets — 2×2 */
-.mfsd-hw-grid--4 {
-  grid-template-columns: repeat(2, 1fr);
+/* 2 widgets — Layout B: Narrow/Wide (25/75) */
+.mfsd-hw-grid--2b {
+  grid-template-columns: 1fr 3fr;
 }
+
+/* 2 widgets — Layout C: Stacked (full width, two rows) */
+.mfsd-hw-grid--2c {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
+  grid-auto-rows: unset;
+}
+
+/* 3 widgets — Layout A: Left Hero + Right Stack
+ *
+ *  [ 1 (tall) |  2  ]
+ *  [ 1        |  3  ]
+ */
+.mfsd-hw-grid--3a {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  grid-auto-rows: unset;
+  grid-template-areas:
+    "cell-1 cell-2"
+    "cell-1 cell-3";
+}
+.mfsd-hw-grid--3a .mfsd-hw-grid__cell--1 { grid-area: cell-1; }
+.mfsd-hw-grid--3a .mfsd-hw-grid__cell--2 { grid-area: cell-2; }
+.mfsd-hw-grid--3a .mfsd-hw-grid__cell--3 { grid-area: cell-3; }
+
+/* 3 widgets — Layout B: Side by Side + Full Width Bottom
+ *
+ *  [ 1  |  2  ]
+ *  [   3      ]
+ */
+.mfsd-hw-grid--3b {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  grid-auto-rows: unset;
+  grid-template-areas:
+    "cell-1 cell-2"
+    "cell-3 cell-3";
+}
+.mfsd-hw-grid--3b .mfsd-hw-grid__cell--1 { grid-area: cell-1; }
+.mfsd-hw-grid--3b .mfsd-hw-grid__cell--2 { grid-area: cell-2; }
+.mfsd-hw-grid--3b .mfsd-hw-grid__cell--3 { grid-area: cell-3; }
+
+/* 3 widgets — Layout C: Full Width Top + Side by Side Bottom
+ *
+ *  [   1      ]
+ *  [ 2  |  3  ]
+ */
+.mfsd-hw-grid--3c {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  grid-auto-rows: unset;
+  grid-template-areas:
+    "cell-1 cell-1"
+    "cell-2 cell-3";
+}
+.mfsd-hw-grid--3c .mfsd-hw-grid__cell--1 { grid-area: cell-1; }
+.mfsd-hw-grid--3c .mfsd-hw-grid__cell--2 { grid-area: cell-2; }
+.mfsd-hw-grid--3c .mfsd-hw-grid__cell--3 { grid-area: cell-3; }
+
+/* 4 widgets — Layout A: Left Hero + Right Trio
+ *
+ *  [ 1 (tall) |  2  |  3  ]
+ *  [          |    4      ]
+ */
+.mfsd-hw-grid--4a {
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  grid-auto-rows: unset;
+  grid-template-areas:
+    "cell-1 cell-2 cell-3"
+    "cell-1 cell-4 cell-4";
+}
+.mfsd-hw-grid--4a .mfsd-hw-grid__cell--1 { grid-area: cell-1; }
+.mfsd-hw-grid--4a .mfsd-hw-grid__cell--2 { grid-area: cell-2; }
+.mfsd-hw-grid--4a .mfsd-hw-grid__cell--3 { grid-area: cell-3; }
+.mfsd-hw-grid--4a .mfsd-hw-grid__cell--4 { grid-area: cell-4; }
+
+/* 4 widgets — Layout B: Z Pattern (diagonal)
+ *
+ *  [ 1 |     2     ]
+ *  [    3     | 4  ]
+ */
+.mfsd-hw-grid--4b {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr 1fr;
+  grid-auto-rows: unset;
+  grid-template-areas:
+    "cell-1 cell-2 cell-2 cell-2"
+    "cell-3 cell-3 cell-3 cell-4";
+}
+.mfsd-hw-grid--4b .mfsd-hw-grid__cell--1 { grid-area: cell-1; }
+.mfsd-hw-grid--4b .mfsd-hw-grid__cell--2 { grid-area: cell-2; }
+.mfsd-hw-grid--4b .mfsd-hw-grid__cell--3 { grid-area: cell-3; }
+.mfsd-hw-grid--4b .mfsd-hw-grid__cell--4 { grid-area: cell-4; }
 
 /* 6 widgets — tall left, stacked right
  *
@@ -287,12 +381,37 @@ body.home:has(.mfsd-home-page) {
       "cell-6"
       "cell-7";
   }
+  /* 2-widget layouts collapse to single column, stacked in source order */
+  .mfsd-hw-grid--2a,
+  .mfsd-hw-grid--2b,
+  .mfsd-hw-grid--2c {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+  }
+  /* 3-widget layouts collapse to single column on tablet */
+  .mfsd-hw-grid--3a,
+  .mfsd-hw-grid--3b,
+  .mfsd-hw-grid--3c {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "cell-1"
+      "cell-2"
+      "cell-3";
+  }
+  /* 4-widget layouts collapse to single column on tablet */
+  .mfsd-hw-grid--4a,
+  .mfsd-hw-grid--4b {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "cell-1"
+      "cell-2"
+      "cell-3"
+      "cell-4";
+  }
 }
 
 @media (max-width: 600px) {
-  .mfsd-hw-grid,
-  .mfsd-hw-grid--2,
-  .mfsd-hw-grid--4 {
+  .mfsd-hw-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -20,7 +20,7 @@ function mfsd_hw_handle_save_layouts(): void {
     if ( ! current_user_can( 'manage_options' ) ) wp_die( 'Unauthorised' );
 
     $raw     = $_POST['role_layouts'] ?? [];
-    $allowed = [ '7', '7b', '7c', '6', '6b', '6c' ];
+    $allowed = [ '7', '7b', '7c', '6', '6b', '6c', '4a', '4b', '3a', '3b', '3c', '2a', '2b', '2c' ];
     $layouts = [];
     foreach ( mfsd_hw_roles() as $slug => $unused ) {
         $val = sanitize_key( $raw[ $slug ] ?? '7' );
@@ -369,9 +369,6 @@ function mfsd_hw_render_layouts_tab(): void {
     // These match the CSS classes applied by mfsd_hw_render_grid().
     $auto_layouts = [
         1 => [ 'label' => '1 widget — full width',         'areas' => [ [ 1 ] ],             'cols' => 1 ],
-        2 => [ 'label' => '2 widgets — side by side',      'areas' => [ [ 1, 2 ] ],           'cols' => 2 ],
-        3 => [ 'label' => '3 widgets — 3 columns',         'areas' => [ [ 1, 2, 3 ] ],        'cols' => 3 ],
-        4 => [ 'label' => '4 widgets — 2×2 grid',          'areas' => [ [ 1, 2 ], [ 3, 4 ] ], 'cols' => 2 ],
         5 => [ 'label' => '5 widgets — 3-col, last 2 wide','areas' => [ [ 1, 2, 3 ], [ 4, 4, 5 ] ], 'cols' => 3 ],
         6 => [ 'label' => '6 widgets — Layout A: tall left, stacked right',
                'areas' => [
@@ -395,6 +392,30 @@ function mfsd_hw_render_layouts_tab(): void {
                    [ 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4 ],
                ],
                'cols' => 12 ],
+        '2a' => [ 'label' => '2 widgets — Layout A: Wide/Narrow (75/25)',
+               'areas' => [ [ 1, 1, 1, 2 ] ],
+               'cols' => 4 ],
+        '2b' => [ 'label' => '2 widgets — Layout B: Narrow/Wide (25/75)',
+               'areas' => [ [ 1, 2, 2, 2 ] ],
+               'cols' => 4 ],
+        '2c' => [ 'label' => '2 widgets — Layout C: Stacked',
+               'areas' => [ [ 1 ], [ 2 ] ],
+               'cols' => 1 ],
+        '3a' => [ 'label' => '3 widgets — Layout A: Left Hero + Right Stack',
+               'areas' => [ [ 1, 2 ], [ 1, 3 ] ],
+               'cols' => 2 ],
+        '3b' => [ 'label' => '3 widgets — Layout B: Side by Side + Full Width Bottom',
+               'areas' => [ [ 1, 2 ], [ 3, 3 ] ],
+               'cols' => 2 ],
+        '3c' => [ 'label' => '3 widgets — Layout C: Full Width Top + Side by Side Bottom',
+               'areas' => [ [ 1, 1 ], [ 2, 3 ] ],
+               'cols' => 2 ],
+        '4a' => [ 'label' => '4 widgets — Layout A: Left Hero + Right Trio',
+               'areas' => [ [ 1, 2, 3 ], [ 1, 4, 4 ] ],
+               'cols' => 3 ],
+        '4b' => [ 'label' => '4 widgets — Layout B: Z Pattern',
+               'areas' => [ [ 1, 2, 2, 2 ], [ 3, 3, 3, 4 ] ],
+               'cols' => 4 ],
     ];
     ?>
 
@@ -412,7 +433,7 @@ function mfsd_hw_render_layouts_tab(): void {
               <?php esc_html_e( 'Layout per Role', 'mfsd-home-widgets' ); ?>
             </h3>
             <p class="description" style="margin:8px 0 20px;">
-              <?php esc_html_e( 'Layout selection applies when a role has exactly 7 active widgets. For other counts the layout is automatic — a preview is shown below.', 'mfsd-home-widgets' ); ?>
+              <?php esc_html_e( 'Layout selection is available when a role has exactly 2, 3, 4, 6, or 7 active widgets. For other counts the layout is automatic — a preview is shown below.', 'mfsd-home-widgets' ); ?>
             </p>
 
             <?php foreach ( $all_roles as $rslug => $rlabel ) :
@@ -458,13 +479,22 @@ function mfsd_hw_render_layouts_tab(): void {
                     <?php esc_html_e( 'No active widgets for this role.', 'mfsd-home-widgets' ); ?>
                   </p>
 
-                <?php elseif ( $count === 6 ) : ?>
-                  <?php /* Show layout selector for 6-widget roles */ ?>
+                <?php elseif ( in_array( $count, [ 6, 4, 3, 2 ], true ) ) : ?>
+                  <?php
+                  // Show layout selector for 6-, 4-, 3-, and 2-widget roles — same UI pattern.
+                  $slug_options = [
+                      6 => [ '6', '6b', '6c' ],
+                      4 => [ '4a', '4b' ],
+                      3 => [ '3a', '3b', '3c' ],
+                      2 => [ '2a', '2b', '2c' ],
+                  ][ $count ];
+                  $default_slug = $slug_options[0];
+                  ?>
                   <div style="display:flex;flex-direction:column;gap:16px;">
-                    <?php foreach ( [ 6, '6b', '6c' ] as $lslug ) :
+                    <?php foreach ( $slug_options as $lslug ) :
                         $linfo = $auto_layouts[ $lslug ] ?? null;
                         if ( ! $linfo ) continue;
-                        $is_selected = ( ( $saved_layouts[ $rslug ] ?? '6' ) === (string) $lslug );
+                        $is_selected = ( ( $saved_layouts[ $rslug ] ?? $default_slug ) === $lslug );
                     ?>
                       <label style="cursor:pointer;display:block;">
                         <input type="radio"
@@ -547,9 +577,9 @@ function mfsd_hw_render_layouts_tab(): void {
                     $widget_count,
                     esc_html( $all_roles[ $active_role ] )
                 ); ?>
-                <?php if ( $widget_count !== 7 ) : ?>
+                <?php if ( ! in_array( $widget_count, [ 2, 3, 4, 6, 7 ], true ) ) : ?>
                   <br><em style="color:#b32d2e;">
-                    <?php esc_html_e( 'Layout selection only applies at exactly 7 widgets.', 'mfsd-home-widgets' ); ?>
+                    <?php esc_html_e( 'Layout selection only applies at 2, 3, 4, 6, or 7 widgets.', 'mfsd-home-widgets' ); ?>
                   </em>
                 <?php endif; ?>
               </p>
@@ -571,16 +601,30 @@ function mfsd_hw_render_layouts_tab(): void {
                 <?php endforeach; ?>
               </ol>
 
-              <?php if ( $widget_count === 7 ) : ?>
-                <?php
-                $preview_layout = $saved_layouts[ $active_role ] ?? '7';
-                $linfo = $layouts[ $preview_layout ] ?? $layouts['7'];
-                ?>
+              <?php
+              $preview_linfo = null;
+              if ( $widget_count === 7 ) {
+                  $preview_layout = $saved_layouts[ $active_role ] ?? '7';
+                  $preview_linfo  = $layouts[ $preview_layout ] ?? $layouts['7'];
+              } elseif ( in_array( $widget_count, [ 6, 4, 3, 2 ], true ) ) {
+                  $preview_options = [
+                      6 => [ '6', '6b', '6c' ],
+                      4 => [ '4a', '4b' ],
+                      3 => [ '3a', '3b', '3c' ],
+                      2 => [ '2a', '2b', '2c' ],
+                  ][ $widget_count ];
+                  $preview_default = $preview_options[0];
+                  $preview_layout  = $saved_layouts[ $active_role ] ?? $preview_default;
+                  $preview_slug    = in_array( $preview_layout, $preview_options, true ) ? $preview_layout : $preview_default;
+                  $preview_linfo   = $auto_layouts[ $preview_slug ] ?? null;
+              }
+              ?>
+              <?php if ( $preview_linfo ) : ?>
                 <div style="margin-top:16px;border-top:1px solid #f0f0f1;padding-top:12px;">
                   <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#50575e;margin:0 0 8px;">
                     <?php esc_html_e( 'Current layout preview', 'mfsd-home-widgets' ); ?>
                   </p>
-                  <?php mfsd_hw_render_layout_thumbnail( $linfo['areas'], $linfo['cols'], $role_widgets, $widget_types ); ?>
+                  <?php mfsd_hw_render_layout_thumbnail( $preview_linfo['areas'], $preview_linfo['cols'], $role_widgets, $widget_types ); ?>
                 </div>
               <?php endif; ?>
             <?php endif; ?>
