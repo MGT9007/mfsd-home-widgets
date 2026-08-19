@@ -631,18 +631,41 @@ function mfsd_hw_task_display_name( string $slug ): string {
 }
 
 /**
- * Task slug → badge slug mapping.
- * Keeps badge display in sync with the latest completed task.
+ * Look up a task's badge_slug live from wp_mfsd_task_order, scoped to the
+ * student's earliest-enrolled course. Replaces the old hardcoded
+ * mfsd_hw_task_badge_map() (MYF-341) — that map only covered 6 of 17 tasks
+ * (Week 1 only) and silently fell back to the student's most recently *earned*
+ * badge overall for any other task, showing the wrong badge on the widget.
  */
-function mfsd_hw_task_badge_map(): array {
-    return [
-        'solution_lens'           => 'badge_solution_lens',
-        'word_association'        => 'badge_word_assoc',
-        'junk_jobs'               => 'badge_junk_jobs',
-        'personality_test_week_1' => 'badge_who_am_i_1',
-        'super_strengths'         => 'badge_super_strengths',
-        'rag_week_1'              => 'badge_rag_w1',
-    ];
+function mfsd_hw_task_badge_slug( string $task_slug, int $student_id ): string {
+    if ( ! $task_slug || ! $student_id ) return '';
+
+    global $wpdb;
+    $task_order_table = $wpdb->prefix . 'mfsd_task_order';
+    $enrol_table      = $wpdb->prefix . 'mfsd_enrolments';
+
+    if (
+        $wpdb->get_var( "SHOW TABLES LIKE '{$task_order_table}'" ) !== $task_order_table ||
+        $wpdb->get_var( "SHOW TABLES LIKE '{$enrol_table}'"      ) !== $enrol_table
+    ) {
+        return '';
+    }
+
+    $course_id = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT course_id FROM {$enrol_table}
+         WHERE student_id = %d ORDER BY enrolled_date ASC LIMIT 1",
+        $student_id
+    ) );
+    if ( ! $course_id ) return '';
+
+    // Not filtered by active=1 — this is a task_slug -> badge_slug translation,
+    // not an "is this task currently offered" check, so deactivating a task
+    // later must not break this lookup for already-completed history.
+    return (string) $wpdb->get_var( $wpdb->prepare(
+        "SELECT badge_slug FROM {$task_order_table}
+         WHERE course_id = %d AND task_slug = %s LIMIT 1",
+        $course_id, $task_slug
+    ) );
 }
 
 /**
@@ -802,9 +825,8 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
         }
     }
 
-    // ── URL / badge maps (used throughout) ───────────────────────────────────
-    $task_urls    = mfsd_hw_task_url_map();
-    $task_badge_m = mfsd_hw_task_badge_map();
+    // ── URL map (used throughout) ─────────────────────────────────────────────
+    $task_urls = mfsd_hw_task_url_map();
 
     // ── Completed tasks ───────────────────────────────────────────────────────
     // Students + parents: fetch all, oldest first — carousel cycles through them.
@@ -866,9 +888,9 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     }
 
     // ── Actual Super Strengths character badge for this student ─────────────
-    // The static task-badge map can only store one slug per task, but SS awards
-    // design-specific badges (badge_ss_complete_supersteve etc). Look up the
-    // most recently earned one so it overrides the generic fallback.
+    // SS awards design-specific badges (badge_ss_complete_supersteve etc) that
+    // can't be expressed as a single task_slug -> badge_slug row. Look up the
+    // most recently earned one so it overrides the generic lookup below.
     $ss_char_badge = '';
     if ( $student_id ) {
         $b_tbl = $wpdb->prefix . 'mfsd_badges';
@@ -884,6 +906,10 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
     }
 
     // ── Badge (latest task drives badge selection) ───────────────────────────
+    // MYF-341: badge_slug is looked up live from wp_mfsd_task_order (mfsd-ordering)
+    // instead of the old hardcoded mfsd_hw_task_badge_map(), which only covered 6
+    // of 17 tasks (Week 1 only) and silently fell back to the student's most
+    // recently *earned* badge overall for any Week 2/3 completion.
     $latest_badge = null;
     if ( $show_badge && $student_id ) {
         $badges_table = $wpdb->prefix . 'mfsd_badges';
@@ -891,7 +917,8 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
             $lt_slug      = $latest_task['task_slug'] ?? '';
             $derived_slug = ( $lt_slug === 'super_strengths' && $ss_char_badge )
                 ? $ss_char_badge
-                : ( $task_badge_m[ $lt_slug ] ?? '' );
+                : mfsd_hw_task_badge_slug( $lt_slug, $student_id );
+
             if ( $derived_slug ) {
                 $latest_badge = $wpdb->get_row( $wpdb->prepare(
                     "SELECT * FROM {$badges_table}
@@ -1018,7 +1045,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
               $ct_date      = ! empty( $ct['completed_date'] ) ? date_i18n( 'j M Y', strtotime( $ct['completed_date'] ) ) : '';
               $ct_bslug     = ( $ct_slug === 'super_strengths' && $ss_char_badge )
                   ? $ss_char_badge
-                  : ( $task_badge_m[ $ct_slug ] ?? '' );
+                  : mfsd_hw_task_badge_slug( $ct_slug, $student_id );
               $ct_bimg      = $ct_bslug ? mfsd_hw_badge_image_url( $ct_bslug, $student_id ) : '';
               $ct_who_am_i  = in_array( $ct_bslug, [ 'badge_who_am_i_1', 'badge_who_am_i_2' ], true );
               $ct_char      = ( $ct_who_am_i && $student_id ) ? mfsd_hw_get_character_avatar( $student_id ) : '';
@@ -1106,7 +1133,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
               $ct_date   = ! empty( $ct['completed_date'] ) ? date_i18n( 'j M Y', strtotime( $ct['completed_date'] ) ) : '';
               $ct_bslug  = ( $ct_slug === 'super_strengths' && $ss_char_badge )
                   ? $ss_char_badge
-                  : ( $task_badge_m[ $ct_slug ] ?? '' );
+                  : mfsd_hw_task_badge_slug( $ct_slug, $student_id );
               $ct_bimg   = $ct_bslug ? mfsd_hw_badge_image_url( $ct_bslug, $student_id ) : '';
               $ct_active = $ci === 0 ? ' mfsd-hw-carousel__slide--active' : '';
               $ct_status = ( $ci === $last_completed_idx ) ? '★ Last Completed' : '✓ Completed';
