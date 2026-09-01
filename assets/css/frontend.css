@@ -1807,21 +1807,28 @@ body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-chatbot-container {
   background: #1A1A1A !important;
 }
 
-body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-chat-header,
-body.mfsd-role-prepurchaseparent  .mfsd-hw-card--stevegpt .stevegpt-chat-header,
-body.mfsd-role-registeredparent  .mfsd-hw-card--stevegpt .stevegpt-chat-header,
-body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-chat-header,
-body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-chat-header {
+/* MYF-354 (2026-09-01): selector updated from .stevegpt-chat-header, which
+   stevegtp's own MYF-354 redesign removed entirely (the single-row header
+   was replaced by a two-column body with a .stevegpt-gold-column sidebar).
+   This override had gone silently dead — it matched nothing any more, so
+   parent/teacher/admin users were getting stevegtp's default white-on-gold
+   text instead of this corporate dark-on-gold treatment, with no error to
+   flag it. Retargeted to the new element; values unchanged. */
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-gold-column,
+body.mfsd-role-prepurchaseparent  .mfsd-hw-card--stevegpt .stevegpt-gold-column,
+body.mfsd-role-registeredparent  .mfsd-hw-card--stevegpt .stevegpt-gold-column,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-gold-column,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-gold-column {
   background: linear-gradient(135deg, #B8923E 0%, #C9A84C 100%) !important;
   color: #111111 !important;
 }
 
-/* All text/icons inside the header should be dark on gold */
-body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-chat-header *,
-body.mfsd-role-prepurchaseparent  .mfsd-hw-card--stevegpt .stevegpt-chat-header *,
-body.mfsd-role-registeredparent  .mfsd-hw-card--stevegpt .stevegpt-chat-header *,
-body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-chat-header *,
-body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-chat-header * {
+/* All text/icons inside the gold column should be dark on gold */
+body.mfsd-role-parent  .mfsd-hw-card--stevegpt .stevegpt-gold-column *,
+body.mfsd-role-prepurchaseparent  .mfsd-hw-card--stevegpt .stevegpt-gold-column *,
+body.mfsd-role-registeredparent  .mfsd-hw-card--stevegpt .stevegpt-gold-column *,
+body.mfsd-role-teacher .mfsd-hw-card--stevegpt .stevegpt-gold-column *,
+body.mfsd-role-admin   .mfsd-hw-card--stevegpt .stevegpt-gold-column * {
   color: #111111 !important;
 }
 
