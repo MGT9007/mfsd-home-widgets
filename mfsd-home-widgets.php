@@ -8,7 +8,7 @@
  *               visible to any role combination. Six widget types available:
  *               MFS News (Internal), External News, Shorts Video, New Courses,
  *               Top Scores, and Progress & Achievements.
- * Version:      6.4.0
+ * Version:      7.0.0
  * Author:       MisterT9007
  * Author URI:   https://s47d.co.uk
  * Text Domain:  mfsd-home-widgets
@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 
-define( 'MFSD_HW_VERSION', '6.4.0' );
+define( 'MFSD_HW_VERSION', '7.0.0' );
 define( 'MFSD_HW_DIR',     plugin_dir_path( __FILE__ ) );
 define( 'MFSD_HW_URI',     plugin_dir_url( __FILE__ ) );
 define( 'MFSD_HW_TABLE',   'mfsd_hw_widgets' );
@@ -73,6 +73,11 @@ function mfsd_hw_widget_types(): array {
             'icon'        => 'dashicons-format-chat',
             'description' => __( 'Embeds a live Steve chat session. Students ask about their course; parents ask about supporting their child. Chatbot assigned in SteveGPT → Chatbots.', 'mfsd-home-widgets' ),
         ],
+        'commitment_cards' => [
+            'label'       => __( 'Commitment Cards', 'mfsd-home-widgets' ),
+            'icon'        => 'dashicons-yes-alt',
+            'description' => __( "Students' commitment cards; parents confirm them. Needs MFSD Commitments.", 'mfsd-home-widgets' ),
+        ],
         'registration_completion' => [
             'label'       => __( 'Registration Completion', 'mfsd-home-widgets' ),
             'icon'        => 'dashicons-clipboard',
@@ -101,6 +106,7 @@ function mfsd_hw_roles(): array {
 require_once MFSD_HW_DIR . 'includes/db.php';
 require_once MFSD_HW_DIR . 'includes/admin.php';
 require_once MFSD_HW_DIR . 'includes/frontend.php';
+require_once MFSD_HW_DIR . 'includes/card-commitments.php';
 
 // ─── STEVEGPT INTEGRATION SLOTS ──────────────────────────────────────────────
 // Register the two Home Widgets chatbot slots with SteveGPT so they appear
@@ -111,6 +117,7 @@ add_filter( 'stevegpt_plugin_integration_slots', function( array $slots ): array
         'plugin' => 'Home Widgets',
         'role'   => 'Student help bot',
         'option' => 'mfsd_stevegpt_map_hw_student_help',
+        // No task_slug: SteveGPT records this chat's safeguarding flags as 'steve_chat'.
         // These values are appended to the chatbot system prompt automatically.
         // content_aware must be OFF on this chatbot — context is provided here.
         'tokens' => [ 'student_name', 'student_age', 'latest_task' ],
@@ -119,6 +126,8 @@ add_filter( 'stevegpt_plugin_integration_slots', function( array $slots ): array
         'plugin' => 'Home Widgets',
         'role'   => 'Parent help bot',
         'option' => 'mfsd_stevegpt_map_hw_parent_help',
+        // Parent audience: SteveGPT adds the PARENT_CHAT safeguarding block and never keyword-checks parents.
+        'audience' => 'parent',
         // These values are appended to the chatbot system prompt automatically.
         // content_aware must be OFF on this chatbot — context is provided here.
         'tokens' => [ 'parent_name', 'linked_student_name' ],

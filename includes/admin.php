@@ -373,6 +373,14 @@ function mfsd_hw_sanitize_config( string $type, array $raw ): array {
                 'collapse_by_default' => ! empty( $raw['collapse_by_default'] ),
             ];
 
+        case 'commitment_cards':
+            return [
+                'title_student' => sanitize_text_field( $raw['title_student'] ?? '' ),
+                'title_parent'  => sanitize_text_field( $raw['title_parent'] ?? '' ),
+                'show_done'     => ! empty( $raw['show_done'] ),
+                'show_teasers'  => ! empty( $raw['show_teasers'] ),
+            ];
+
         case 'registration_completion':
             return [
                 'intro_heading'   => sanitize_text_field( $raw['intro_heading'] ?? '' ),
@@ -1304,6 +1312,30 @@ function mfsd_hw_render_config_fields( string $type, array $config ): void {
                 <input type="checkbox" name="config[link_out]" value="1"
                        <?php checked( ! empty( $config['link_out'] ) ); ?>>
                 <?php esc_html_e( 'Open story links in a new tab', 'mfsd-home-widgets' ); ?>
+              </label>
+            </div>
+            <?php
+            break;
+
+        case 'commitment_cards':
+            $is_new = empty( $config );
+            ?>
+            <?php if ( ! function_exists( 'mfsd_get_open_commitments' ) ) : ?>
+              <div class="notice notice-error inline" style="margin:0 0 16px;"><p><strong><?php esc_html_e( 'MFSD Commitments is not active.', 'mfsd-home-widgets' ); ?></strong> <?php esc_html_e( 'This widget renders nothing on the front end until it is.', 'mfsd-home-widgets' ); ?></p></div>
+            <?php endif; ?>
+            <div class="mfsd-hw-admin__info-box" style="margin-bottom:20px;">
+              <?php esc_html_e( 'Students see their open commitment cards and a Done shelf; parents see their children\'s cards and confirm them. Cards load after the page renders, so nothing personal is ever in the cached page. Assign to Student and Parent / Registered Parent (registered parents only see it once their child is linked). Admins see a preview with sample cards. Suggested position: 1 or 2.', 'mfsd-home-widgets' ); ?>
+            </div>
+            <?php mfsd_hw_text_field( 'config[title_student]', __( 'Title (student)', 'mfsd-home-widgets' ), $config['title_student'] ?? 'My commitments' ); ?>
+            <?php mfsd_hw_text_field( 'config[title_parent]', __( 'Title (parent)', 'mfsd-home-widgets' ), $config['title_parent'] ?? 'Their commitments' ); ?>
+            <div class="mfsd-hw-admin__field">
+              <label class="mfsd-hw-admin__check">
+                <input type="checkbox" name="config[show_done]" value="1" <?php checked( $is_new || ! empty( $config['show_done'] ) ); ?>>
+                <?php esc_html_e( 'Show the Done tab', 'mfsd-home-widgets' ); ?>
+              </label>
+              <label class="mfsd-hw-admin__check">
+                <input type="checkbox" name="config[show_teasers]" value="1" <?php checked( $is_new || ! empty( $config['show_teasers'] ) ); ?>>
+                <?php esc_html_e( 'Show teaser cards to parents (e.g. "Sam has made a commitment in Dream & Junk Jobs. Play the guessing game to see it")', 'mfsd-home-widgets' ); ?>
               </label>
             </div>
             <?php

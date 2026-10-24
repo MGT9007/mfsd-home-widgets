@@ -108,7 +108,16 @@ function mfsd_hw_render_widget( string $type, array $config, string $role ): voi
         case 'rss_feed':       mfsd_hw_card_rss( $config );               break;
         case 'stevegpt_help':  mfsd_hw_card_stevegpt( $config, $role );   break;
         case 'registration_completion': mfsd_hw_card_registration_completion( $config, $role ); break;
+        case 'commitment_cards': mfsd_hw_card_commitments( $config, $role ); break;
     }
+}
+
+/**
+ * Parent-type roles (7.0.0). registeredparent and prepurchaseparent used to fall through to the
+ * student view in the Ask Steve and Progress widgets. Teacher keeps its previous parent-style view.
+ */
+function mfsd_hw_is_parent_role( string $role ): bool {
+    return in_array( $role, [ 'parent', 'registeredparent', 'prepurchaseparent', 'teacher' ], true );
 }
 
 
@@ -802,7 +811,7 @@ function mfsd_hw_card_progress( array $c, string $role ): void {
 
     $user_id = get_current_user_id();
 
-    $is_parent  = in_array( $role, [ 'parent', 'teacher' ], true );
+    $is_parent  = mfsd_hw_is_parent_role( $role );
     $is_student = $role === 'student';
 
     $title = $is_parent
@@ -1751,7 +1760,7 @@ function mfsd_hw_card_stevegpt( array $c, string $role ): void {
         return;
     }
 
-    $is_parent = in_array( $role, [ 'parent', 'teacher' ], true );
+    $is_parent = mfsd_hw_is_parent_role( $role );
 
     // Resolve which chatbot slot to use.
     $chatbot_id = $is_parent
@@ -2081,9 +2090,12 @@ function mfsd_hw_frontend_assets(): void {
         'mfsd-hw-carousel',
         MFSD_HW_URI . 'assets/js/carousel.js',
         [],
-        MFSD_HW_VERSION,
+        MFSD_HW_VERSION . '.' . filemtime( MFSD_HW_DIR . 'assets/js/carousel.js' ),
         true
     );
+
+    // Commitment Cards widget (7.0.0): only when it's in this role's grid.
+    mfsd_hw_commitments_assets();
 
     $user = wp_get_current_user();
     if ( in_array( 'prepurchaseparent', (array) $user->roles, true ) ) {

@@ -1,0 +1,324 @@
+/* MFSD Home Widgets — Commitment Cards widget (7.0.0)
+ * Uses the theme variables from frontend.css (gamer for students, corporate for parents).
+ * Never sets a height on the grid or the cell: the body scrolls inside the card instead (spec §1.6).
+ */
+
+.mfsd-hw-card--commitments {
+  min-height: 260px;
+}
+
+.mfsd-hw-commit__badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-accent, #F5A623);
+  color: #1d2330;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+/* Child tabs (parents with more than one child) */
+.mfsd-hw-commit__children {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 0;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.mfsd-hw-commit__children[hidden] { display: none; }
+.mfsd-hw-commit__child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 4px 12px;
+  border: 1px solid var(--color-card-border, #d5dae3);
+  border-radius: var(--radius-pill, 999px);
+  background: transparent;
+  color: var(--color-text, inherit);
+  font-size: 13px;
+  cursor: pointer;
+}
+.mfsd-hw-commit__child.is-on {
+  border-color: var(--color-accent, #F5A623);
+  font-weight: 700;
+}
+.mfsd-hw-commit__count {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--color-accent, #F5A623);
+  color: #1d2330;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+}
+.mfsd-hw-commit__count[hidden] { display: none; }
+
+/* Open / Done tabs */
+.mfsd-hw-commit__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px 0;
+  flex-shrink: 0;
+}
+.mfsd-hw-commit__tab {
+  flex: 1 1 0;
+  min-height: 36px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted, inherit);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mfsd-hw-commit__tab.is-on {
+  color: var(--color-text, inherit);
+  border-bottom-color: var(--color-accent, #F5A623);
+}
+
+/* Celebration banner */
+.mfsd-hw-commit__celebrate[hidden] { display: none; }
+.mfsd-hw-commit__celebrate-box {
+  margin: 8px 12px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(245, 166, 35, 0.15);
+  color: var(--color-text, inherit);
+  font-size: 13px;
+  animation: mfsd-commit-pop 450ms ease-out;
+}
+.mfsd-hw-commit__celebrate-box p { margin: 4px 0 0; }
+.mfsd-hw-commit__coin {
+  display: inline-block;
+  margin-right: 6px;
+  animation: mfsd-commit-spin 900ms ease-in-out 2;
+}
+@keyframes mfsd-commit-spin { from { transform: rotateY(0); } to { transform: rotateY(360deg); } }
+@keyframes mfsd-commit-pop  { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* Body: scrolls inside the card, never pushes the grid */
+.mfsd-hw-commit__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px 12px;
+  color: var(--color-text, inherit);
+}
+
+/* Carousel (reuses the shared .mfsd-hw-carousel classes, laid out for this widget) */
+.mfsd-hw-commit__carousel {
+  position: relative;
+  outline: none;
+}
+.mfsd-hw-commit__carousel:focus-visible {
+  outline: 3px solid var(--color-accent, #4a90e2);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+.mfsd-hw-commit__carousel .mfsd-hw-carousel__slide { display: none; }
+.mfsd-hw-commit__carousel .mfsd-hw-carousel__slide--active,
+.mfsd-hw-commit__carousel .mfsd-hw-carousel__slide:only-child { display: block; }
+
+.mfsd-hw-commit__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.mfsd-hw-commit__nav .mfsd-hw-carousel__arrow {
+  position: static;
+  transform: none;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.mfsd-hw-commit__nav .mfsd-hw-carousel__dots {
+  position: static;
+  transform: none;
+}
+.mfsd-hw-commit__nav .mfsd-hw-carousel__dot {
+  width: 10px;
+  height: 10px;
+}
+.mfsd-hw-carousel__counter {
+  min-width: 48px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--color-text-muted, inherit);
+}
+
+/* A card */
+.mfsd-hw-commit__card {
+  position: relative;
+  padding: 10px 12px 12px 16px;
+  border: 1px solid var(--color-card-border, #d5dae3);
+  border-radius: 10px;
+  background: var(--color-card-bg, #fff);
+  overflow: hidden;
+}
+.mfsd-hw-commit__card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 6px;
+  background: var(--mfsd-commit-colour, #8A8F98);
+}
+.mfsd-hw-commit__card.is-reminded {
+  animation: mfsd-commit-pulse 1.8s ease-in-out infinite;
+}
+@keyframes mfsd-commit-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 166, 35, 0.0); }
+  50%      { box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mfsd-hw-commit__card.is-reminded,
+  .mfsd-hw-commit__coin,
+  .mfsd-hw-commit__celebrate-box { animation: none; }
+}
+.mfsd-hw-commit__card.is-teaser {
+  border-style: dashed;
+}
+.mfsd-hw-commit__card.is-teaser::before { background: var(--color-card-border, #d5dae3); }
+
+.mfsd-hw-commit__card-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.mfsd-hw-commit__icon { width: 20px; height: 20px; }
+.mfsd-hw-commit__kind {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text, inherit);
+}
+.mfsd-hw-commit__source {
+  font-size: 11px;
+  color: var(--color-text-muted, inherit);
+}
+.mfsd-hw-commit__card-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--color-text, inherit);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.mfsd-hw-commit__status,
+.mfsd-hw-commit__meta,
+.mfsd-hw-commit__prompt {
+  margin: 0 0 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.mfsd-hw-commit__status { color: var(--color-text-muted, inherit); }
+.mfsd-hw-commit__prompt { font-weight: 600; }
+.mfsd-hw-commit__quote {
+  margin: 0 0 8px;
+  padding: 4px 10px;
+  border-left: 3px solid var(--mfsd-commit-colour, #F5A623);
+  font-size: 13px;
+  font-style: italic;
+}
+
+.mfsd-hw-commit__progress {
+  height: 8px;
+  margin: 4px 0 8px;
+  border-radius: 4px;
+  background: rgba(127, 127, 127, 0.25);
+  overflow: hidden;
+}
+.mfsd-hw-commit__progress span {
+  display: block;
+  height: 100%;
+  background: var(--mfsd-commit-colour, #F5A623);
+}
+
+.mfsd-hw-commit__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.mfsd-hw-commit__btn {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--color-accent, #F5A623);
+  color: #1d2330;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mfsd-hw-commit__btn--ghost {
+  background: transparent;
+  border: 2px solid var(--color-accent, #F5A623);
+  color: var(--color-text, inherit);
+}
+.mfsd-hw-commit__link {
+  min-height: 44px;
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text, inherit); /* accent gold on white fails 4.5:1, so links use the text colour */
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent, #F5A623);
+  text-decoration-thickness: 2px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.mfsd-hw-commit__btn:focus-visible,
+.mfsd-hw-commit__link:focus-visible,
+.mfsd-hw-commit__tab:focus-visible,
+.mfsd-hw-commit__child:focus-visible {
+  outline: 3px solid #4a90e2;
+  outline-offset: 2px;
+}
+.mfsd-hw-commit__btn[disabled],
+.mfsd-hw-commit__link[disabled] { opacity: 0.5; cursor: default; }
+
+.mfsd-hw-commit__empty {
+  margin: 12px 0;
+  font-size: 14px;
+  text-align: center;
+  color: var(--color-text-muted, inherit);
+}
+
+/* Skeleton while loading */
+.mfsd-hw-commit__skeleton { padding: 4px 0; }
+.mfsd-hw-commit__skel-line,
+.mfsd-hw-commit__skel-btn {
+  height: 12px;
+  margin: 0 0 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(127,127,127,0.15), rgba(127,127,127,0.3), rgba(127,127,127,0.15));
+  background-size: 200% 100%;
+  animation: mfsd-commit-shimmer 1.4s linear infinite;
+}
+.mfsd-hw-commit__skel-line--short { width: 40%; }
+.mfsd-hw-commit__skel-btn { width: 110px; height: 36px; border-radius: 10px; }
+@keyframes mfsd-commit-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .mfsd-hw-commit__skel-line, .mfsd-hw-commit__skel-btn { animation: none; }
+}
+
+@media (max-width: 400px) {
+  .mfsd-hw-commit__body { padding: 8px; }
+  .mfsd-hw-commit__card-title { font-size: 15px; }
+  .mfsd-hw-commit__badge { font-size: 10px; }
+}
